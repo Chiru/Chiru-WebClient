@@ -1,37 +1,48 @@
-var AssetManager = function ( gui, websocket ) {
+var AssetManager = function ( gui, remoteStorage ) {
     //Ref to GUI
     this.GUI = gui;
+    this.forceType = 'dae';
+    this.remoteStorage = remoteStorage;
 
-    //Ref to websocket manager
-    this.websocket = websocket;
-
-    this.remoteStorage = "http://localhost:8000/models/outdoor";
-
-    this.requestQueue = [];
-    
+    //Storage for bound callback events
+    this.callbacks = {};
 
 
 };
 
+AssetManager.prototype.setRemoteStorage = function ( url ) {
+    this.remoteStorage = url;
+};
 
-AssetManager.prototype.requestAsset = function ( assetName, customUrl ) {
+AssetManager.prototype.checkFileName = function ( assetFileName ) {
 
-    // Collada loader/parser
-    var url = this.remoteStorage + assetName;
-    if ( typeof(customUrl) !== 'undefined' ) {
-        url = customUrl;
-        var parsed = parseUri( url );
-        this.remoteStorage = "http://" + parsed.host;
-        assetName = parsed.file;
+    var fileName = assetFileName.split( '.' ),
+        type = fileName.slice( -1 )[0];
+
+    if ( type.toLowerCase() !== this.forceType ) {
+        fileName[fileName.length - 1] = this.forceType;
+        assetFileName = fileName.join( '.' );
     }
 
-    console.log("Requesting: " + this.remoteStorage + assetName);
+    return assetFileName;
+};
 
-    var trigger;
+AssetManager.prototype.requestAsset = function ( assetName, relPath ) {
+    var trigger, request, asset,
+        that = this;
+
+    if ( relPath === undefined ) {
+        relPath = '';
+    }
+
+    assetName = this.checkFileName( assetName );
+
+    console.log( "Requesting: " + this.remoteStorage + relPath + assetName );
+
 
     if ( document.implementation && document.implementation.createDocument ) {
 
-        var request = new XMLHttpRequest();
+        request = new XMLHttpRequest();
         request.overrideMimeType( 'text/xml' );
 
         // Linking request with GUI, so it can be aborted
@@ -42,19 +53,18 @@ AssetManager.prototype.requestAsset = function ( assetName, customUrl ) {
             if ( request.readyState === 4 ) {
                 clearInterval( trigger );
                 trigger = null;
-                _objController.loading = false;
 
                 if ( request.status === 200 ) {
 
                     if ( request.responseXML ) {
-                        console.log('Download complete');
+                        console.log( 'Download complete' );
 
                         //The final download progress update
                         console.log( Math.ceil( (request.responseText.length / 1000024) * 100 ) / 100 );
 
                         //Gives the program some time to breath after download so it has time to update the viewport
                         setTimeout( function () {
-                            processCollada( request.responseXML, assetName );
+                            that.processAsset( request.responseXML, assetName );
                         }, 500 );
 
                     } else {
@@ -62,13 +72,13 @@ AssetManager.prototype.requestAsset = function ( assetName, customUrl ) {
                         request = null;
                     }
                 } else if ( request.status === 404 ) {
-                    console.log( 'error', "File not found from: " + url );
+                    console.log( 'error', "File not found from: " + this.remoteStorage + relPath );
                     request = null;
                 }
 
             } else if ( request.readyState === 2 ) {
                 console.log( 'Loading asset' );
-                _objController.loading = true;
+
                 trigger = setInterval( function () {
                     if ( request.readyState === 3 ) {
                         console.log( Math.ceil( (request.responseText.length / 1000024) * 100 ) / 100 );
@@ -88,10 +98,10 @@ AssetManager.prototype.requestAsset = function ( assetName, customUrl ) {
             clearInterval( trigger );
             trigger = null;
             request = null;
-            console.log( 'error', "Failed to download: " + url );
+            console.log( 'error', "Failed to download: " + this.remoteStorage + relPath + assetName );
         };
 
-        request.open( "GET", url, true );
+        request.open( "GET", this.remoteStorage + assetName, true );
         try {
             request.send( null );
         } catch (e) {
@@ -101,46 +111,46 @@ AssetManager.prototype.requestAsset = function ( assetName, customUrl ) {
     } else {
         console.log( 'error', "Your browser can't handle XML." );
     }
+
+    return this;
+
 };
 
-AssetManager.prototype.processAsset = processAsset = function ( xml, type, name ) {
-    var loadedObjects = _sceneController.loadedObjects;
-    var loader = new THREE.ColladaLoader();
+AssetManager.prototype.processAsset = function ( xml, name ) {
+    var loader = new THREE.ColladaLoader(),
+        that = this;
 
     loader.options.convertUpAxis = true;
     loader.parse( xml, function colladaReady( collada ) {
         var model = collada.scene;
-        //Changing colormode of the collada model
-        setColorMode( model, _sceneController.sceneParams.colorMode );
 
         model.name = name;
 
-        // Removing earlier object from scene
-        if ( loadedObjects.length > 0 ) {
-            clearScene();
-        }
-
-        // Adding the new object to memory and in scene
-        loadedObjects.push( model );
-        console.log( model );
-        addToScene( model );
-
-        model.traverse( function ( obj ) {
-            if ( obj instanceof THREE.Mesh )
-                _sceneController.meshes.push( obj );
-        } );
-
-        console.log( _sceneController.meshes );
-
-        model = null;
-
-        //Freeing memory by removing and de-allocating unneeded objects
-        cleanMemory();
-
-        //console.log(_sceneController.renderer.info.memory)
         loader = null;
 
-        this.GUI.loadDiag.changeState( 'ready' );
+        console.log( 'ready' );
+
+        that.triggerEvent('assetReady', model);
 
     }, this.remoteStorage );
+};
+
+//A function for binding custom event callbacks for Connection
+AssetManager.prototype.bindEvent = function(eventName, callback){
+    this.callbacks[eventName] = this.callbacks[eventName] || [];
+    this.callbacks[eventName].push(callback);
+    return this;
+};
+
+//Triggers the bound event and gives it some data as argument if it has a callback function
+AssetManager.prototype.triggerEvent = function(eventName, message){
+    var eventChain = this.callbacks[eventName], i;
+
+    if(eventChain === undefined){
+        console.log("Error: Received an unbound event: " + eventName);
+        return;
+    }
+    for(i = 0; i < eventChain.length; i++){
+        eventChain[i](message);
+    }
 };

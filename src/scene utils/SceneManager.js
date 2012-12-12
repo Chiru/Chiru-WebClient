@@ -1,27 +1,26 @@
-var SceneManager = function (container) {
-        this.time = Date.now();
-        this.container = container;
-        this.controls = null;
-        this.renderer = null;
-        this.scene = null;
-        this.camera = null;
+var SceneManager = function ( container ) {
+    this.time = Date.now();
+    this.container = container;
+    this.controls = null;
+    this.renderer = null;
+    this.scene = null;
+    this.camera = null;
+    this.loadedObjects = [];
 
-        this.sceneParams = {
-            resolution: 1
-        };
+    this.sceneParams = {
+        resolution:1
+    };
 
-        this.ecModel = new ECModel();
-        this.assetManager = new AssetManager();
-
-        this.loadedObjects = [];
-
+    this.websocket = null;
+    this.ecModel = null;
+    this.assetManager = new AssetManager( {}, "http://localhost:8000/models/outdoor/" );
 
 
     this.initScene();
 };
 
 
-SceneManager.prototype.update = function( delta ) {
+SceneManager.prototype.update = function ( delta ) {
 
     this.controls.isOnObject( false );
 
@@ -29,11 +28,12 @@ SceneManager.prototype.update = function( delta ) {
     this.controls.rayCaster.ray.origin.copy( this.controls.getObject().position );
     this.controls.rayCaster.ray.origin.y -= 10;
 
-    var intersections = this.controls.rayCaster.intersectObjects( this.loadedObjects );
+    var intersections = this.controls.rayCaster.intersectObjects( this.loadedObjects ),
+        distance;
 
     if ( intersections.length > 0 ) {
 
-        var distance = intersections[ 0 ].distance;
+        distance = intersections[ 0 ].distance;
 
         if ( distance > 0 && distance < 10 ) {
 
@@ -52,19 +52,54 @@ SceneManager.prototype.update = function( delta ) {
 };
 
 
-SceneManager.prototype.windowResize = function( ) {
+SceneManager.prototype.connect = function ( host, port, options ) {
+    this.websocket = new WSManager();
+
+    // Binding events
+
+    this.websocket.bind( "connected", function ( url ) {
+        console.log( "WebSocket connection opened." );
+    } );
+
+    this.websocket.bind( "disconnected", function ( e ) {
+        console.log( "WebSocket closed." );
+
+    } );
+
+    this.websocket.bind( "reconnecting", function ( e ) {
+        console.log( "Attempting to reconnect to " + e.host + " (Attempt: " + e.attempt + ")" );
+
+    } );
+
+    this.websocket.bind( "error", function ( e ) {
+        console.log( "WebSocket error" + e );
+    } );
+
+
+    this.websocket.bind( "scene", function ( xml ) {
+
+        this.parseScene( xml );
+
+    } );
+
+    this.websocket.bind( "colladaList", function ( data ) {
+
+
+    } );
+
+    this.websocket.connect();
+
+};
+
+SceneManager.prototype.windowResize = function () {
     var callback = function () {
         var res = this.sceneParams.resolution;
         this.renderer.setSize( window.innerWidth * res, window.innerHeight * res );
-        if ( this.renderer.domElement.style.width || this.renderer.domElement.style.height ) {
-            this.renderer.domElement.style.width = window.innerWidth + 'px';
-            this.renderer.domElement.style.height = window.innerHeight + 'px';
-        }
 
         this.camera.aspect = ((window.innerWidth * res) / (window.innerHeight * res));
         this.camera.updateProjectionMatrix();
 
-    }.bind(this);
+    }.bind( this );
     window.addEventListener( 'resize', callback, false );
 
     return {
@@ -75,48 +110,49 @@ SceneManager.prototype.windowResize = function( ) {
 };
 
 
+SceneManager.prototype.parseScene = function ( xml ) {
 
-SceneManager.prototype.parseSceneXML = function () {
+    var sceneParser = new SceneParser();
 
+    this.ecModel = sceneParser.parse( xml );
 
+    sceneParser = null;
 
 
 };
 
 SceneManager.prototype.clearScene = function ( filter ) {
-    var obj, scene = this.scene;
+    var obj, scene = this.scene, i;
 
-    if ( typeof(filter) === undefined ){ filter = THREE.Object3D }
+    if ( filter === undefined ) {
+        filter = THREE.Object3D;
+    }
 
     //Removes all objects (but not camera/lights)
-    for ( var i = scene.children.length - 1; i >= 0; i-- ) {
+    for ( i = scene.children.length - 1; i >= 0; i - 1 ) {
         obj = scene.children[i];
-        if ( obj instanceof filter )
-        {
+        if ( obj instanceof filter ) {
             scene.remove( obj );
         }
     }
 };
 
 SceneManager.prototype.cleanMemory = function ( freeMemory, cleanAll ) {
-    if ( typeof(freeMemory) === 'undefined' )
-    {
+    if ( freeMemory === undefined ) {
         freeMemory = true;
     }
 
-    if ( typeof(cleanAll) === 'undefined' )
-    {
+    if ( cleanAll === undefined ) {
         cleanAll = false;
     }
 
-    var objects = this.loadedObjects;
-    var that = this;
+    var objects = this.loadedObjects,
+        that = this, len;
 
     if ( freeMemory ) {
 
-        var len = 4;
-        if ( cleanAll )
-        {
+        len = 4;
+        if ( cleanAll ) {
             len = 0;
         }
 
@@ -141,11 +177,18 @@ SceneManager.prototype.cleanMemory = function ( freeMemory, cleanAll ) {
     }
 };
 
+SceneManager.prototype.addToScene = function ( object ) {
+    object.scale.y = object.scale.x = object.scale.z = 5;
+    this.scene.add( object );
+    this.loadedObjects.push( object );
+
+};
 
 SceneManager.prototype.initScene = function () {
 
-    var body = document.body;
-    var that = this;
+    var body = document.body,
+        that = this,
+        dirLight;
 
     body.addEventListener( 'click', function ( event ) {
         // Ask the browser to lock the pointer
@@ -179,11 +222,11 @@ SceneManager.prototype.initScene = function () {
             body.requestPointerLock();
 
         }
-            that.controls.enabled = true;
+        that.controls.enabled = true;
     }, false );
 
 
-    this.renderer =  new THREE.WebGLRenderer( {
+    this.renderer = new THREE.WebGLRenderer( {
         antiAlias:true, // to get smoother output
         preserveDrawingBuffer:false, // true to allow screen shot
         precision:'highp'
@@ -194,7 +237,7 @@ SceneManager.prototype.initScene = function () {
     this.container.appendChild( this.renderer.domElement );
 
 
-    this.scene =  new THREE.Scene();
+    this.scene = new THREE.Scene();
     this.scene.fog = new THREE.FogExp2( 0x000000, 0.00000025 );
 
     // Camera
@@ -205,7 +248,8 @@ SceneManager.prototype.initScene = function () {
 
 
     // Lights
-    var dirLight = new THREE.DirectionalLight( 0xffffff );
+
+    dirLight = new THREE.DirectionalLight( 0xffffff );
     dirLight.intensity = 2;
     dirLight.position.set( 17, 10, 15 );
     dirLight.lookAt( this.scene.position );
@@ -213,7 +257,7 @@ SceneManager.prototype.initScene = function () {
     this.scene.add( new THREE.AmbientLight( 0xffffff ) );
 
     // Controls
-    this.controls =  new THREE.PointerLockControls( this.camera );
+    this.controls = new THREE.PointerLockControls( this.camera );
     this.scene.add( this.controls.getObject() );
 
     this.controls.rayCaster = new THREE.Raycaster();
@@ -222,19 +266,44 @@ SceneManager.prototype.initScene = function () {
 
     //Windows resize listener
     this.windowResize();
+    /*
+     var vertex = "varying vec3 vNormal;void main() { vNormal = normal;gl_Position = projectionMatrix *modelViewMatrix *vec4(position,1.0);}";
+     var fragment = "varying vec3 vNormal;void main() {vec3 light = vec3(0.5,0.2,1.0);light = normalize(light);float dProd = max(0.0, dot(vNormal, light));gl_FragColor = vec4(dProd, dProd, dProd, 1.0);}";
+     var material = new THREE.ShaderMaterial( {
+     vertexShader:vertex,
+     fragmentShader:fragment
+     } );
 
-    var vertex = "varying vec3 vNormal;void main() { vNormal = normal;gl_Position = projectionMatrix *modelViewMatrix *vec4(position,1.0);}";
-    var fragment = "varying vec3 vNormal;void main() {vec3 light = vec3(0.5,0.2,1.0);light = normalize(light);float dProd = max(0.0, dot(vNormal, light));gl_FragColor = vec4(dProd, dProd, dProd, 1.0);}";
-    var material = new THREE.ShaderMaterial({
-        vertexShader: vertex,
-        fragmentShader: fragment
-    });
+     var mesh = new THREE.Mesh( new THREE.TorusKnotGeometry( 200, 50, 64, 10 ), material );
+     this.loadedObjects.push( mesh );
+     this.scene.add( mesh );
+     */
+    this.renderer.render( this.scene, this.camera );
 
-    var mesh = new THREE.Mesh(new THREE.TorusKnotGeometry(200,50,64,10), material);
-    this.loadedObjects.push(mesh);
-    this.scene.add(mesh);
+    this.parseScene();
 
-    this.renderer.render(this.scene, this.camera)
+    for ( var entity in this.ecModel.entities ) {
+        console.log( entity )
+        if ( this.ecModel.entities[entity].hasOwnProperty( 'components' ) ) {
+            var components = this.ecModel.entities[entity].components;
+            console.log( components );
+
+            if ( components.hasOwnProperty( 'EC_Mesh' ) ) {
+                this.assetManager.requestAsset( components['EC_Mesh']['Mesh ref'] ).bindEvent( 'assetReady', function ( asset ) {
+                    console.log( asset )
+                    that.addToScene( asset )
+                } )
+
+            }
+
+
+        }
+    }
+
+    this.assetManager.requestAsset( "outdoorspace.dae" ).bindEvent( 'assetReady', function ( asset ) {
+        console.log( asset )
+        that.addToScene( asset )
+    } )
 
 };
 

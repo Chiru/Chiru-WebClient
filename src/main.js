@@ -10,9 +10,9 @@ var time = Date.now();
 
 //Initializes the renderer, camera, etc.
 function init() {
-    var body = document.body;
+    var body = document.body, container;
 
-    var container = document.createElement( 'div' );
+    container = document.createElement( 'div' );
     body.appendChild( container );
 
     sManager = new SceneManager( container );

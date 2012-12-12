@@ -1,78 +1,53 @@
-var ECModel = function(){
+var ECModel = function () {
 
     this.entities = {};
     this.components = {};
 
-    //Initializes the default component types
-    this.components.EC_Placeable = function (params) {
-        this.name = 'EC_Placeable';
-        this.parent = params.id;
-        //console.log(params)
-        this.transform = params.transform;
-    };
-
-    this.components.EC_Mesh = function (params) {
-        this.name = 'EC_Mesh';
-        this.parent = params.id;
-        this.data = params.data;
-        //FIXME
-
-    };
 };
 
 //Defines a new entity object
-ECModel.prototype.Entity = function (id) {
+ECModel.prototype.Entity = function ( id ) {
     this.id = id;
-    this.components = [];
+    this.components = {};
 
-    this.addComponent = function (component) {
-        this.components.push(component);
+    this.addComponent = function ( component ) {
+        if(!this.components.hasOwnProperty(component.type)) {
+            this.components[component.type] = component;
+        }
+    };
+};
+
+ECModel.prototype.Component = function ( type ) {
+    this.type = type;
+
+    this.addAttribute = function ( name, value ) {
+        if ( name !== undefined && name !== '' && value !== undefined ) {
+            this[name] = value;
+        }
     };
 };
 
 //Adds a custom component to component types
-ECModel.prototype.addComponent = function (typeName, component){
-    this.components[typeName] = component;
-};
+ECModel.prototype.addComponent = function ( component ) {
 
-
-ECModel.prototype.addEntity = function (params){
-    var id = params.id;
-    if (!this.entities[id]){
-        this.entities[id] = new this.Entity(id);
-    }
-    //TODO: Add to scene?
-};
-
-ECModel.prototype.removeEntity = function (id) {
-    //TODO: Remove from scene hierarchy
-    delete this.entities[id];
-};
-
-//Adds a new component to entity
-ECModel.prototype.addComponentToEnt = function (params) {
-    var id = params.id;
-    var newComponent = params.component;
-
-
-    // WS does not have any fancy sync state stuff so if we get an
-    // addcomponent message for an entity that hasn't been created yet
-    // we'll just add a new entity. This is not the way to go.
-    if (!this.entities[id]){
-        this.addEntity(params);
-    }
-
-    if (this.components[newComponent]) {
-        //TODO: check that entity does not already have a mesh. Should be done smarter
-        for (var i = 0; i < this.entities[id].components.length; i++) {
-            if (this.entities[id].components[i].name === newComponent) {
-                return;
-            }
+    if ( component.type !== undefined ) {
+        if ( !this.components.hasOwnProperty( component.type ) ) {
+            this.components[component.type] = component;
         }
-        var comp = new this.components[newComponent] (params);
-        this.entities[id].addComponent(comp);
-
     }
+};
+
+
+ECModel.prototype.addEntity = function ( entity ) {
+    var id = entity.id;
+    console.log(id);
+    if ( !this.entities.hasOwnProperty(id)) {
+        this.entities[id] = entity;
+    }
+};
+
+ECModel.prototype.removeEntity = function ( id ) {
+    //TODO: Remove from scene and from hierarchy
 };
 
 

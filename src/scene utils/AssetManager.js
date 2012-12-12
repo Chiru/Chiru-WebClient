@@ -64,7 +64,7 @@ AssetManager.prototype.requestAsset = function ( assetName, relPath ) {
 
                         //Gives the program some time to breath after download so it has time to update the viewport
                         setTimeout( function () {
-                            that.processAsset( request.responseXML, assetName );
+                            that.processAsset( request, assetName );
                         }, 500 );
 
                     } else {
@@ -112,12 +112,15 @@ AssetManager.prototype.requestAsset = function ( assetName, relPath ) {
         console.log( 'error', "Your browser can't handle XML." );
     }
 
-    return this;
+    request.assetReady = new Signal();
+
+    return request.assetReady;
 
 };
 
-AssetManager.prototype.processAsset = function ( xml, name ) {
-    var loader = new THREE.ColladaLoader(),
+AssetManager.prototype.processAsset = function ( request, name ) {
+
+    var loader = new THREE.ColladaLoader(), xml = request.responseXML,
         that = this;
 
     loader.options.convertUpAxis = true;
@@ -130,27 +133,9 @@ AssetManager.prototype.processAsset = function ( xml, name ) {
 
         console.log( 'ready' );
 
-        that.triggerEvent('assetReady', model);
+        request.assetReady.dispatch(model)
 
     }, this.remoteStorage );
 };
 
-//A function for binding custom event callbacks for Connection
-AssetManager.prototype.bindEvent = function(eventName, callback){
-    this.callbacks[eventName] = this.callbacks[eventName] || [];
-    this.callbacks[eventName].push(callback);
-    return this;
-};
-
-//Triggers the bound event and gives it some data as argument if it has a callback function
-AssetManager.prototype.triggerEvent = function(eventName, message){
-    var eventChain = this.callbacks[eventName], i;
-
-    if(eventChain === undefined){
-        console.log("Error: Received an unbound event: " + eventName);
-        return;
-    }
-    for(i = 0; i < eventChain.length; i++){
-        eventChain[i](message);
-    }
-};
+AssetManager.prototype.assetReady = new Signal();

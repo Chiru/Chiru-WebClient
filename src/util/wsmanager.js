@@ -23,11 +23,6 @@ var WSManager = function (host, port, options){
     this.reconnectTimer = null;
     this.reconnAttempt = 0;
 
-    if(typeof(options) === 'object'){
-        options = $.extend(defaultOpt, options);
-    }else{
-        options = defaultOpt;
-    }
 
     //Reconnection interval time (milliseconds)
     this.reconnectInterval = options.reconnectInterval;
@@ -51,10 +46,10 @@ var WSManager = function (host, port, options){
 WSManager.prototype.connect = function () {
     this.ws = null;
 
-    if ("WebSocket" in window) {
-        this.ws = new WebSocket(this.url);
-    }else if ("MozWebSocket" in window) {
-        this.ws = new MozWebSocket(this.url);
+    if (window.WebSocket === 'undefined') {
+        this.ws = new window.WebSocket(this.url);
+    }else if (window.MozWebSocket === 'undefined') {
+        this.ws = new window.MozWebSocket(this.url);
     } else {
         alert("This Browser does not support WebSockets.  Use newest version of Google Chrome, FireFox or Opera. ");
         return;
@@ -160,7 +155,7 @@ WSManager.prototype.processEvent = function (json) {
 };
 
 //A function for binding custom event callbacks for Connection
-WSManager.prototype.bind = function(eventName, callback){
+WSManager.prototype.bindEvent = function(eventName, callback){
     this.callbacks[eventName] = this.callbacks[eventName] || [];
     this.callbacks[eventName].push(callback);
     return this;
@@ -168,12 +163,12 @@ WSManager.prototype.bind = function(eventName, callback){
 
 //Triggers the bound event and gives it some data as argument if it has a callback function
 WSManager.prototype.triggerEvent = function(eventName, message){
-    var eventChain = this.callbacks[eventName];
-    if(typeof eventChain === 'undefined'){
+    var eventChain = this.callbacks[eventName], i;
+    if(eventChain === 'undefined'){
         console.log("Error: Received an unknown event: " + eventName);
         return;
     }
-    for(var i = 0; i < eventChain.length; i++){
+    for(i = 0; i < eventChain.length; i+1){
         eventChain[i](message);
     }
 };

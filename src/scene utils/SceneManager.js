@@ -12,8 +12,8 @@ var SceneManager = function ( container ) {
     };
 
     this.websocket = null;
-    this.ecModel = null;
-    this.assetManager = new AssetManager( {}, "http://localhost:8000/models/outdoor/" );
+    this.assetManager = new AssetManager( {}, "http://localhost:8000/tests/test1/" );
+    this.ecModel = new ECModel( this.assetManager );
 
 
     this.initScene();
@@ -111,10 +111,13 @@ SceneManager.prototype.windowResize = function () {
 
 
 SceneManager.prototype.parseScene = function ( xml ) {
+    var that = this
 
-    var sceneParser = new SceneParser();
-
-    this.ecModel = sceneParser.parse( xml );
+    var sceneParser = new SceneParser( this.ecModel );
+    this.ecModel.meshAdded.add(function(component){
+        that.addToScene(component.mesh)
+    })
+    sceneParser.parse( xml );
 
     sceneParser = null;
 
@@ -177,8 +180,16 @@ SceneManager.prototype.cleanMemory = function ( freeMemory, cleanAll ) {
     }
 };
 
+
+SceneManager.prepareAsset = function ( entId ) {
+
+    var ecMesh = this.ecModel.entities[id].components['EC_Mesh'],
+        transform = ecMesh.transform,
+        scale
+}
+
 SceneManager.prototype.addToScene = function ( object ) {
-    object.scale.y = object.scale.x = object.scale.z = 5;
+
     this.scene.add( object );
     this.loadedObjects.push( object );
 
@@ -266,7 +277,7 @@ SceneManager.prototype.initScene = function () {
 
     //Windows resize listener
     this.windowResize();
-    /*
+
      var vertex = "varying vec3 vNormal;void main() { vNormal = normal;gl_Position = projectionMatrix *modelViewMatrix *vec4(position,1.0);}";
      var fragment = "varying vec3 vNormal;void main() {vec3 light = vec3(0.5,0.2,1.0);light = normalize(light);float dProd = max(0.0, dot(vNormal, light));gl_FragColor = vec4(dProd, dProd, dProd, 1.0);}";
      var material = new THREE.ShaderMaterial( {
@@ -277,33 +288,10 @@ SceneManager.prototype.initScene = function () {
      var mesh = new THREE.Mesh( new THREE.TorusKnotGeometry( 200, 50, 64, 10 ), material );
      this.loadedObjects.push( mesh );
      this.scene.add( mesh );
-     */
+
     this.renderer.render( this.scene, this.camera );
 
     this.parseScene();
-
-    for ( var entity in this.ecModel.entities ) {
-        console.log( entity )
-        if ( this.ecModel.entities[entity].hasOwnProperty( 'components' ) ) {
-            var components = this.ecModel.entities[entity].components;
-            console.log( components );
-
-            if ( components.hasOwnProperty( 'EC_Mesh' ) ) {
-                this.assetManager.requestAsset( components['EC_Mesh']['Mesh ref'] ).bindEvent( 'assetReady', function ( asset ) {
-                    console.log( asset )
-                    that.addToScene( asset )
-                } )
-
-            }
-
-
-        }
-    }
-
-    this.assetManager.requestAsset( "outdoorspace.dae" ).bindEvent( 'assetReady', function ( asset ) {
-        console.log( asset )
-        that.addToScene( asset )
-    } )
 
 };
 

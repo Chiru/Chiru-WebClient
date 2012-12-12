@@ -1,6 +1,6 @@
-var SceneParser = function () {
+var SceneParser = function ( ecModel ) {
 
-    this.ecModel = new ECModel();
+    this.ecModel = ecModel;
     this.parser = this.initParser();
 
 };
@@ -53,6 +53,7 @@ SceneParser.prototype.parse = function ( xml ) {
         id = entity.getAttribute( "id" );
 
         ECEnt = new this.ecModel.Entity( id );
+        this.ecModel.addEntity(ECEnt);
 
         components = entity.getElementsByTagName( "component" );
 
@@ -64,8 +65,6 @@ SceneParser.prototype.parse = function ( xml ) {
 
             ECComp = new this.ecModel.Component(type);
 
-            this.ecModel.addComponent( ECComp );
-
             for ( k = 0; k < attributes.length; k++ ) {
                 attribute = attributes[k];
 
@@ -76,10 +75,9 @@ SceneParser.prototype.parse = function ( xml ) {
 
             }
 
-            ECEnt.addComponent(ECComp);
+            this.ecModel.addComponent(ECComp, id);
 
         }
-        this.ecModel.addEntity(ECEnt);
     }
 
     return this.ecModel;

@@ -1,54 +1,113 @@
-var ECModel = function () {
+var ECModel = function ( assetManager ) {
 
     this.entities = {};
     this.components = {};
+    this.assetManager = assetManager;
 
 };
 
-//Defines a new entity object
-ECModel.prototype.Entity = function ( id ) {
-    this.id = id;
-    this.components = {};
+ECModel.prototype = {
+    meshAdded: new Signal(),
 
-    this.addComponent = function ( component ) {
-        if(!this.components.hasOwnProperty(component.type)) {
-            this.components[component.type] = component;
+    //Defines a new entity object
+    Entity: function ( id ) {
+        this.id = id;
+        this.components = {};
+    },
+
+    Component: function ( type, parent ) {
+        this.type = type;
+        this.parent = parent;
+
+        this.addAttribute = function ( name, value ) {
+            if (name !== undefined && name !== '' && value !== undefined) {
+                this[name] = value;
+            }
+        };
+    },
+    addComponent: function ( component, entId ) {
+        var entity = this.entities[entId]
+        component.parent = entId;
+
+        console.log(entity)
+        if (entity !== undefined) {
+            if (!entity.components.hasOwnProperty(component.type)) {
+                entity.components[component.type] = component;
+                this.componentAdded(component);
+            }
         }
-    };
-};
+    },
+    componentAdded: function ( component ) {
+        var that = this;
 
-ECModel.prototype.Component = function ( type ) {
-    this.type = type;
+        switch ( component.type ) {
+            case 'EC_Mesh':
+            {
+                var trans;
+                console.log('ADDED EC MESH!');
 
-    this.addAttribute = function ( name, value ) {
-        if ( name !== undefined && name !== '' && value !== undefined ) {
-            this[name] = value;
+                this.assetManager.requestAsset(component['Mesh ref']).add(function ( asset ) {
+
+                    trans = component.Transform.split(',');
+                    for (var i = trans.length; i--;) trans[i] = Number(trans[i]);
+
+                    asset.position.set(trans[0], trans[1], trans[2]);
+                    asset.rotation.set(trans[3] * Math.PI / 180, trans[4] * Math.PI / 180, trans[5] * Math.PI / 180);
+                    asset.scale.set(trans[6], trans[7], trans[8]);
+
+                    trans = that.entities[component.parent].components['EC_Placeable'].Transform.split(',')
+                    for (var i = trans.length; i--;) trans[i] = Number(trans[i]);
+
+                    asset.position.set(asset.position.x + trans[0], asset.position.y + trans[1], asset.position.z + trans[2]);
+                    asset.rotation.set(asset.rotation.x + trans[3] * Math.PI / 180, asset.rotation.y + trans[4] * Math.PI / 180, asset.rotation.z + trans[5] * Math.PI / 180);
+                    asset.scale.set(asset.scale.x * trans[6], asset.scale.y * trans[7], asset.scale.z * trans[8]);
+
+
+                    component.mesh = asset;
+                    console.log(component.mesh)
+
+                    that.meshAdded.dispatch(component)
+
+                })
+                break;
+            }
+            case 'EC_Placeable':
+            {
+                console.log('ADDED EC PLACEABLE');
+                break;
+            }
+            case 'EC_RigidBody':
+            {
+                console.log('ADDED EC RigidBody');
+                break;
+            }
         }
-    };
-};
+    },
 
-//Adds a custom component to component types
-ECModel.prototype.addComponent = function ( component ) {
 
-    if ( component.type !== undefined ) {
-        if ( !this.components.hasOwnProperty( component.type ) ) {
-            this.components[component.type] = component;
+    //Adds a custom component to component types
+    customComponent: function ( component ) {
+
+        if (component.type !== undefined) {
+            if (!this.components.hasOwnProperty(component.type)) {
+                this.components[component.type] = component;
+            }
         }
+    },
+
+
+    addEntity: function ( entity ) {
+        var id = entity.id;
+        console.log(id);
+        if (!this.entities.hasOwnProperty(id)) {
+            this.entities[id] = entity;
+        }
+    },
+
+    removeEntity: function ( id ) {
+        //TODO: Remove from scene and from hierarchy
     }
-};
-
-
-ECModel.prototype.addEntity = function ( entity ) {
-    var id = entity.id;
-    console.log(id);
-    if ( !this.entities.hasOwnProperty(id)) {
-        this.entities[id] = entity;
-    }
-};
-
-ECModel.prototype.removeEntity = function ( id ) {
-    //TODO: Remove from scene and from hierarchy
-};
+}
 
 
 /*
@@ -116,48 +175,7 @@ ECModel.prototype.removeEntity = function ( id ) {
  return values
  }
 
- function loadScene(params) {
- var xmlstring = params['xml'];
- var scenexml = (new DOMParser()).parseFromString(xmlstring, "text/xml");
 
- var data = {};
-
- var loadentities = scenexml.getElementsByTagName("entity")
-
- for (e = 0; e < loadentities.length; e++) {
- var entity = loadentities[e];
-
- var id = entity.getAttribute("id");
- data[id] = {};
-
- components = entity.getElementsByTagName("component");
-
- for (c = 0; c < components.length; c++) {
- var component = components[c].getAttribute("type")
-
- data[id][component] = {};
- var attributes = components[c].getElementsByTagName("attribute");
-
- for (a = 0; a < attributes.length; a++) {
- var attribute = attributes[a];
-
- var name = attribute.getAttribute("name");
- var value = attribute.getAttribute("value");
- data[id][component][name] = value
-
- }
- }
- }
-
- //Add/update components
- // Just use EC_Placeable and EC_MESH for time being
- for (id in data) {
- //add entity (if not in scene)
- if (!entities[id]) {
- addEntity({id: id});
- } else {
- console.log('ERROR: ' + id + ' already in scene!');
- }
 
  for (component in data[id]) {
  //console.log(component)

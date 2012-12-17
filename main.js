@@ -10,6 +10,8 @@ var time = Date.now();
 
 //Initializes the renderer, camera, etc.
 function init() {
+
+    // Defining the rendering container
     var body = document.body, container;
 
     container = document.createElement( 'div' );

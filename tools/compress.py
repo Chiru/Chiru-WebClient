@@ -6,7 +6,7 @@ import os
 
 _compressor = 'compressor/compiler.jar'
 
-def compress(in_files, out_file, verbose=False, temp_file='.temp'):
+def compress(in_files, out_file, externs, verbose=False, temp_file='.temp'):
     temp = open(temp_file, 'w')
 
     for f in in_files:
@@ -14,6 +14,7 @@ def compress(in_files, out_file, verbose=False, temp_file='.temp'):
         data = fh.read() + '\n'
         fh.close()
 
+        temp.write('\n/** Src: %s **/\n' %f)
         temp.write(data)
 
         print ' + %s, %.2f kB' % (f, (os.path.getsize(f)/1024.0))
@@ -21,7 +22,10 @@ def compress(in_files, out_file, verbose=False, temp_file='.temp'):
     temp.close()
 
     options = ['--js %s' %temp_file, '--jscomp_off=globalThis', '--language_in=ECMASCRIPT5_STRICT',
-               '--jscomp_off=checkTypes', '--js_output_file %s' %out_file]
+               '--jscomp_off=checkTypes', '--compilation_level ADVANCED_OPTIMIZATIONS','--js_output_file %s' %out_file]
+
+    if externs:
+        options.append('--externs %s' %externs)
 
     if verbose:
         options.append('--warning_level=VERBOSE')

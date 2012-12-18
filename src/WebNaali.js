@@ -2,23 +2,37 @@
  * Global namespace that holds highest level functionality
  * @namespace webnaali
  * @version 0.1 dev
- * @param {object} namespace Global namespace
- * @param {object} $ jQuery
- * @param {undefined} undefined Reserving the undefined
  *
  */
 
 (function ( namespace, $, undefined ) {
-    /** @lends webnaali **/
-    namespace.version = '0.1 dev';
+    // Attributes
+    namespace.VERSION = '0.1 dev';
 
-    this.createScene = function ( container, options ) {
-        return this.scene = new this.SceneManager ( container );
+    // Basic methods
+
+    namespace.initScene = function ( container, options ) {
+        return this.scene = new this.SceneManager( container );
     };
 
-    this.connect = function ( host, port, options ) {
-        return this.connection = new this.W;
+    namespace.initConnection = function ( host, port, options ) {
+        var socket = new this.WSManager( host, port, options );
+
+        if ( this.scene !== undefined ) {
+            this.scene.bindConnection( socket );
+        } else {
+            console.error( " ERROR: Create scene before creating a WebSocket connection. " );
+        }
+        return socket;
+    };
+
+    namespace.start = function () {
+        if ( this.scene !== undefined ) {
+            this.scene.start();
+        } else {
+            console.error( " ERROR: Create a scene before starting the client. " );
+        }
     };
 
 
-}( window.webnaali = window.webnaali || {}, jQuery ));
+}(window.webnaali = window.webnaali || {}, jQuery ));

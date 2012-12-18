@@ -9,7 +9,7 @@
      * @param {object} container Container DOM element for webgl renderer
      */
 
-    var SceneManager = namespace.SceneManager = function ( container , options ) {
+    var SceneManager = namespace.SceneManager = function ( container, options ) {
         this.time = Date.now();
         this.container = container;
         this.controls = null;
@@ -19,86 +19,98 @@
         this.loadedObjects = [];
 
         this.sceneParams = {
-            resolution:1
+            resolution: 1
         };
 
         this.websocket = null;
+        // In final solution the storage url will come through a websocket, but it's now defined here for testing
         this.assetManager = new webnaali.AssetManager( {}, "http://localhost:8000/scenes/avatar/" );
         this.ecModel = new webnaali.ECModel( this.assetManager );
-
 
         this.initScene();
     };
 
 
-    SceneManager.prototype.update = function ( delta ) {
+    SceneManager.prototype.renderLoop = function () {
+        var self = this;
 
-        this.controls.isOnObject( false );
+        (function loop() {
+            window.requestAnimationFrame( loop );
+
+            self.controls.isOnObject( false );
 
 
-        this.controls.rayCaster.ray.origin.copy( this.controls.getObject().position );
-        this.controls.rayCaster.ray.origin.y -= 10;
+            self.controls.rayCaster.ray.origin.copy( self.controls.getObject().position );
+            self.controls.rayCaster.ray.origin.y -= 10;
 
-        var intersections = this.controls.rayCaster.intersectObjects( this.loadedObjects ),
-            distance;
+            var intersections = self.controls.rayCaster.intersectObjects( self.loadedObjects ),
+                distance;
 
-        if ( intersections.length > 0 ) {
+            if ( intersections.length > 0 ) {
 
-            distance = intersections[ 0 ].distance;
+                distance = intersections[ 0 ].distance;
 
-            if ( distance > 0 && distance < 10 ) {
+                if ( distance > 0 && distance < 10 ) {
 
-                this.controls.isOnObject( true );
+                    self.controls.isOnObject( true );
+
+                }
 
             }
+            self.controls.update( Date.now() - self.time );
 
-        }
-        this.controls.update( Date.now() - this.time );
+            self.renderer.render( self.scene, self.camera );
 
-        this.renderer.render( this.scene, this.camera );
-
-        this.time = Date.now();
+            self.time = Date.now();
+        }());
 
 
     };
 
 
-    SceneManager.prototype.connect = function ( host, port, options ) {
-        this.websocket = new WSManager();
+    SceneManager.prototype.bindConnection = function ( socket ) {
 
-        // Binding events
-
-        this.websocket.bind( "connected", function ( url ) {
-            console.log( "WebSocket connection opened." );
-        } );
-
-        this.websocket.bind( "disconnected", function ( e ) {
-            console.log( "WebSocket closed." );
-
-        } );
-
-        this.websocket.bind( "reconnecting", function ( e ) {
-            console.log( "Attempting to reconnect to " + e.host + " (Attempt: " + e.attempt + ")" );
-
-        } );
-
-        this.websocket.bind( "error", function ( e ) {
-            console.log( "WebSocket error" + e );
-        } );
+        if ( socket !== undefined ) {
+            this.websocket = socket;
 
 
-        this.websocket.bind( "scene", function ( xml ) {
+            // Binding events
 
-            this.parseScene( xml );
+            try {
+                this.websocket.bindEvent( "connected", function ( url ) {
+                    console.log( "WebSocket connection opened." );
+                } );
 
-        } );
+                this.websocket.bindEvent( "disconnected", function ( e ) {
+                    console.log( "WebSocket closed." );
 
-        this.websocket.bind( "colladaList", function ( data ) {
+                } );
+
+                this.websocket.bindEvent( "reconnecting", function ( e ) {
+                    console.log( "Attempting to reconnect to " + e.host + " (Attempt: " + e.attempt + ")" );
+
+                } );
+
+                this.websocket.bindEvent( "error", function ( e ) {
+                    console.log( "WebSocket error" + e );
+                } );
 
 
-        } );
+                this.websocket.bindEvent( "scene", function ( xml ) {
 
-        this.websocket.connect();
+                    this.parseScene( xml );
+
+                } );
+
+                return true;
+
+            } catch (e) {
+                console.error( 'ERROR:', e.stack );
+            }
+
+        }
+
+        return false;
 
     };
 
@@ -114,7 +126,7 @@
         window.addEventListener( 'resize', callback, false );
 
         return {
-            stop:function () {
+            stop: function () {
                 window.removeEventListener( 'resize', callback );
             }
         };
@@ -125,9 +137,9 @@
         var that = this;
 
         var sceneParser = new webnaali.SceneParser( this.ecModel );
-        this.ecModel.meshAdded.add(function(component){
-            that.addToScene(component.mesh);
-        });
+        this.ecModel.meshAdded.add( function ( component ) {
+            that.addToScene( component.mesh );
+        } );
         sceneParser.parse( xml );
 
         sceneParser = null;
@@ -249,9 +261,9 @@
 
 
         this.renderer = new THREE.WebGLRenderer( {
-            antiAlias:true, // to get smoother output
-            preserveDrawingBuffer:false, // true to allow screen shot
-            precision:'highp'
+            antiAlias: true, // to get smoother output
+            preserveDrawingBuffer: false, // true to allow screen shot
+            precision: 'highp'
         } );
 
         this.renderer.setClearColorHex( 0xBBBBBB, 1 );
@@ -260,6 +272,8 @@
 
 
         this.scene = new THREE.Scene();
+
+        /** TEMP SCENE **/
         this.scene.fog = new THREE.FogExp2( 0x000000, 0.00000025 );
 
         // Camera
@@ -292,18 +306,26 @@
         var vertex = "varying vec3 vNormal;void main() { vNormal = normal;gl_Position = projectionMatrix *modelViewMatrix *vec4(position,1.0);}";
         var fragment = "varying vec3 vNormal;void main() {vec3 light = vec3(0.5,0.2,1.0);light = normalize(light);float dProd = max(0.0, dot(vNormal, light));gl_FragColor = vec4(dProd, dProd, dProd, 1.0);}";
         var material = new THREE.ShaderMaterial( {
-            vertexShader:vertex,
-            fragmentShader:fragment
+            vertexShader: vertex,
+            fragmentShader: fragment
         } );
 
         var mesh = new THREE.Mesh( new THREE.TorusKnotGeometry( 200, 50, 64, 10 ), material );
         this.loadedObjects.push( mesh );
         this.scene.add( mesh );
 
-        this.renderer.render( this.scene, this.camera );
-
+        // Adding this here temporarily for testing
         this.parseScene();
 
+    };
+
+    SceneManager.prototype.start = function () {
+        try {
+            this.renderLoop();
+            this.websocket.connect();
+        } catch (e) {
+            console.error( 'ERROR:', e.stack );
+        }
     };
 
 }( window.webnaali = window.webnaali || {}, jQuery ));

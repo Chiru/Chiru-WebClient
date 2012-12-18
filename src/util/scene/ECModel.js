@@ -15,6 +15,7 @@
         Entity: function ( id ) {
             this.id = id;
             this.components = {};
+            console.debug(this)
         },
 
         Component: function ( type, parent ) {
@@ -31,7 +32,6 @@
             var entity = this.entities[entId];
             component.parent = entId;
 
-            console.log( entity );
             if ( entity !== undefined ) {
                 if ( !entity.components.hasOwnProperty( component.type ) ) {
                     entity.components[component.type] = component;
@@ -46,7 +46,7 @@
                 case 'EC_Mesh':
                 {
                     var trans;
-                    console.log( 'ADDED EC MESH!' );
+                    console.debug( 'ADDED EC MESH!' );
 
                     this.assetManager.requestAsset( component['Mesh ref'] ).add( function ( asset ) {
 
@@ -66,9 +66,9 @@
 
 
                         component.mesh = asset;
-                        console.log( component.mesh );
+                        //console.log( component.mesh );
 
-                        that.meshAdded.dispatch( component )
+                        that.meshAdded.dispatch( component );
 
                     } );
 
@@ -104,7 +104,7 @@
 
         addEntity: function ( entity ) {
             var id = entity.id;
-            console.log( id );
+            //console.log( id );
             if ( !this.entities.hasOwnProperty( id ) ) {
                 this.entities[id] = entity;
             }

@@ -1,13 +1,17 @@
+/**
+ * The actual WebNaali API is used here by the end users
+ *
+ */
 
-if ( !Detector.webgl ) {
-    Detector.addGetWebGLMessage();
-}
 
-var sManager = null;
-var time = Date.now();
 
-//Initializes the renderer, camera, etc.
-function init() {
+(function ( namespace, $, undefined ) {
+
+    // Checking if WebGL context is available
+    if ( !webnaali.Detector.webgl ) {
+        webnaali.Detector.throwWebGLError();
+        return;
+    }
 
     // Defining the rendering container
     var body = document.body, container;
@@ -15,23 +19,13 @@ function init() {
     container = document.createElement( 'div' );
     body.appendChild( container );
 
-    sManager = new webnaali.SceneManager( container );
+    webnaali.initScene( container, {} );
+    webnaali.initConnection('127.0.0.1', '9002', {allowReconnect: false});
+    webnaali.start();
 
-}
-
-
-//The animation loop
-function loop() {
-    window.requestAnimationFrame( loop );
-    sManager.update();
+    webnaali.MeshParser.spawnWorker();
 
 
+}( window.myNamespace = window.myNamespace || {}, jQuery ));
 
-}
-
-//Initialize the WebGL renderer and scene
-init();
-
-//Start the animation loop
-loop();
 

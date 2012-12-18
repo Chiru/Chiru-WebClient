@@ -1,10 +1,12 @@
 (function ( namespace, $, undefined ) {
 
-    var WSManager = namespace.WSManager =  function ( host, port, options ) {
-        var defaultOpt = {
-            reconnectInterval: 8000,
-            timeout: 8000
-        };
+    var WSManager = namespace.WSManager = function ( host, port, options ) {
+        var defaults = {
+                reconnectInterval: 8000,
+                timeout: 8000,
+                allowReconnect: true
+            },
+            settings = $.extend( {}, defaults, options );
 
         this.ws = null;
         this.url = "ws://" + host + ":" + port;
@@ -16,14 +18,13 @@
         this.reconnectTimer = null;
         this.reconnAttempt = 0;
 
-        $.extend( {}, defaultOpt, options );
-
+        this.allowReconnect = settings.allowReconnect;
 
         //Reconnection interval time (milliseconds)
-        this.reconnectInterval = options.reconnectInterval;
+        this.reconnectInterval = settings.reconnectInterval;
 
         //Connection attempt timeout (milliseconds)
-        this.timeout = options.timeout;
+        this.timeout = settings.timeout;
 
         //Storage for bound callback events
         this.callbacks = {};
@@ -42,12 +43,17 @@
     WSManager.prototype.connect = function () {
         this.ws = null;
 
-        if ( window.WebSocket === 'undefined' ) {
-            this.ws = new window.WebSocket( this.url );
-        } else if ( window.MozWebSocket === 'undefined' ) {
-            this.ws = new window.MozWebSocket( this.url );
-        } else {
-            alert( "This Browser does not support WebSockets.  Use newest version of Google Chrome, FireFox or Opera. " );
+        try {
+            if ( window.WebSocket !== undefined ) {
+                this.ws = new window.WebSocket( this.url );
+            } else if ( window.MozWebSocket !== undefined ) {
+                this.ws = new window.MozWebSocket( this.url );
+            } else {
+                alert( "This Browser does not support WebSockets.  Use newest version of Google Chrome, FireFox or Opera. " );
+                return;
+            }
+        } catch (e) {
+            console.error( 'ERROR:', e.stack );
             return;
         }
 
@@ -96,7 +102,7 @@
             }
 
             // Reconnect if the  connection was not closed cleanly (network error/abnormal server close etc.)
-            if ( !evt.wasClean ) {
+            if ( !evt.wasClean && this.allowReconnect ) {
                 this.reconnecting = true;
 
                 console.log( "Reconnecting in " + this.reconnectInterval / 1000 + " seconds..." );
@@ -157,11 +163,11 @@
 //Triggers the bound event and gives it some data as argument if it has a callback function
     WSManager.prototype.triggerEvent = function ( eventName, message ) {
         var eventChain = this.callbacks[eventName], i;
-        if ( eventChain === 'undefined' ) {
+        if ( eventChain === undefined ) {
             console.log( "Error: Received an unknown event: " + eventName );
             return;
         }
-        for ( i = 0; i < eventChain.length; i + 1 ) {
+        for ( i = 0; i < eventChain.length; i ++ ) {
             eventChain[i]( message );
         }
     };

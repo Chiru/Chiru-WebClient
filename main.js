@@ -3,8 +3,6 @@ if ( !Detector.webgl ) {
     Detector.addGetWebGLMessage();
 }
 
-
-
 var sManager = null;
 var time = Date.now();
 

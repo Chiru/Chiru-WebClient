@@ -12,7 +12,7 @@ var SceneManager = function ( container ) {
     };
 
     this.websocket = null;
-    this.assetManager = new AssetManager( {}, "http://localhost:8000/scenes/test1/" );
+    this.assetManager = new AssetManager( {}, "http://localhost:8000/scenes/avatar/" );
     this.ecModel = new ECModel( this.assetManager );
 
 

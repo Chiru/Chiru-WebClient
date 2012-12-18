@@ -15,7 +15,7 @@ function init() {
     container = document.createElement( 'div' );
     body.appendChild( container );
 
-    sManager = new SceneManager( container );
+    sManager = new webnaali.SceneManager( container );
 
 }
 

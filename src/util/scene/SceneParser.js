@@ -1,84 +1,88 @@
-var SceneParser = function ( ecModel ) {
+(function ( namespace, $, undefined ) {
 
-    this.ecModel = ecModel;
-    this.parser = this.initParser();
+    var SceneParser = namespace.SceneParser = function ( ecModel ) {
 
-};
+        this.ecModel = ecModel;
+        this.parser = this.initParser();
 
-SceneParser.prototype.initParser = function () {
-    var parser, xhttp;
+    };
 
-    if ( window.DOMParser !== undefined ) {
-        parser = function ( xml ) {
-            return ( new window.DOMParser() ).parseFromString( xml, "text/xml" );
-        };
-    } else if ( window.ActiveXObject !== undefined &&
-        new window.ActiveXObject( "Microsoft.XMLDOM" ) ) {
-        parser = function ( xml ) {
-            var xmlDoc = new window.ActiveXObject( "Microsoft.XMLDOM" );
-            xmlDoc.async = "false";
-            xmlDoc.loadXML( xml );
-            return xmlDoc;
-        };
-    } else {
-        throw new Error( "No XML parser found" );
-    }
+    SceneParser.prototype.initParser = function () {
+        var parser, xhttp;
 
-
-    if ( window.XMLHttpRequest ) {
-        xhttp = new XMLHttpRequest();
-    } else {    // IE 5/6
-        xhttp = new ActiveXObject( "Microsoft.XMLHTTP" );
-    }
-
-    // Temporarilly loading static xml
-    xhttp.overrideMimeType( 'text/xml' );
-
-    xhttp.open( "GET", "tests/test1/scene.txml", false );
-    xhttp.send( null );
-    parser = xhttp.responseXML;
-    console.log( parser );
-    return parser;
-};
-
-SceneParser.prototype.parse = function ( xml ) {
-
-    var entities = this.parser.getElementsByTagName( "entity" ),
-        i, j, k, entity, id, components,
-        type, attributes, attribute, name, value, ECEnt, ECComp;
+        if ( window.DOMParser !== undefined ) {
+            parser = function ( xml ) {
+                return ( new window.DOMParser() ).parseFromString( xml, "text/xml" );
+            };
+        } else if ( window.ActiveXObject !== undefined &&
+            new window.ActiveXObject( "Microsoft.XMLDOM" ) ) {
+            parser = function ( xml ) {
+                var xmlDoc = new window.ActiveXObject( "Microsoft.XMLDOM" );
+                xmlDoc.async = "false";
+                xmlDoc.loadXML( xml );
+                return xmlDoc;
+            };
+        } else {
+            throw new Error( "No XML parser found" );
+        }
 
 
-    for ( i = 0; i < entities.length; i++ ) {
-        entity = entities[i];
-        id = entity.getAttribute( "id" );
+        if ( window.XMLHttpRequest ) {
+            xhttp = new XMLHttpRequest();
+        } else {    // IE 5/6
+            xhttp = new ActiveXObject( "Microsoft.XMLHTTP" );
+        }
 
-        ECEnt = new this.ecModel.Entity( id );
-        this.ecModel.addEntity(ECEnt);
+        // Temporarilly loading static xml
+        xhttp.overrideMimeType( 'text/xml' );
 
-        components = entity.getElementsByTagName( "component" );
+        xhttp.open( "GET", "scenes/avatar/scene.txml", false );
+        xhttp.send( null );
+        parser = xhttp.responseXML;
+        console.log( parser );
+        return parser;
+    };
 
-        for ( j = 0; j < components.length; j++ ) {
-            type = components[j].getAttribute( "type" );
+    SceneParser.prototype.parse = function ( xml ) {
 
-            attributes = components[j].getElementsByTagName( "attribute" );
+        var entities = this.parser.getElementsByTagName( "entity" ),
+            i, j, k, entity, id, components,
+            type, attributes, attribute, name, value, ECEnt, ECComp;
 
 
-            ECComp = new this.ecModel.Component(type);
+        for ( i = 0; i < entities.length; i++ ) {
+            entity = entities[i];
+            id = entity.getAttribute( "id" );
 
-            for ( k = 0; k < attributes.length; k++ ) {
-                attribute = attributes[k];
+            ECEnt = new this.ecModel.Entity( id );
+            this.ecModel.addEntity(ECEnt);
 
-                name = attribute.getAttribute( "name" );
-                value = attribute.getAttribute( "value" );
+            components = entity.getElementsByTagName( "component" );
 
-                ECComp.addAttribute(name, value);
+            for ( j = 0; j < components.length; j++ ) {
+                type = components[j].getAttribute( "type" );
+
+                attributes = components[j].getElementsByTagName( "attribute" );
+
+
+                ECComp = new this.ecModel.Component(type);
+
+                for ( k = 0; k < attributes.length; k++ ) {
+                    attribute = attributes[k];
+
+                    name = attribute.getAttribute( "name" );
+                    value = attribute.getAttribute( "value" );
+
+                    ECComp.addAttribute(name, value);
+
+                }
+
+                this.ecModel.addComponent(ECComp, id);
 
             }
-
-            this.ecModel.addComponent(ECComp, id);
-
         }
-    }
 
-    return this.ecModel;
-};
+        return this.ecModel;
+    };
+
+}( window.webnaali = window.webnaali || {}, jQuery ));

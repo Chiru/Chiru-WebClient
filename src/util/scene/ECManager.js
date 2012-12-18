@@ -1,4 +1,0 @@
-var ECManager = Class.$extend({
-
-
-});

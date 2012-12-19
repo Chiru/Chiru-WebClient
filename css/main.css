@@ -1,0 +1,72 @@
+body, html {
+    background-color: #3a3a3a;
+    height:100%;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    font-size:1em;
+}
+a { color: skyblue }
+
+div#pageLoader {
+    color: #FFFFFF;
+    position: absolute;
+    float:left;
+    height:50px;
+    width:250px;
+    top:50%;
+    left:50%;
+    text-align: center;
+    margin-left:-125px;
+    margin-top:-25px;
+    font-family: Charcoal, sans-serif;
+    font-size: 2em;
+    font-weight:bold;
+}
+
+div#top {
+    text-align: center;
+    padding-top: 4px;
+    display: table; /* to center the header text */
+    font-family: Charcoal, sans-serif;
+    font-size: 2em;
+    font-weight:bold;
+    text-shadow: 0 4px 3px rgba(0, 0, 0, 0.4), 0 8px 10px rgba(0, 0, 0, 0.1), 0 8px 9px rgba(0, 0, 0, 0.1);
+    color: #F5FFFA;
+    width: 100%;
+    height: 50px;
+    border-bottom: solid 1px #000;
+    margin:0;
+    background-color: #929293;
+    z-index: 150;
+}
+
+div#webglContainer {
+    position: absolute;
+    top: 57px;
+    right: 0;
+    bottom: 92px;
+    left: 0;
+}
+div#container {
+    height:auto !important; /* real browsers */
+    height: 100%;
+}
+
+div#footer {
+    position : absolute;
+    bottom   : 0;
+    left     : 0;
+    width    : 100%;
+    height   : 90px;
+    border-top: solid 1px #000;
+    z-index: 150;
+}
+div#log {
+    position:relative;
+    height:100%;
+    width: 100%;
+    overflow-y:auto;
+    background-color: #F9F9F9;
+
+}

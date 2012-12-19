@@ -5,12 +5,12 @@
 
 (function ( namespace, $, undefined ) {
 
-    var Detector = namespace.Detector = {
+    var Detector = namespace['Detector'] = {
 
         canvas: !!window.CanvasRenderingContext2D,
         webgl: (function () {
             try {
-                return !!window.WebGLRenderingContext && !!document.createElement( 'canvas' ).getContext( 'experimental-webgl' );
+                return !!window['WebGLRenderingContext'] && !!document.createElement( 'canvas' ).getContext( 'experimental-webgl' );
             } catch (e) {
                 return false;
             }
@@ -79,4 +79,4 @@
         }
     };
 
-}( window.webnaali = window.webnaali || {}, jQuery ));
+}( window['webnaali'] = window['webnaali'] || {}, jQuery ));

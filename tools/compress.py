@@ -2,11 +2,11 @@
 # the resulted file with Google Closure Compiler
 
 
-import os
+import os, argparse
 
 _compressor = 'compressor/compiler.jar'
 
-def compress(in_files, out_file, externs, verbose=False, temp_file='.temp'):
+def compress(in_files, out_file, externs, verbose=False, temp_file='.temp', advanced=False):
     temp = open(temp_file, 'w')
 
     for f in in_files:
@@ -21,8 +21,10 @@ def compress(in_files, out_file, externs, verbose=False, temp_file='.temp'):
 
     temp.close()
 
-    options = ['--js %s' %temp_file, '--jscomp_off=globalThis', '--language_in=ECMASCRIPT5_STRICT',
-               '--jscomp_off=checkTypes', '--compilation_level ADVANCED_OPTIMIZATIONS','--js_output_file %s' %out_file]
+    options = ['--js %s' %temp_file,
+               #'--jscomp_off=globalThis',
+               #'--language_in=ECMASCRIPT5_STRICT',
+               '--jscomp_off=checkTypes', '--js_output_file %s' %out_file]
 
     if externs:
         options.append('--externs %s' %externs)
@@ -31,6 +33,9 @@ def compress(in_files, out_file, externs, verbose=False, temp_file='.temp'):
         options.append('--warning_level=VERBOSE')
     else:
         options.append('--warning_level=QUIET')
+
+    if advanced:
+        options.append('--compilation_level ADVANCED_OPTIMIZATIONS')
 
     os.system('java -jar "%s" %s' % (_compressor, ' '.join(options)))
 

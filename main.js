@@ -5,27 +5,57 @@
 
 
 
-(function ( namespace, $, undefined ) {
-
-    // Checking if WebGL context is available
-    if ( !webnaali.Detector.webgl ) {
-        webnaali.Detector.throwWebGLError();
-        return;
-    }
-
-    // Defining the rendering container
-    var body = document.body, container;
-
-    container = document.createElement( 'div' );
-    body.appendChild( container );
-
-    webnaali.initScene( container, {} );
-    webnaali.initConnection('127.0.0.1', '9002', {allowReconnect: false});
-    webnaali.start();
-
-    webnaali.MeshParser.spawnWorker();
+(function ( namespace,  undefined ) {
 
 
-}( window.myNamespace = window.myNamespace || {}, jQuery ));
+        // Checking if WebGL context is available
+        if ( !webnaali.Detector.webgl ) {
+            webnaali.Detector.throwWebGLError();
+            return;
+        }
+
+        // Defining the rendering container
+        var body = document.body, container;
+
+        container = document.getElementById( 'webglContainer' );
+
+        webnaali.initScene( container, {} );
+        webnaali.initConnection( '127.0.0.1', '9002', {allowReconnect: false} );
+        webnaali.start();
+
+        /** Worker example
+         var script =
+         "self.onmessage = function(event) {" +
+                // "self.postMessage(THREE.REVISION);" +
+                "self.postMessage('kill');" +
+                "};";
+
+         namespace.worker = webnaali.Workers.spawnWorker( script );
+         namespace.worker.onmessage = function ( event ) {
+            if ( event.data === 'kill' ) {
+                console.log( 'worker ' + this.id + ' sent message: ' + event.data );
+                //Let worker2 do the killing
+                namespace.worker2.postMessage( '' );
+            } else {
+                console.log( 'worker ' + this.id + ' echoed message: ' + event.data );
+            }
+        };
+         var scriptId = namespace.worker.scriptId;
+         namespace.worker2 = webnaali.Workers.spawnWorker( '', scriptId );
+         namespace.worker2.onmessage = function ( event ) {
+            if ( event.data === 'kill' ) {
+                console.log( 'worker ' + this.id + ' sent message: ' + event.data );
+                //Deal the final blow: remove a worker script -> kills all workers related to that script
+                webnaali.Workers.removeScript( scriptId );
+            } else {
+                console.log( 'worker ' + this.id + ' echoed message: ' + event.data );
+            }
+        };
+         namespace.worker.postMessage( '' );
+         **/
+
+
+
+}( window.myNamespace = window.myNamespace || {} ));
 
 

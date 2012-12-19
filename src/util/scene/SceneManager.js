@@ -9,7 +9,7 @@
      * @param {object} container Container DOM element for webgl renderer
      */
 
-    var SceneManager = namespace.SceneManager = function ( container, options ) {
+    var SceneManager = namespace['SceneManager'] = function ( container, options ) {
         this.time = Date.now();
         this.container = container;
         this.controls = null;
@@ -18,16 +18,12 @@
         this.camera = null;
         this.loadedObjects = [];
 
-        this.sceneParams = {
-            resolution: 1
-        };
-
         this.websocket = null;
         // In final solution the storage url will come through a websocket, but it's now defined here for testing
         this.assetManager = new webnaali.AssetManager( {}, "http://localhost:8000/scenes/avatar/" );
         this.ecModel = new webnaali.ECModel( this.assetManager );
 
-        this.initScene();
+        this.init();
     };
 
 
@@ -116,10 +112,9 @@
 
     SceneManager.prototype.windowResize = function () {
         var callback = function () {
-            var res = this.sceneParams.resolution;
-            this.renderer.setSize( window.innerWidth * res, window.innerHeight * res );
+            this.renderer.setSize( $(this.container).innerWidth(),  $(this.container).innerHeight());
 
-            this.camera.aspect = ((window.innerWidth * res) / (window.innerHeight * res));
+            this.camera.aspect = $(this.container).innerWidth() / $(this.container).innerHeight();
             this.camera.updateProjectionMatrix();
 
         }.bind( this );
@@ -218,7 +213,7 @@
 
     };
 
-    SceneManager.prototype.initScene = function () {
+    SceneManager.prototype.init = function () {
 
         var body = document.body,
             that = this,
@@ -226,6 +221,8 @@
 
         body.addEventListener( 'click', function ( event ) {
             // Ask the browser to lock the pointer
+
+
             body.requestPointerLock = body.requestPointerLock || body.mozRequestPointerLock || body.webkitRequestPointerLock;
 
             if ( /Firefox/i.test( navigator.userAgent ) ) {
@@ -267,7 +264,7 @@
         } );
 
         this.renderer.setClearColorHex( 0xBBBBBB, 1 );
-        this.renderer.setSize( window.innerWidth, window.innerHeight );
+        this.renderer.setSize( $(this.container).innerWidth(), $(this.container).innerHeight() );
         this.container.appendChild( this.renderer.domElement );
 
 
@@ -277,7 +274,7 @@
         this.scene.fog = new THREE.FogExp2( 0x000000, 0.00000025 );
 
         // Camera
-        this.camera = new THREE.PerspectiveCamera( 45, (window.innerWidth / window.innerHeight), 1, 5000 );
+        this.camera = new THREE.PerspectiveCamera( 45, ( $(this.container).innerWidth() / $(this.container).innerHeight()), 1, 5000 );
         this.camera.lookAt( this.scene.position );
 
         this.scene.add( this.camera );
@@ -328,6 +325,6 @@
         }
     };
 
-}( window.webnaali = window.webnaali || {}, jQuery ));
+}( window['webnaali'] = window['webnaali'] || {}, jQuery ));
 
 

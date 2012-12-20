@@ -2,11 +2,11 @@
 # the resulted file with Google Closure Compiler
 
 
-import os, argparse
+import os
 
 _compressor = 'compressor/compiler.jar'
 
-def compress(in_files, out_file, externs, verbose=False, temp_file='.temp', advanced=False):
+def compress(in_files, out_file, externs, temp_file='.temp', advanced=False, verbose=False):
     temp = open(temp_file, 'w')
 
     for f in in_files:
@@ -22,8 +22,8 @@ def compress(in_files, out_file, externs, verbose=False, temp_file='.temp', adva
     temp.close()
 
     options = ['--js %s' %temp_file,
-               #'--jscomp_off=globalThis',
-               #'--language_in=ECMASCRIPT5_STRICT',
+               '--jscomp_off=globalThis',
+               '--language_in=ECMASCRIPT5_STRICT',
                '--jscomp_off=checkTypes', '--js_output_file %s' %out_file]
 
     if externs:

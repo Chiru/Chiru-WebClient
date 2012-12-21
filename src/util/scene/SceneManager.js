@@ -92,9 +92,9 @@
                 } );
 
 
-                this.websocket.bindEvent( "scene", function ( xml ) {
-
-                    this.parseScene( xml );
+                this.websocket.bindEvent( "EntityAdded", function ( data ) {
+                    console.log(data);
+                    namespace.log("Got 'Entity Added'-event, entity id: " + data);
 
                 } );
 

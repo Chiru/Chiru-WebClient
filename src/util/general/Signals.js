@@ -2,6 +2,7 @@
  * JS Signals <http://millermedeiros.github.com/js-signals/>
  * Released under the MIT license
  * Author: Miller Medeiros
+ * Enhanced by: Toni Dahl
  * Version: 1.0.0 - Build: 268 (2012/11/29 05:48 PM)
  */
 

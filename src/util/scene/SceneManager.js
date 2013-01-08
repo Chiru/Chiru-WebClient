@@ -81,6 +81,30 @@
 
                 this.websocket.bindEvent( "disconnected", function ( e ) {
                     console.log( "WebSocket closed." );
+                    self.websocket.parseMessage(JSON.stringify({event:'EntityAdded',
+                        data: {entityId: '1',
+                        components:{1:
+                        {typeId: '17', id:'1',
+                            attributes:
+                            {1:{data:"WoodPallet.mesh"}, 0:{data:"0,0,0,0,0,0,0.14,0.2,0.14"}}},
+                        2:{typeId: '20', id:'1',
+                        attributes:
+                        {0:{data:"0,-5,0,0,0,0,100,1,100"}}}
+                        }
+                    }
+                    }))
+                    self.websocket.parseMessage(JSON.stringify({event:'EntityAdded',
+                        data: {entityId: '2',
+                            components:{1:
+                            {typeId: '17', id:'1',
+                                attributes:
+                                {1:{data:"fish.mesh"}, 0:{data:"0,0,0,0,0,0,1,1,1"}}},
+                                2:{typeId: '20', id:'1',
+                                    attributes:
+                                    {0:{data:"1.45201,-4.65185,5.40487,-47.8323,42.1262,-145.378,1,1,1"}}}
+                            }
+                        }
+                    }))
 
                 } );
 

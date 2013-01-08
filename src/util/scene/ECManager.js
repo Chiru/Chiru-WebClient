@@ -1,38 +1,51 @@
 (function ( namespace, $, undefined ) {
 
-    var ECModel = namespace.ECModel = function ( assetMgr ) {
+    var ECManager = namespace.ECManager = function ( assetMgr ) {
 
         var entities = {};
         var components = {};
         var assetManager = assetMgr;
 
+        var Entity = function ( id ) {
+            this.id = id;
+            this.components = {};
+            console.debug( this );
+        };
+
+        var Component = function ( type, parent, id ) {
+            this.id = id;
+            this.type = type || '-1';
+            this.parent = parent || '';
+            this.attributes = {};
+
+        };
+
+        Component.prototype.addAttribute = function ( name, value ) {
+            if ( name !== undefined && name !== '' && value !== undefined ) {
+                this[name] = value;
+            }
+        };
+
         return {
             meshAdded: new Signal(),
 
             //Defines a new entity object
-            Entity: function ( id ) {
-                this.id = id;
-                this.components = {};
-                console.debug( this );
+            newEntity: function ( id ) {
+                return new Entity( id );
             },
 
-            Component: function ( type, parent ) {
-                this.type = type;
-                this.parent = parent;
-
-                this.addAttribute = function ( name, value ) {
-                    if ( name !== undefined && name !== '' && value !== undefined ) {
-                        this[name] = value;
-                    }
-                };
+            newComponent: function ( type ) {
+                return new Component( type );
             },
+
+
             addComponent: function ( component, entId ) {
                 var entity = entities[entId];
                 component.parent = entId;
 
-                if ( entity !== undefined ) {
-                    if ( !entity.components.hasOwnProperty( component.type ) ) {
-                        entity.components[component.type] = component;
+                if ( entity !== undefined && component['typeId'] !== undefined ) {
+                    if ( !entity.components.hasOwnProperty( component['typeId'] ) ) {
+                        entity.components[component.id] = component;
                         this.componentAdded( component );
                     }
                 }
@@ -40,31 +53,29 @@
             componentAdded: function ( component ) {
                 var that = this;
 
-                switch (component.type) {
-                    case 'EC_Mesh':
+                switch (component['typeId']) {
+                    case '17':
                     {
                         var trans;
                         console.debug( 'ADDED EC MESH!' );
 
-                        assetManager.requestAsset( component['Mesh ref'] ).add( function ( asset ) {
+                        if ( component.attributes === undefined ) {
+                            return;
+                        }
+                        var attributes = component.attributes;
+                        var meshRef = attributes['1'].data || '';
 
-                            trans = component.Transform.split( ',' );
+                        assetManager.requestAsset( meshRef ).add( function ( asset ) {
+
+                            trans = attributes['0'].data.split( ',' );
                             for ( var i = trans.length; i--; ) trans[i] = Number( trans[i] );
 
                             asset.position.set( trans[0], trans[1], trans[2] );
                             asset.rotation.set( trans[3] * Math.PI / 180, trans[4] * Math.PI / 180, trans[5] * Math.PI / 180 );
                             asset.scale.set( trans[6], trans[7], trans[8] );
 
-                            trans = entities[component.parent].components['EC_Placeable'].Transform.split( ',' );
-                            for ( var i = trans.length; i--; ) trans[i] = Number( trans[i] );
-
-                            asset.position.set( asset.position.x + trans[0], asset.position.y + trans[1], asset.position.z + trans[2] );
-                            asset.rotation.set( asset.rotation.x + trans[3] * Math.PI / 180, asset.rotation.y + trans[4] * Math.PI / 180, asset.rotation.z + trans[5] * Math.PI / 180 );
-                            asset.scale.set( asset.scale.x * trans[6], asset.scale.y * trans[7], asset.scale.z * trans[8] );
-
-
                             component.mesh = asset;
-                            //console.log( component.mesh );
+                            console.log( component.mesh );
 
                             that.meshAdded.dispatch( component );
 
@@ -72,14 +83,35 @@
 
                     }
                         break;
-                    case 'EC_Placeable':
+                    case '20':
                     {
                         console.log( 'ADDED EC PLACEABLE' );
+                        this.meshAdded.add( function ( component ) {
+                            if ( component.mesh !== undefined ) {
+                                var asset = component.mesh;
+                                if ( component.attributes === undefined ) {
+                                    return;
+                                }
+                                var attributes = component.attributes;
+                                trans = attributes['0'].data.split( ',' );
+                                console.log(trans)
+                                for ( var i = trans.length; i--; ) trans[i] = Number( trans[i] );
+
+                                asset.position.set( asset.position.x + trans[0], asset.position.y + trans[1], asset.position.z + trans[2] );
+                                asset.rotation.set( asset.rotation.x + trans[3] *
+                                    Math.PI / 180, asset.rotation.y + trans[4] * Math.PI / 180, asset.rotation.z + trans[5] * Math.PI / 180 );
+                                asset.scale.set( asset.scale.x * trans[6], asset.scale.y * trans[7], asset.scale.z * trans[8] );
+                                console.log( "applied ec placeable" )
+
+                            }
+                        } );
+
+
 
                     }
                         break;
 
-                    case 'EC_RigidBody':
+                    case '23':
                     {
                         console.log( 'ADDED EC RigidBody' );
 
@@ -111,8 +143,15 @@
             removeEntity: function ( id ) {
                 //TODO: Remove from scene and from hierarchy
             },
-            getEntities: function() {
+            getEntities: function () {
                 return entities;
+            },
+
+            getEntity: function ( id ) {
+                if ( entities['id'] !== undefined ) {
+                    return entities['id'];
+                }
+                return false;
             }
         };
     };

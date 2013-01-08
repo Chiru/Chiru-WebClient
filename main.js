@@ -1,5 +1,6 @@
 /**
- * The actual WebNaali API is used here by the end users
+ * Example file
+ * The actual WebNaali library is used here by the end users
  *
  */
 

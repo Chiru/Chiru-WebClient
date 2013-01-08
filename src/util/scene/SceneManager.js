@@ -21,7 +21,7 @@
         this.websocket = null;
         // In final solution the storage url will come through a websocket, but it's now defined here for testing
         this.assetManager = new webnaali.AssetManager( {}, "http://localhost:8000/scenes/avatar/" );
-        this.ecModel = new webnaali.ECModel( this.assetManager );
+        this.ecManager = new webnaali.ECManager( this.assetManager );
 
         this.init();
     };
@@ -66,6 +66,8 @@
 
     SceneManager.prototype.bindConnection = function ( socket ) {
 
+        var self = this;
+
         if ( socket !== undefined ) {
             this.websocket = socket;
 
@@ -93,42 +95,54 @@
 
 
                 this.websocket.bindEvent( "EntityAdded", function ( data ) {
-                    console.log(data);
-                    namespace.log("Got 'EntityAdded'-event, entity id: " + data);
+                    console.log( data );
+                    namespace.log( "Got 'EntityAdded'-event, entity id: " + data );
+
+                    if ( data['entityId'] !== undefined ) {
+                        var e = self.ecManager.addEntity( self.ecManager.newEntity( data['entityId'] ) );
+                        console.log(self.ecManager);
+                        if (data.hasOwnProperty('components') ) {
+                            for(var compId in data['components']) {
+                                data.components[compId].id = compId;
+                                self.ecManager.addComponent(data['components'][compId], data['entityId']);
+                            }
+                        }
+                    }
+
 
                 } );
 
                 this.websocket.bindEvent( "ComponentsRemoved", function ( data ) {
-                    console.log("ComponentsRemoved:");
-                    console.log(data);
+                    console.log( "ComponentsRemoved:" );
+                    console.log( data );
                     //namespace.log("Got 'ComponentsRemoved'-event, entity id: " + data.entityId);
 
                 } );
 
                 this.websocket.bindEvent( "ComponentsAdded", function ( data ) {
-                    console.log("ComponentsAdded:");
-                    console.log(data);
+                    console.log( "ComponentsAdded:" );
+                    console.log( data );
                     //namespace.log("Got 'ComponentsAdded'-event, entity id: " + data.entityId);
 
                 } );
 
                 this.websocket.bindEvent( "AttributesRemoved", function ( data ) {
-                    console.log("AttributesRemoved:");
-                    console.log(data);
+                    console.log( "AttributesRemoved:" );
+                    console.log( data );
                     //namespace.log("Got 'Entity Added'-event, entity id: " + data);
 
                 } );
 
                 this.websocket.bindEvent( "AttributesAdded", function ( data ) {
-                    console.log("AttributesAdded:");
-                    console.log(data);
+                    console.log( "AttributesAdded:" );
+                    console.log( data );
                     //namespace.log("Got 'AttributesAdded'-event, entity id: " + data.entityId);
 
                 } );
 
                 this.websocket.bindEvent( "AttributesChanged", function ( data ) {
-                    console.log("AttributesChanged:");
-                    console.log(data);
+                    console.log( "AttributesChanged:" );
+                    console.log( data );
                     //namespace.log("Got 'AttributesChanged'-event, entity id: " + data.entityId);
 
                 } );
@@ -147,9 +161,9 @@
 
     SceneManager.prototype.windowResize = function () {
         var callback = function () {
-            this.renderer.setSize( $(this.container).innerWidth(),  $(this.container).innerHeight());
+            this.renderer.setSize( $( this.container ).innerWidth(), $( this.container ).innerHeight() );
 
-            this.camera.aspect = $(this.container).innerWidth() / $(this.container).innerHeight();
+            this.camera.aspect = $( this.container ).innerWidth() / $( this.container ).innerHeight();
             this.camera.updateProjectionMatrix();
 
         }.bind( this );
@@ -166,9 +180,10 @@
     SceneManager.prototype.parseScene = function ( xml ) {
         var that = this;
 
-        var sceneParser = new webnaali.SceneParser( this.ecModel );
-        this.ecModel.meshAdded.add( function ( component ) {
+        var sceneParser = new namespace.SceneParser( this.ecManager );
+        this.ecManager.meshAdded.add( function ( component ) {
             that.addToScene( component.mesh );
+            console.log("added to scene")
         } );
         sceneParser.parse( xml );
 
@@ -178,6 +193,8 @@
     };
 
     SceneManager.prototype.clearScene = function ( filter ) {
+        //TODO: Clean this up
+
         var obj, scene = this.scene, i;
 
         if ( filter === undefined ) {
@@ -194,6 +211,8 @@
     };
 
     SceneManager.prototype.cleanMemory = function ( freeMemory, cleanAll ) {
+        // TODO: Clean this up
+
         if ( freeMemory === undefined ) {
             freeMemory = true;
         }
@@ -236,7 +255,7 @@
 
     SceneManager.prepareAsset = function ( entId ) {
 
-        var ecMesh = this.ecModel.entities[entId].components['EC_Mesh'],
+        var ecMesh = this.ecManager.entities[entId].components['EC_Mesh'],
             transform = ecMesh.transform,
             scale;
     };
@@ -299,7 +318,7 @@
         } );
 
         this.renderer.setClearColorHex( 0xBBBBBB, 1 );
-        this.renderer.setSize( $(this.container).innerWidth(), $(this.container).innerHeight() );
+        this.renderer.setSize( $( this.container ).innerWidth(), $( this.container ).innerHeight() );
         this.container.appendChild( this.renderer.domElement );
 
 
@@ -309,7 +328,7 @@
         this.scene.fog = new THREE.FogExp2( 0x000000, 0.00000025 );
 
         // Camera
-        this.camera = new THREE.PerspectiveCamera( 45, ( $(this.container).innerWidth() / $(this.container).innerHeight()), 1, 5000 );
+        this.camera = new THREE.PerspectiveCamera( 45, ( $( this.container ).innerWidth() / $( this.container ).innerHeight()), 1, 5000 );
         this.camera.lookAt( this.scene.position );
 
         this.scene.add( this.camera );
@@ -335,6 +354,7 @@
         //Windows resize listener
         this.windowResize();
 
+        // Just testing custom shaders
         var vertex = "varying vec3 vNormal;void main() { vNormal = normal;gl_Position = projectionMatrix *modelViewMatrix *vec4(position,1.0);}";
         var fragment = "varying vec3 vNormal;void main() {vec3 light = vec3(0.5,0.2,1.0);light = normalize(light);float dProd = max(0.0, dot(vNormal, light));gl_FragColor = vec4(dProd, dProd, dProd, 1.0);}";
         var material = new THREE.ShaderMaterial( {
@@ -346,8 +366,10 @@
         this.loadedObjects.push( mesh );
         this.scene.add( mesh );
 
-        // Adding this here temporarily for testing
-        this.parseScene();
+        this.ecManager.meshAdded.add( function ( component ) {
+            that.addToScene( component.mesh );
+            console.log("added to scene")
+        } );
 
     };
 

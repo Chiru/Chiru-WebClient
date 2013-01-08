@@ -1,4 +1,4 @@
-# WebNaali README
+# README
 
 This js-library implements a light-weight web client for RealXTend Tundra server and it needs a WebSocketModule add-on
 installed into the Tundra server so a connection to the server through a websocket can be established. This project

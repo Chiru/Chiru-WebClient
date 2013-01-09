@@ -81,6 +81,7 @@
 
                 this.websocket.bindEvent( "disconnected", function ( e ) {
                     console.log( "WebSocket closed." );
+                    /*
                     self.websocket.parseMessage(JSON.stringify({event:'EntityAdded',
                         data: {entityId: '1',
                         components:{1:
@@ -105,6 +106,7 @@
                             }
                         }
                     }))
+                    */
 
                 } );
 

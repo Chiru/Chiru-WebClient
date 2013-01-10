@@ -1,5 +1,7 @@
-var Gui = function () {
+(function () {
 
-    //TODO: Methods for GUI
+    //TODO:
 
-};
+}());
+
+

@@ -6,32 +6,16 @@
         var components = {};
         var assetManager = assetMgr;
 
-        var Entity = function ( id ) {
-            this.id = id;
-            this.components = {};
-            console.debug( this );
-        };
-
-        var Component = function ( type, parent, id ) {
-            this.id = id;
-            this.type = type || '-1';
-            this.parent = parent || '';
-            this.attributes = {};
-
-        };
-
-        Component.prototype.addAttribute = function ( name, value ) {
-            if ( name !== undefined && name !== '' && value !== undefined ) {
-                this[name] = value;
-            }
-        };
-
         return {
             meshAdded: new Signal(),
 
             //Defines a new entity object
-            newEntity: function ( id ) {
-                return new Entity( id );
+            createEntity: function ( id ) {
+                if ( !entities.hasOwnProperty( id ) ) {
+                    entities[id] = new namespace.Entity( id );
+                    return entities[id];
+                }
+                return false;
             },
 
             componentAdded: function ( component ) {
@@ -105,18 +89,6 @@
                 }
             },
 
-
-            //Adds a custom component to component types
-            customComponent: function ( component ) {
-
-                if ( component.type !== undefined ) {
-                    if ( !this.components.hasOwnProperty( component.type ) ) {
-                        this.components[component.type] = component;
-                    }
-                }
-            },
-
-
             addEntity: function ( entity ) {
                 var id = entity.id;
                 //console.log( id );
@@ -128,7 +100,7 @@
             removeEntity: function ( id ) {
                 //TODO: Remove from scene and from hierarchy
             },
-            getEntities: function () {
+            listEntities: function () {
                 return entities;
             },
 

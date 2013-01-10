@@ -1,9 +1,13 @@
 (function ( namespace, $, undefined ) {
 
-    var Entity = namespace.Entity = function ( assetMgr ) {
-        this.components = {};
+    var Entity = namespace.Entity = function ( id ) {
+
         this.componentAdded = new Signal();
         this.componentRemoved = new Signal();
+
+        this.entityActions = {};
+        this.components = {};
+        this.id = id;
 
     };
 
@@ -29,7 +33,7 @@
 
     Entity.prototype.addComponent = function ( component ) {
 
-        component.setParentEnt(this);
+        //component.setParentEnt(this);
 
         if ( component.typeId !== undefined ) {
             if ( !this.components.hasOwnProperty(component.id) ) {

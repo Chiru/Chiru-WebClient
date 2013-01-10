@@ -20,8 +20,8 @@
 
         this.websocket = null;
         // In final solution the storage url will come through a websocket, but it's now defined here for testing
-        this.assetManager = new webnaali.AssetManager( {}, "http://localhost:8000/scenes/avatar/" );
-        this.ecManager = new webnaali.ECManager( this.assetManager );
+        this.assetManager = new namespace.AssetManager( {}, "http://localhost:8000/scenes/avatar/" );
+        this.ecManager = new namespace.ECManager( this.assetManager );
 
         this.init();
     };
@@ -125,16 +125,16 @@
                     namespace.log( "Got 'EntityAdded'-event, entity id: " + data );
 
                     if ( data['entityId'] !== undefined ) {
-                        var e = self.ecManager.addEntity( self.ecManager.newEntity( data['entityId'] ) );
-                        console.log(self.ecManager);
+                        var e = self.ecManager.createEntity( data['entityId'] );
+
                         if (data.hasOwnProperty('components') ) {
                             for(var compId in data['components']) {
                                 data.components[compId].id = compId;
-                                self.ecManager.addComponent(data['components'][compId], data['entityId']);
+                                e.addComponent(data['components'][compId]);
                             }
                         }
                     }
-
+                    console.log(self.ecManager.listEntities());
 
                 } );
 

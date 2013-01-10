@@ -55,21 +55,15 @@
 
     ECMesh.prototype.onAttributeUpdated  = function ( id ) {
 
-        if ( this.hasOwnPro)
-        switch (id){
-            case 0:{
-
-            }
-                break;
-            case 1:
-            {
-
-            }
-                break;
-        }
     };
 
     ECMesh.prototype.getAttribute = function ( name ) {
+        for(var id in this.attributes) {
+            if(this.attributes[id].name === name) {
+                return this.attributes[id];
+            }
+        }
+        return false;
 
     };
 

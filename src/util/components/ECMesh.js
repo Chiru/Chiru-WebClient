@@ -1,18 +1,23 @@
 (function ( namespace, $, undefined ) {
 
-    var ECMesh = namespace.ECMesh = function ( assetMgr ) {
+    var ECMesh = namespace.ECMesh = function ( ) {
 
+        namespace.Component.call(this); //Inherit component properties
 
+        // ECMesh specific properties
         this.meshChanged = new Signal();
         this.materialChanged = new Signal();
         this.placeable = null;
-        this.parent = null;
         this.castShadows = false;
         this.meshRef = null;
         this.meshMaterial = null;
-        this.attributes = {};
 
     };
+
+    //Inherit component prototype methods
+    ECMesh.prototype = Object.create(namespace.Component.prototype);
+
+
 
     ECMesh.prototype.onMeshLoaded = function () {
 
@@ -36,11 +41,7 @@
         return false;
     };
 
-    ECMesh.prototype.setParentEnt = function ( parent ) {
-        if ( parent ) {
-            this.parent = parent;
-        }
-    };
+
 
     ECMesh.prototype.setMesh = function ( mesh ) {
         if (this.placeable === null ) {
@@ -54,16 +55,6 @@
     };
 
     ECMesh.prototype.onAttributeUpdated  = function ( id ) {
-
-    };
-
-    ECMesh.prototype.getAttribute = function ( name ) {
-        for(var id in this.attributes) {
-            if(this.attributes[id].name === name) {
-                return this.attributes[id];
-            }
-        }
-        return false;
 
     };
 

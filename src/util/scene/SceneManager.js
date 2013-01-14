@@ -21,7 +21,7 @@
         this.websocket = null;
         // In final solution the storage url will come through a websocket, but it's now defined here for testing
         this.assetManager = new namespace.AssetManager( {}, "http://localhost:8000/scenes/avatar/" );
-        this.ecManager = new namespace.ECManager( this.assetManager );
+        this.ecManager = new namespace.ECManager( this );
 
         this.init();
     };
@@ -82,31 +82,31 @@
                 this.websocket.bindEvent( "disconnected", function ( e ) {
                     console.log( "WebSocket closed." );
                     /*
-                    self.websocket.parseMessage(JSON.stringify({event:'EntityAdded',
-                        data: {entityId: '1',
-                        components:{1:
-                        {typeId: '17', id:'1',
-                            attributes:
-                            {1:{data:"WoodPallet.mesh"}, 0:{data:"0,0,0,0,0,0,0.14,0.2,0.14"}}},
-                        2:{typeId: '20', id:'1',
-                        attributes:
-                        {0:{data:"0,-5,0,0,0,0,100,1,100"}}}
-                        }
-                    }
-                    }))
-                    self.websocket.parseMessage(JSON.stringify({event:'EntityAdded',
-                        data: {entityId: '2',
-                            components:{1:
-                            {typeId: '17', id:'1',
-                                attributes:
-                                {1:{data:"fish.mesh"}, 0:{data:"0,0,0,0,0,0,1,1,1"}}},
-                                2:{typeId: '20', id:'1',
-                                    attributes:
-                                    {0:{data:"1.45201,-4.65185,5.40487,-47.8323,42.1262,-145.378,1,1,1"}}}
-                            }
-                        }
-                    }))
-                    */
+                     self.websocket.parseMessage(JSON.stringify({event:'EntityAdded',
+                     data: {entityId: '1',
+                     components:{1:
+                     {typeId: '17', id:'1',
+                     attributes:
+                     {1:{data:"WoodPallet.mesh"}, 0:{data:"0,0,0,0,0,0,0.14,0.2,0.14"}}},
+                     2:{typeId: '20', id:'1',
+                     attributes:
+                     {0:{data:"0,-5,0,0,0,0,100,1,100"}}}
+                     }
+                     }
+                     }))
+                     self.websocket.parseMessage(JSON.stringify({event:'EntityAdded',
+                     data: {entityId: '2',
+                     components:{1:
+                     {typeId: '17', id:'1',
+                     attributes:
+                     {1:{data:"fish.mesh"}, 0:{data:"0,0,0,0,0,0,1,1,1"}}},
+                     2:{typeId: '20', id:'1',
+                     attributes:
+                     {0:{data:"1.45201,-4.65185,5.40487,-47.8323,42.1262,-145.378,1,1,1"}}}
+                     }
+                     }
+                     }))
+                     */
 
                 } );
 
@@ -125,16 +125,21 @@
                     namespace.log( "Got 'EntityAdded'-event, entity id: " + data );
 
                     if ( data['entityId'] !== undefined ) {
-                        var e = self.ecManager.createEntity( data['entityId'] );
+                        var e = self.ecManager.createEntity( data['entityId'] ),
+                            component;
 
-                        if (data.hasOwnProperty('components') ) {
-                            for(var compId in data['components']) {
-                                data.components[compId].id = compId;
-                                e.addComponent(data['components'][compId]);
+                        if ( data.hasOwnProperty( 'components' ) ) {
+                            for ( var id in data['components'] ) {
+                                component = self.ecManager.createComponent( id, data['components'][id] );
+                                if ( component ) {
+                                    component.setParentEnt( e );
+                                    console.log( component );
+                                    e.addComponent( component );
+                                }
                             }
                         }
                     }
-                    console.log(self.ecManager.listEntities());
+                    console.log( self.ecManager.listEntities() );
 
                 } );
 
@@ -209,7 +214,7 @@
         var sceneParser = new namespace.SceneParser( this.ecManager );
         this.ecManager.meshAdded.add( function ( component ) {
             that.addToScene( component.mesh );
-            console.log("added to scene")
+            console.log( "added to scene" )
         } );
         sceneParser.parse( xml );
 
@@ -394,7 +399,7 @@
 
         this.ecManager.meshAdded.add( function ( component ) {
             that.addToScene( component.mesh );
-            console.log("added to scene")
+            console.log( "added to scene" )
         } );
 
     };

@@ -6,8 +6,7 @@
         this.forceType = 'dae';
         this.remoteStorage = remoteStorage;
 
-        //Storage for bound callback events
-        this.callbacks = {};
+        this.loadedAssets = {};
 
 
     };
@@ -38,6 +37,11 @@
         }
 
         assetName = this.checkFileName( assetName );
+
+        if(this.loadedAssets.hasOwnProperty(assetName)) {
+            console.log("Asset:",assetName, "already downloaded");
+            return;
+        }
 
         console.log( "Requesting: " + this.remoteStorage + relPath + assetName );
 
@@ -123,23 +127,25 @@
     AssetManager.prototype.processAsset = function ( request, name ) {
 
         var loader = new THREE.ColladaLoader(), xml = request.responseXML,
-            that = this;
+            model, self = this;
 
         loader.options.convertUpAxis = true;
         loader.parse( xml, function colladaReady( collada ) {
-            var model = collada.scene;
+            model = collada.scene;
 
             model.name = name;
 
             loader = null;
 
-            console.log( 'ready' );
+            console.log( "asset","(",model.name,") processed." );
 
-            request.assetReady.dispatch(model);
+            if(!self.loadedAssets.hasOwnProperty(name)) {
+                self.loadedAssets[name] = model;
+            }
+
+            request.assetReady.dispatch(self.loadedAssets[name]);
 
         }, this.remoteStorage );
     };
-
-    AssetManager.prototype.assetReady = new Signal();
 
 }( window.webnaali = window.webnaali || {}, jQuery ));

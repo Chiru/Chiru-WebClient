@@ -15,7 +15,7 @@
         this.remoteStorage = url;
     };
 
-    AssetManager.prototype.checkFileName = function ( assetFileName ) {
+    AssetManager.prototype.cleanFileName = function ( assetFileName ) {
 
         var fileName = assetFileName.split( '.' ),
             type = fileName.slice( -1 )[0];
@@ -36,11 +36,11 @@
             relPath = '';
         }
 
-        assetName = this.checkFileName( assetName );
+        assetName = this.cleanFileName( assetName );
 
         if(this.loadedAssets.hasOwnProperty(assetName)) {
             console.log("Asset:",assetName, "already downloaded");
-            return;
+            return false;
         }
 
         console.log( "Requesting: " + this.remoteStorage + relPath + assetName );
@@ -50,9 +50,6 @@
 
             request = new XMLHttpRequest();
             request.overrideMimeType( 'text/xml' );
-
-            // Linking request with GUI, so it can be aborted
-            //this.GUI.loadDiag.xhr = request;
 
             request.onreadystatechange = function () {
 
@@ -147,5 +144,12 @@
 
         }, this.remoteStorage );
     };
+
+    AssetManager.prototype.getAsset = function ( assetRef ) {
+        if(this.loadedAssets.hasOwnProperty(assetRef)) {
+            return this.loadedAssets[assetRef];
+        }
+        return false;
+    }
 
 }( window.webnaali = window.webnaali || {}, jQuery ));

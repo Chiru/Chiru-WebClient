@@ -3,12 +3,11 @@
     var ECManager = namespace.ECManager = function ( sceneMgr ) {
 
         var entities = {},
-        components = {},
         sceneManager = sceneMgr;
 
 
         return {
-            meshAdded: new Signal(),
+
 
             //Defines a new entity object
             createEntity: function ( id ) {
@@ -49,6 +48,9 @@
                 {
                     console.log("Creating ECMesh")
                     component = new namespace.ECMesh( sceneManager );
+                    component.meshChanged.add(function() {
+                        console.log("Mesh of ECMesh component of entity", component.parent.id, "changed")
+                    });
 
                 }
                     break;

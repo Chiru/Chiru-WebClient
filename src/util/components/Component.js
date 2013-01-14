@@ -12,9 +12,6 @@
         this.typeId = null;
         this.typeName = null;
 
-
-
-
     };
 
     Component.prototype.onParentAdded = function ( parent ) {
@@ -24,10 +21,9 @@
 
     Component.prototype.parseAttrVal = function ( value, type ) {
         var val = '';
-        if ( type && value) {
+        if (value) {
 
             switch (type) {
-
                 // Int
             case 2:
             case 9:
@@ -52,19 +48,11 @@
     };
 
     Component.prototype.cleanAttribute = function ( attr ) {
-        if ( !attr['typeId']) {
-            return false;
-        }
-
         var name = attr['name'],
-            typeId = parseInt(attr['typeId'], 10 ),
+            typeId = parseInt(attr['typeId'], 10 ) || -1 ,
             val = this.parseAttrVal(attr['val'], typeId);
 
         name = name.replace( /\s/g, '' ).toLowerCase();
-
-
-
-
 
         return {name: name, val: val, typeId: typeId};
 

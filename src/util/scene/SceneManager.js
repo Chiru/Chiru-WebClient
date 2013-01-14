@@ -4,9 +4,9 @@
      * Creates a scene manager object
      *
      * @constructor
-     * @this {SceneManager}
-     * @type {Function}
-     * @param {object} container Container DOM element for webgl renderer
+     * @name SceneManager
+     * @type Function
+     * @param {object} container Container DOM element for WebGL renderer.
      */
 
     var SceneManager = namespace['SceneManager'] = function ( container, options ) {
@@ -17,9 +17,10 @@
         this.scene = null;
         this.camera = null;
         this.loadedObjects = [];
+        this.meshChanged = new Signal();
 
         this.websocket = null;
-        // In final solution the storage url will come through a websocket, but it's now defined here for testing
+        // In future implementation the storage url will come through a websocket, but it's now defined here for testing
         this.assetManager = new namespace.AssetManager( {}, "http://localhost:8000/scenes/avatar/" );
         this.ecManager = new namespace.ECManager( this );
 
@@ -34,7 +35,6 @@
             window.requestAnimationFrame( loop );
 
             self.controls.isOnObject( false );
-
 
             self.controls.rayCaster.ray.origin.copy( self.controls.getObject().position );
             self.controls.rayCaster.ray.origin.y -= 10;
@@ -81,16 +81,16 @@
 
                 this.websocket.bindEvent( "disconnected", function ( e ) {
                     console.log( "WebSocket closed." );
-                    /*
+
                      self.websocket.parseMessage(JSON.stringify({event:'EntityAdded',
                      data: {entityId: '1',
                      components:{1:
                      {typeId: '17', id:'1',
                      attributes:
-                     {1:{data:"WoodPallet.mesh"}, 0:{data:"0,0,0,0,0,0,0.14,0.2,0.14"}}},
+                     {1:{name:"Mesh ref", val:"WoodPallet.mesh"}, 0:{name:"Transform", val:"0,0,0,0,0,0,0.14,0.2,0.14", typeId: '16'}}},
                      2:{typeId: '20', id:'1',
                      attributes:
-                     {0:{data:"0,-5,0,0,0,0,100,1,100"}}}
+                     {0:{name: "Transform", val:"0,-5,0,0,0,0,100,1,100"}}}
                      }
                      }
                      }))
@@ -99,14 +99,14 @@
                      components:{1:
                      {typeId: '17', id:'1',
                      attributes:
-                     {1:{data:"fish.mesh"}, 0:{data:"0,0,0,0,0,0,1,1,1"}}},
+                     {1:{name: "Mesh ref", val:"fish.mesh"}, 0:{name: "Transform", val:"0,0,0,0,0,0,1,1,1", typeId: '16'}}},
                      2:{typeId: '20', id:'1',
                      attributes:
-                     {0:{data:"1.45201,-4.65185,5.40487,-47.8323,42.1262,-145.378,1,1,1"}}}
+                     {0:{name: "Transform", val:"1.45201,-4.65185,5.40487,-47.8323,42.1262,-145.378,1,1,1"}}}
                      }
                      }
                      }))
-                     */
+
 
                 } );
 
@@ -283,25 +283,16 @@
         }
     };
 
-
-    SceneManager.prepareAsset = function ( entId ) {
-
-        var ecMesh = this.ecManager.entities[entId].components['EC_Mesh'],
-            transform = ecMesh.transform,
-            scale;
-    };
-
     SceneManager.prototype.addToScene = function ( object ) {
 
-        this.scene.add( object );
-        this.loadedObjects.push( object );
+        this.scene.add( object )
 
     };
 
     SceneManager.prototype.init = function () {
 
         var body = document.body,
-            that = this,
+            self = this,
             dirLight;
 
         body.addEventListener( 'click', function ( event ) {
@@ -338,7 +329,7 @@
                 body.requestPointerLock();
 
             }
-            that.controls.enabled = true;
+            self.controls.enabled = true;
         }, false );
 
 
@@ -385,6 +376,13 @@
         //Windows resize listener
         this.windowResize();
 
+        // Mesh change listener
+        this.meshChanged.add(function(mesh){
+            console.log("scene manager, mesh changed!", mesh.name)
+            self.addToScene( mesh );
+        });
+
+
         // Just testing custom shaders
         var vertex = "varying vec3 vNormal;void main() { vNormal = normal;gl_Position = projectionMatrix *modelViewMatrix *vec4(position,1.0);}";
         var fragment = "varying vec3 vNormal;void main() {vec3 light = vec3(0.5,0.2,1.0);light = normalize(light);float dProd = max(0.0, dot(vNormal, light));gl_FragColor = vec4(dProd, dProd, dProd, 1.0);}";
@@ -396,11 +394,6 @@
         var mesh = new THREE.Mesh( new THREE.TorusKnotGeometry( 200, 50, 64, 10 ), material );
         this.loadedObjects.push( mesh );
         this.scene.add( mesh );
-
-        this.ecManager.meshAdded.add( function ( component ) {
-            that.addToScene( component.mesh );
-            console.log( "added to scene" )
-        } );
 
     };
 

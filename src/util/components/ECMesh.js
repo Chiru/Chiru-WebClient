@@ -19,7 +19,7 @@
     ECMesh.prototype = Object.create(namespace.Component.prototype);
 
 
-    ECMesh.prototype.onAttributeUpdated = function (attr, state) {
+    ECMesh.prototype.onAttributeUpdated = function ( attr, state ) {
         //console.log("Attribute", attr['name'], "of component", this.id, "added/updated.");
         switch ( attr['name'] ) {
         case 'transform':
@@ -45,16 +45,16 @@
     };
 
     ECMesh.prototype.setPlaceable = function ( ECPlaceable ) {
-        if ( ECPlaceable ) {
+        if (ECPlaceable) {
             this.placeable = ECPlaceable;
         }
     };
 
     ECMesh.prototype.autoSetPlaceable = function () {
-        if ( this.parent !== null ) {
+        if (this.parent !== null) {
             var placeable;
-            placeable = this.parent.getComponent( '20' );
-            if ( placeable ) {
+            placeable = this.parent.getComponent('20');
+            if (placeable) {
                 this.placeable = placeable;
                 return true;
             }
@@ -63,28 +63,30 @@
     };
 
 
+    ECMesh.prototype.setMesh = function () {
+        var self = this, request;
 
-    ECMesh.prototype.setMesh = function ( ) {
-        if (this.placeable === null ) {
+        if (this.placeable === null) {
             this.autoSetPlaceable();
         }
-        this.getMesh();
-        this.meshChanged.dispatch();
-    };
-
-    ECMesh.prototype.getMesh = function () {
-        var self = this;
-        if(this.meshRef === null ) {
+        if (this.meshRef === null) {
             return false;
         }
 
-        this.assetManager.requestAsset( this.meshRef ).add( function ( asset ) {
-            self.mesh = asset;
 
-        } );
-
-        return true;
+        request = this.assetManager.requestAsset(this.meshRef);
+        if (request) {
+            request.add(function ( asset ) {
+                self.mesh = asset;
+                self.sceneManager.meshChanged.dispatch(self.mesh);
+            });
+        } else {
+            this.mesh = this.assetManager.getAsset(this.meshRef)
+            this.sceneManager.meshChanged.dispatch(this.mesh)
+        }
     };
 
 
-}( window.webnaali = window.webnaali || {}, jQuery ));
+
+
+}(window.webnaali = window.webnaali || {}, jQuery));

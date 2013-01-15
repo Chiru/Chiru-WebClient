@@ -73,54 +73,14 @@
                 if ( component ) {
                     component.id = id;
                     component.name = name;
-                    for(var id in attributes ) {
-                        component.addAttribute(id, attributes[id]);
+                    for(var cid in attributes ) {
+                        component.addAttribute(cid, attributes[cid]);
                     }
 
                 }
 
                 return component;
 
-            },
-
-            componentAdded: function ( component ) {
-                var that = this;
-
-                switch (component['typeId']) {
-                case '20':
-                {
-                    (function () {
-                        console.log( 'ADDED EC PLACEABLE' );
-                        that.meshAdded.addOnce( function ( c ) {
-                            if ( c.mesh !== undefined ) {
-                                var asset = c.mesh;
-                                if ( component.attributes === undefined ) {
-                                    return;
-                                }
-                                var attributes = component.attributes;
-                                var trans = attributes['0'].data.split( ',' );
-                                console.log(c.id)
-                                for ( var i = trans.length; i--; ) trans[i] = Number( trans[i] );
-
-                                asset.position.set( asset.position.x + trans[0], asset.position.y + trans[1], asset.position.z + trans[2] );
-                                asset.rotation.set( asset.rotation.x + trans[3] *
-                                    Math.PI / 180, asset.rotation.y + trans[4] * Math.PI / 180, asset.rotation.z + trans[5] * Math.PI / 180 );
-                                asset.scale.set( asset.scale.x * trans[6], asset.scale.y * trans[7], asset.scale.z * trans[8] );
-                            }
-                        } );
-                    }());
-
-
-                }
-                    break;
-
-                case '23':
-                {
-                    console.log( 'ADDED EC RigidBody' );
-
-                }
-                    break;
-                }
             },
 
             addEntity: function ( entity ) {

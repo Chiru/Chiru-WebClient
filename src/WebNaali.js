@@ -10,6 +10,7 @@
     // Attributes
     namespace.VERSION = '0.1 dev';
     namespace.NAME = 'WebNaali';
+    namespace.ENUMS = {};
 
 
     // Basic methods
@@ -59,5 +60,27 @@
 
     namespace.log( 'WebNaali v' + namespace.VERSION );
 
+    /*
+    namespace.Enum = (function () {
+        function assign(name, i) {
+            this[name] = i;
+        }
+        var forEach = [].forEach,
+            freeze = Object.freeze || function(o){return o;};
+        return function () {
+            forEach.call(arguments, assign, this);
+            return freeze(this);
+        };
+    }());
+
+
+    // ENUMS
+
+    namespace.ENUMS.ATTRIBUTES = new namespace.Enum(
+        'none', 'string', 'int', 'real', 'color', 'float2', 'float3','float4', 'bool', 'uint', 'quat',
+        'assetref', 'assetreflist', 'entityref', 'qvariant', 'qvariantlist', 'transform', 'qpoint',
+        'numattributetypes'
+    );
+    */
 
 }( window['webnaali'] = window['webnaali'] || {}, jQuery ));

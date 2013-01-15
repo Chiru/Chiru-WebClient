@@ -129,12 +129,9 @@
         loader.options.convertUpAxis = true;
         loader.parse( xml, function colladaReady( collada ) {
             model = collada.scene;
-
             model.name = name;
 
             loader = null;
-
-            console.log( "asset","(",model.name,") processed." );
 
             if(!self.loadedAssets.hasOwnProperty(name)) {
                 self.loadedAssets[name] = model;

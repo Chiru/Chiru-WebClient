@@ -14,6 +14,7 @@
 
     };
 
+
     Component.prototype.onParentAdded = function ( parent ) {
     };
     Component.prototype.onAttributeUpdated = function ( attr, state ) {
@@ -80,7 +81,7 @@
     Component.prototype.getAttribute = function ( name ) {
         for ( var id in this.attributes ) {
             if ( this.attributes[id].name === name ) {
-                return this.attributes[id];
+                return this.attributes[id]['val'];
             }
         }
         return false;

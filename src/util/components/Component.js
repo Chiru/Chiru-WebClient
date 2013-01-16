@@ -65,8 +65,8 @@
                 var attr = this.cleanAttribute( data );
                 if ( attr ) {
                     this.attributes[id] = attr;
+                    this.onAttributeUpdated( this.attributes[id], 0 );
                 }
-                this.onAttributeUpdated( this.attributes[id], 0 );
             }
         }
     };

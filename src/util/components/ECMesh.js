@@ -12,7 +12,7 @@
         this.meshRef = null;
         this.mesh = null;
         this.meshMaterial = null;
-        this.transform = [];
+        this.transform = null;
 
     };
 
@@ -25,7 +25,7 @@
         switch (attr['name']) {
         case 'transform':
         {
-            if ( typeof attr['val'] === 'array' && attr['val'].length === 9 ) {
+            if ( attr['val'] instanceof Array && attr['val'].length === 9 ) {
                 this.transform = attr['val'];
             }
         }

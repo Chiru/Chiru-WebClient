@@ -122,7 +122,7 @@
 
                 this.websocket.bindEvent( "EntityAdded", function ( data ) {
                     console.log( data );
-                    namespace.log( "Got 'EntityAdded'-event, entity id: " + data );
+                    namespace.util.log( "Got 'EntityAdded'-event, entity id: " + data );
 
                     if ( data['entityId'] !== undefined ) {
                         var e = self.ecManager.createEntity( data['entityId'] ),
@@ -146,35 +146,35 @@
                 this.websocket.bindEvent( "ComponentsRemoved", function ( data ) {
                     console.log( "ComponentsRemoved:" );
                     console.log( data );
-                    //namespace.log("Got 'ComponentsRemoved'-event, entity id: " + data.entityId);
+                    //namespace.util.log("Got 'ComponentsRemoved'-event, entity id: " + data.entityId);
 
                 } );
 
                 this.websocket.bindEvent( "ComponentsAdded", function ( data ) {
                     console.log( "ComponentsAdded:" );
                     console.log( data );
-                    //namespace.log("Got 'ComponentsAdded'-event, entity id: " + data.entityId);
+                    //namespace.util.log("Got 'ComponentsAdded'-event, entity id: " + data.entityId);
 
                 } );
 
                 this.websocket.bindEvent( "AttributesRemoved", function ( data ) {
                     console.log( "AttributesRemoved:" );
                     console.log( data );
-                    //namespace.log("Got 'Entity Added'-event, entity id: " + data);
+                    //namespace.util.log("Got 'Entity Added'-event, entity id: " + data);
 
                 } );
 
                 this.websocket.bindEvent( "AttributesAdded", function ( data ) {
                     console.log( "AttributesAdded:" );
                     console.log( data );
-                    //namespace.log("Got 'AttributesAdded'-event, entity id: " + data.entityId);
+                    //namespace.util.log("Got 'AttributesAdded'-event, entity id: " + data.entityId);
 
                 } );
 
                 this.websocket.bindEvent( "AttributesChanged", function ( data ) {
                     console.log( "AttributesChanged:" );
                     console.log( data );
-                    //namespace.log("Got 'AttributesChanged'-event, entity id: " + data.entityId);
+                    //namespace.util.log("Got 'AttributesChanged'-event, entity id: " + data.entityId);
 
                 } );
 

@@ -12,27 +12,7 @@
     namespace.NAME = 'WebNaali';
     namespace.ENUMS = {};
 
-
     // Basic methods
-
-    namespace.log = function ( msg ) {
-        var str;
-        if ( typeof(msg) === 'string' ) {
-            str = msg;
-        } else if ( typeof(msg) === 'object' ) {
-            str = JSON.stringify(msg);
-        }else {
-            str = "ERROR: Use Strings or Objects with log().";
-        }
-        var el = document.getElementById( "log" );
-        if ( el !== null ) {
-            el.innerHTML +=
-                "&nbsp[" + new Date().toTimeString().replace( /.*(\d{2}:\d{2}:\d{2}).*/, "$1" ) + "] " + str + "<br>";
-            el.scrollTop = el.scrollHeight;
-        } else {
-            console.log( msg );
-        }
-    };
 
     namespace.initScene = function ( container, options ) {
        return this.scene = new namespace.SceneManager( container );
@@ -58,29 +38,17 @@
     };
 
 
-    namespace.log( 'WebNaali v' + namespace.VERSION );
 
-    /*
-    namespace.Enum = (function () {
-        function assign(name, i) {
-            this[name] = i;
-        }
-        var forEach = [].forEach,
-            freeze = Object.freeze || function(o){return o;};
-        return function () {
-            forEach.call(arguments, assign, this);
-            return freeze(this);
-        };
-    }());
+
 
 
     // ENUMS
-
-    namespace.ENUMS.ATTRIBUTES = new namespace.Enum(
+    namespace.ENUMS.ATTRIBUTES = namespace.util.createEnum(
         'none', 'string', 'int', 'real', 'color', 'float2', 'float3','float4', 'bool', 'uint', 'quat',
         'assetref', 'assetreflist', 'entityref', 'qvariant', 'qvariantlist', 'transform', 'qpoint',
         'numattributetypes'
     );
-    */
+
+    namespace.util.log( 'WebNaali v' + namespace.VERSION );
 
 }( window['webnaali'] = window['webnaali'] || {}, jQuery ));

@@ -71,9 +71,13 @@
         }
     };
 
-    Component.prototype.updateAttribute = function ( id, val ) {
+    Component.prototype.updateAttribute = function ( id, attr ) {
+        var val = attr['val'], typeId = attr['typeId'], parsed;
         if ( this.attributes.hasOwnProperty( id ) && val ) {
-            this.attributes[id] = this.parseAttrVal(val, typeId);
+            parsed = this.parseAttrVal(val, this.attributes[id]['typeId']);
+            for (var i = parsed.length; i--;) {
+                this.attributes[id]['val'][i] = parsed[i];
+            }
             this.onAttributeUpdated( this.attributes[id], 1 );
         }
     };

@@ -70,11 +70,11 @@
      * @return {*}
      */
 
-    Entity.prototype.getComponent = function ( typeId ) {
+    Entity.prototype.getComponent = function ( type ) {
         if ( Object.keys( this.components ).length !== 0 ) {
 
             for ( var id in this.components ) {
-                if ( this.components.hasOwnProperty( id ) && this.components[id].typeId === typeId ) {
+                if ( this.components[id] instanceof type ) {
                     return this.components[id];
                 }
             }
@@ -119,8 +119,6 @@
                 this.componentAdded.dispatch( component );
             }
         }
-
-
 
     };
 

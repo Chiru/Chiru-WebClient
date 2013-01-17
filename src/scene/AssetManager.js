@@ -124,17 +124,22 @@
     AssetManager.prototype.processAsset = function ( request, name ) {
 
         var loader = new THREE.ColladaLoader(), xml = request.responseXML,
-            model, self = this;
+            scene, mesh, self = this;
 
-        loader.options.convertUpAxis = true;
+        //loader.options.convertUpAxis = true;
         loader.parse( xml, function colladaReady( collada ) {
-            model = collada.scene;
-            model.name = name;
+            scene = collada.scene;
+            if(scene && scene.children && scene.children.length > 0) {
+                mesh = scene.children[0];
+                if (mesh) {
+                    mesh.name = name;
+                }
+            }
 
             loader = null;
 
             if(!self.loadedAssets.hasOwnProperty(name)) {
-                self.loadedAssets[name] = model;
+                self.loadedAssets[name] = mesh;
             }
 
             request.assetReady.dispatch(self.loadedAssets[name]);

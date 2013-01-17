@@ -49,6 +49,11 @@
         'numattributetypes'
     );
 
+    // Three.js Settings
+
+    THREE.Object3D.defaultEulerOrder = 'ZYX';
+
+
     namespace.util.log( 'WebNaali v' + namespace.VERSION );
 
 }( window['webnaali'] = window['webnaali'] || {}, jQuery ));

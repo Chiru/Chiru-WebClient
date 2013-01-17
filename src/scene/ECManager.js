@@ -60,7 +60,7 @@
                 {
 
                     console.log("Creating ECPlaceable")
-                    component = new namespace.ECPlaceable( id );
+                    component = new namespace.ECPlaceable( sceneManager );
                 }
 
                     break;
@@ -99,8 +99,8 @@
             },
 
             getEntity: function ( id ) {
-                if ( entities['id'] !== undefined ) {
-                    return entities['id'];
+                if ( entities.hasOwnProperty(id) ) {
+                    return entities[id];
                 }
                 return false;
             }

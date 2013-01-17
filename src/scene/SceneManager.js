@@ -17,7 +17,6 @@
         this.scene = null;
         this.camera = null;
         this.loadedObjects = [];
-        this.meshChanged = new Signal();
 
         this.websocket = null;
         // In future implementation the storage url will come through a websocket, but it's now defined here for testing
@@ -106,7 +105,7 @@
                      }
                      }
                      }))
-                    */
+                     */
 
                 } );
 
@@ -169,12 +168,25 @@
                     console.log( data );
                     //namespace.util.log("Got 'AttributesAdded'-event, entity id: " + data.entityId);
 
+
                 } );
 
                 this.websocket.bindEvent( "AttributesChanged", function ( data ) {
-                    console.log( "AttributesChanged:" );
-                    console.log( data );
+                    //console.log( "AttributesChanged:" );
+                    //console.log( data );
                     //namespace.util.log("Got 'AttributesChanged'-event, entity id: " + data.entityId);
+                    var ent, attrs = data['attrs'], cId, comp;
+                    ent = self.ecManager.getEntity( data['entityId'] );
+                    if ( ent ) {
+                        for ( var i in attrs ) {
+                            cId = attrs[i]['compId'];
+                            comp = ent.getComponentById( cId );
+                            if ( comp ) {
+                                comp.updateAttribute( i, attrs[i] );
+                            }
+                        }
+                    }
+
 
                 } );
 
@@ -207,22 +219,22 @@
         };
     };
 
+    /*
+     SceneManager.prototype.parseScene = function ( xml ) {
+     var that = this;
 
-    SceneManager.prototype.parseScene = function ( xml ) {
-        var that = this;
+     var sceneParser = new namespace.SceneParser( this.ecManager );
+     this.ecManager.meshAdded.add( function ( component ) {
+     that.addToScene( component.mesh );
+     console.log( "added to scene" )
+     } );
+     sceneParser.parse( xml );
 
-        var sceneParser = new namespace.SceneParser( this.ecManager );
-        this.ecManager.meshAdded.add( function ( component ) {
-            that.addToScene( component.mesh );
-            console.log( "added to scene" )
-        } );
-        sceneParser.parse( xml );
-
-        sceneParser = null;
+     sceneParser = null;
 
 
-    };
-
+     };
+     */
     SceneManager.prototype.clearScene = function ( filter ) {
         //TODO: Clean this up
 
@@ -266,7 +278,7 @@
                 while ( objects.length > len ) {
                     //console.log("removing object: " + objects[0].name)
 
-                    removeFromScene( objects[0] );
+                    this.removeFromScene( objects[0] );
 
                     this.renderer.deallocateObject( objects[0] );
                     objects.splice( 0, 1 );
@@ -286,7 +298,13 @@
     SceneManager.prototype.addToScene = function ( object ) {
 
         this.scene.add( object );
-        console.log(object)
+        console.log( object )
+
+    };
+
+    SceneManager.prototype.removeFromScene = function ( object ) {
+
+        this.scene.remove( object );
 
     };
 
@@ -295,43 +313,6 @@
         var body = document.body,
             self = this,
             dirLight;
-
-        body.addEventListener( 'click', function ( event ) {
-            // Ask the browser to lock the pointer
-
-
-            body.requestPointerLock = body.requestPointerLock || body.mozRequestPointerLock || body.webkitRequestPointerLock;
-
-            if ( /Firefox/i.test( navigator.userAgent ) ) {
-
-                var fullscreenchange = function ( event ) {
-
-                    if ( document.fullscreenElement === body || document.mozFullscreenElement === body ||
-                        document.mozFullScreenElement === body ) {
-
-                        document.removeEventListener( 'fullscreenchange', fullscreenchange );
-                        document.removeEventListener( 'mozfullscreenchange', fullscreenchange );
-
-                        body.requestPointerLock();
-                    }
-
-                };
-
-                document.addEventListener( 'fullscreenchange', fullscreenchange, false );
-                document.addEventListener( 'mozfullscreenchange', fullscreenchange, false );
-
-                body.requestFullscreen = body.requestFullscreen || body.mozRequestFullscreen ||
-                    body.mozRequestFullScreen || body.webkitRequestFullscreen;
-
-                body.requestFullscreen();
-
-            } else {
-
-                body.requestPointerLock();
-
-            }
-            self.controls.enabled = true;
-        }, false );
 
 
         this.renderer = new THREE.WebGLRenderer( {
@@ -373,15 +354,31 @@
         this.controls.rayCaster = new THREE.Raycaster();
         this.controls.rayCaster.ray.direction.set( 0, -1, 0 );
 
+        this.controls.enabled = false;
+
+        function pointerLockChange() {
+            if ( document.mozPointerLockElement === body ||
+                document.webkitPointerLockElement === body ||
+                document.pointerLockElement === body ) {
+                self.controls.enabled = true;
+            } else {
+                self.controls.enabled = false;
+            }
+        }
+
+        document.addEventListener( 'webkitpointerlockchange', pointerLockChange, false );
+        body.addEventListener( 'click', function ( event ) {
+            if ( document.mozPointerLockElement !== body &&
+                document.webkitPointerLockElement !== body &&
+                document.pointerLockElement !== body ) {
+                body.requestPointerLock = body.requestPointerLock || body.mozRequestPointerLock || body.webkitRequestPointerLock;
+                body.requestPointerLock();
+            }
+
+        }, false );
 
         //Windows resize listener
         this.windowResize();
-
-        // Mesh change listener
-        this.meshChanged.add(function(mesh){
-            console.log("scene manager, mesh changed!", mesh.name)
-            self.addToScene( mesh );
-        });
 
 
         // Just testing custom shaders

@@ -166,56 +166,6 @@
         <dl>
             
 <dt>
-    <h4 class="name" id="addComponent"><span class="type-signature"></span>addComponent<span class="type-signature"> :Function</span></h4>
-    
-    
-</dt>
-<dd>
-    
-    <div class="description">
-        Adds a component to an entity
-    </div>
-    
-    
-    
-<dl class="details">
-    
-        
-	
-	
-	
-
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	<dt class="tag-source">Source:</dt>
-	<dd class="tag-source"><ul class="dummy"><li>Entity.js, line 103</li></ul></dd>
-	
-    
-    
-	
-	
-	
-	
-</dl>
-
-    
-    
-</dd>
-
-        
-            
-<dt>
     <h4 class="name" id="componentAdded"><span class="type-signature"></span>componentAdded<span class="type-signature"> :<a href="Signal.html">Signal</a></span></h4>
     
     
@@ -249,7 +199,7 @@
 	
 	
 	<dt class="tag-source">Source:</dt>
-	<dd class="tag-source"><ul class="dummy"><li>Entity.js, line 14</li></ul></dd>
+	<dd class="tag-source"><ul class="dummy"><li>Entity.js, line 13</li></ul></dd>
 	
     
     
@@ -299,7 +249,7 @@
 	
 	
 	<dt class="tag-source">Source:</dt>
-	<dd class="tag-source"><ul class="dummy"><li>Entity.js, line 23</li></ul></dd>
+	<dd class="tag-source"><ul class="dummy"><li>Entity.js, line 22</li></ul></dd>
 	
     
     
@@ -349,7 +299,7 @@
 	
 	
 	<dt class="tag-source">Source:</dt>
-	<dd class="tag-source"><ul class="dummy"><li>Entity.js, line 42</li></ul></dd>
+	<dd class="tag-source"><ul class="dummy"><li>Entity.js, line 41</li></ul></dd>
 	
     
     
@@ -399,107 +349,7 @@
 	
 	
 	<dt class="tag-source">Source:</dt>
-	<dd class="tag-source"><ul class="dummy"><li>Entity.js, line 32</li></ul></dd>
-	
-    
-    
-	
-	
-	
-	
-</dl>
-
-    
-    
-</dd>
-
-        
-            
-<dt>
-    <h4 class="name" id="getComponent"><span class="type-signature"></span>getComponent<span class="type-signature"> :Function</span></h4>
-    
-    
-</dt>
-<dd>
-    
-    <div class="description">
-        Gets a component of an entity by component type id.
-    </div>
-    
-    
-    
-<dl class="details">
-    
-        
-	
-	
-	
-
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	<dt class="tag-source">Source:</dt>
-	<dd class="tag-source"><ul class="dummy"><li>Entity.js, line 63</li></ul></dd>
-	
-    
-    
-	
-	
-	
-	
-</dl>
-
-    
-    
-</dd>
-
-        
-            
-<dt>
-    <h4 class="name" id="getComponentById"><span class="type-signature"></span>getComponentById<span class="type-signature"> :Function</span></h4>
-    
-    
-</dt>
-<dd>
-    
-    <div class="description">
-        Gets a component of an entity by unique component id.
-    </div>
-    
-    
-    
-<dl class="details">
-    
-        
-	
-	
-	
-
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	<dt class="tag-source">Source:</dt>
-	<dd class="tag-source"><ul class="dummy"><li>Entity.js, line 86</li></ul></dd>
+	<dd class="tag-source"><ul class="dummy"><li>Entity.js, line 31</li></ul></dd>
 	
     
     
@@ -549,7 +399,7 @@
 	
 	
 	<dt class="tag-source">Source:</dt>
-	<dd class="tag-source"><ul class="dummy"><li>Entity.js, line 52</li></ul></dd>
+	<dd class="tag-source"><ul class="dummy"><li>Entity.js, line 51</li></ul></dd>
 	
     
     
@@ -563,18 +413,79 @@
     
 </dd>
 
+        </dl>
+    
+    
+    
+        <h3 class="subsection-title">Methods</h3>
         
+        <dl>
             
 <dt>
-    <h4 class="name" id="removeComponent"><span class="type-signature"></span>removeComponent<span class="type-signature"> :Function</span></h4>
+    <h4 class="name" id="addComponent"><span class="type-signature"></span>addComponent<span class="signature">(component)</span><span class="type-signature"></span></h4>
     
     
 </dt>
 <dd>
     
+    
     <div class="description">
-        Removes a component from an entity.
+        Adds a component to an entity
     </div>
+    
+
+    
+    
+    
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>component</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Component.html">Component</a></span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">Component of a specific type. e.g. ECMesh</td>
+        </tr>
+	
+	
+	</tbody>
+</table>
     
     
     
@@ -599,7 +510,7 @@
 	
 	
 	<dt class="tag-source">Source:</dt>
-	<dd class="tag-source"><ul class="dummy"><li>Entity.js, line 125</li></ul></dd>
+	<dd class="tag-source"><ul class="dummy"><li>Entity.js, line 102</li></ul></dd>
 	
     
     
@@ -611,11 +522,405 @@
 
     
     
+    
+    
+    
+    
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="getComponent"><span class="type-signature"></span>getComponent<span class="signature">(type)</span><span class="type-signature"> &rarr; {*}</span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        Gets a component of an entity by component type id.
+    </div>
+    
+
+    
+    
+    
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>type</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Component.html">Component</a></span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">Pointer to object constructor e.g. namespace.ECPlaceable.</td>
+        </tr>
+	
+	
+	</tbody>
+</table>
+    
+    
+    
+<dl class="details">
+    
+        
+	
+	
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	<dt class="tag-source">Source:</dt>
+	<dd class="tag-source"><ul class="dummy"><li>Entity.js, line 62</li></ul></dd>
+	
+    
+    
+	
+	
+	
+	
+</dl>
+
+    
+    
+    
+    
+    
+    
+    <h5>Returns:</h5>
+    
+            
+
+
+<dl>
+	<dt>
+		Type
+	</dt>
+	<dd>
+		
+<span class="param-type">*</span>
+
+
+	</dd>
+</dl>
+
+        
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="getComponentById"><span class="type-signature"></span>getComponentById<span class="signature">(id)</span><span class="type-signature"> &rarr; {<a href="Component.html">Component</a>|Boolean}</span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        Gets a component of an entity by unique component id.
+    </div>
+    
+
+    
+    
+    
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>id</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type">Number</span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">Unique component id.</td>
+        </tr>
+	
+	
+	</tbody>
+</table>
+    
+    
+    
+<dl class="details">
+    
+        
+	
+	
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	<dt class="tag-source">Source:</dt>
+	<dd class="tag-source"><ul class="dummy"><li>Entity.js, line 85</li></ul></dd>
+	
+    
+    
+	
+	
+	
+	
+</dl>
+
+    
+    
+    
+    
+    
+    
+    <h5>Returns:</h5>
+    
+            
+
+
+<dl>
+	<dt>
+		Type
+	</dt>
+	<dd>
+		
+<span class="param-type"><a href="Component.html">Component</a></span>
+|
+
+<span class="param-type">Boolean</span>
+
+
+	</dd>
+</dl>
+
+        
+    
+    
+</dd>
+
+        
+            
+<dt>
+    <h4 class="name" id="removeComponent"><span class="type-signature"></span>removeComponent<span class="signature">(component)</span><span class="type-signature"> &rarr; {Boolean}</span></h4>
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        Removes a component from an entity.
+    </div>
+    
+
+    
+    
+    
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+		
+		<th>Type</th>
+		
+		
+		
+		
+		
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+	
+	<tbody>
+	
+	
+        <tr>
+            
+                <td class="name"><code>component</code></td>
+            
+            
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Component.html">Component</a></span>
+
+
+            
+            </td>
+            
+            
+            
+            
+            
+            <td class="description last">Component of a specific type.</td>
+        </tr>
+	
+	
+	</tbody>
+</table>
+    
+    
+    
+<dl class="details">
+    
+        
+	
+	
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	<dt class="tag-source">Source:</dt>
+	<dd class="tag-source"><ul class="dummy"><li>Entity.js, line 124</li></ul></dd>
+	
+    
+    
+	
+	
+	
+	
+</dl>
+
+    
+    
+    
+    
+    
+    
+    <h5>Returns:</h5>
+    
+            
+
+
+<dl>
+	<dt>
+		Type
+	</dt>
+	<dd>
+		
+<span class="param-type">Boolean</span>
+
+
+	</dd>
+</dl>
+
+        
+    
+    
 </dd>
 
         </dl>
-    
-    
     
     
     
@@ -631,13 +936,13 @@
 </div>
 
 <nav>
-    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="Component.html">Component</a></li><li><a href="ECManager.html">ECManager</a></li><li><a href="ECMesh.html">ECMesh</a></li><li><a href="Entity.html">Entity</a></li><li><a href="SceneManager.html">SceneManager</a></li><li><a href="Signal.html">Signal</a></li><li><a href="SignalBinding.html">SignalBinding</a></li></ul><h3>Namespaces</h3><ul><li><a href="THREEx.html">THREEx</a></li><li><a href="webtundra.html">webtundra</a></li></ul>
+    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="Component.html">Component</a></li><li><a href="ECLight.html">ECLight</a></li><li><a href="ECManager.html">ECManager</a></li><li><a href="ECMaterial.html">ECMaterial</a></li><li><a href="ECMesh.html">ECMesh</a></li><li><a href="ECPlaceable.html">ECPlaceable</a></li><li><a href="Entity.html">Entity</a></li><li><a href="SceneManager.html">SceneManager</a></li><li><a href="Signal.html">Signal</a></li><li><a href="SignalBinding.html">SignalBinding</a></li></ul><h3>Namespaces</h3><ul><li><a href="THREEx.html">THREEx</a></li><li><a href="window.webtundra.html">webtundra</a></li></ul>
 </nav>
 
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3</a> on Fri Jan 18 2013 12:22:11 GMT+0200 (EET)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3</a> on Fri Jan 18 2013 15:17:48 GMT+0200 (EET)
 </footer>
 
 <script> prettyPrint(); </script>

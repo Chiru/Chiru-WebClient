@@ -20,6 +20,13 @@ in the build-folder.
 3. A web browser that supports WebGL and WebSockets (newest version of FireFox or Google Chrome recommended)
 
 
+## Document Generation
+
+Documentation of this project can be generated for example with [JSDoc3][2], using command:
+./jsdoc -r ../WebnaaliRootFolder/src --destination ../path/to/docs/ ../WebnaaliRootFolder/README.md
+You should also change the default "excludepattern" in JSDoc3 conf.json to ".+\\libs" to ignore js-libs from the documentation.
+
 [1]: https://github.com/Chiru/ChiruAddons/tree/master/WebSocketModule
+[2]: https://github.com/jsdoc3/jsdoc
 
 

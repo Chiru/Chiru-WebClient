@@ -10,8 +10,8 @@
 
 
         // Checking if WebGL context is available
-        if ( !webnaali.Detector.webgl ) {
-            webnaali.Detector.throwWebGLError();
+        if ( !webtundra.Detector.webgl ) {
+            webtundra.Detector.throwWebGLError();
             return;
         }
 
@@ -20,9 +20,9 @@
 
         container = document.getElementById( 'webglContainer' );
 
-        webnaali.initScene( container, {} );
-        webnaali.initConnection( '127.0.0.1', '9002', {allowReconnect: false} );
-        webnaali.start();
+        webtundra.initScene( container, {} );
+        webtundra.initConnection( '127.0.0.1', '9002', {allowReconnect: false} );
+        webtundra.start();
 
         /** Worker example
          var script =

@@ -9,7 +9,7 @@
 
     // Attributes
     namespace.VERSION = '0.1 dev';
-    namespace.NAME = 'WebNaali';
+    namespace.NAME = 'WebTundra';
     namespace.ENUMS = {};
 
     // Basic methods
@@ -54,6 +54,6 @@
     THREE.Object3D.defaultEulerOrder = 'ZYX';
 
 
-    namespace.util.log( 'WebNaali v' + namespace.VERSION );
+    namespace.util.log( namespace.NAME + ' v' + namespace.VERSION );
 
-}( window['webnaali'] = window['webnaali'] || {}, jQuery ));
+}( window['webtundra'] = window['webtundra'] || {}, jQuery ));

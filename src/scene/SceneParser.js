@@ -85,4 +85,4 @@
         return this.ecModel;
     };
 
-}( window.webnaali = window.webnaali || {}, jQuery ));
+}( window['webtundra'] = window['webtundra'] || {}, jQuery ));

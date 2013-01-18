@@ -105,4 +105,4 @@
     }();
 
 
-}( window.webnaali = window.webnaali || {}, jQuery ));
+}( window['webtundra'] = window['webtundra'] || {}, jQuery ));

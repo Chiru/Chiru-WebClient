@@ -52,4 +52,4 @@
     }());
 
 
-}( window.webnaali = window.webnaali || {} ));
+}( window['webtundra'] = window['webtundra'] || {} ));

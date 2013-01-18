@@ -66,7 +66,7 @@
      * @name getComponent
      * @type Function
      * @memberOf Entity.prototype
-     * @param {Number} typeId Unique component type id.
+     * @param {Function} type Pointer to object constructor e.g. namespace.ECPlaceable.
      * @return {*}
      */
 

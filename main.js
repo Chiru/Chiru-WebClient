@@ -8,7 +8,6 @@
 
 (function ( namespace,  undefined ) {
 
-
         // Checking if WebGL context is available
         if ( !webtundra.Detector.webgl ) {
             webtundra.Detector.throwWebGLError();

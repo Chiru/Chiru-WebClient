@@ -1,5 +1,15 @@
 (function ( namespace, $, undefined ) {
 
+    /**
+     * ECMesh constructor
+     *
+     * @constructor
+     * @augments Component
+     * @name ECMesh
+     * @type Function
+     * @param {object} sceneMgr Pointer to scene manager.
+     */
+
     var ECMesh = namespace.ECMesh = function ( sceneMgr ) {
 
         namespace.Component.call( this, sceneMgr ); //Inherit component properties

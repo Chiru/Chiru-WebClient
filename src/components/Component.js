@@ -1,5 +1,14 @@
 (function ( namespace, $, undefined ) {
 
+    /**
+     * Component parent constructor
+     *
+     * @constructor
+     * @name Component
+     * @type Function
+     * @param {object} sceneMgr Pointer to scene manager.
+     */
+
     var Component = namespace.Component = function ( sceneMgr ) {
 
         this.sceneManager = sceneMgr;

@@ -1,5 +1,14 @@
 (function ( namespace, $, undefined ) {
 
+    /**
+     * Entity/Component Manager constructor
+     *
+     * @constructor
+     * @name ECManager
+     * @type Function
+     * @param {object} sceneMgr Pointer to scene manager.
+     */
+
     var ECManager = namespace.ECManager = function ( sceneMgr ) {
 
         var entities = {},

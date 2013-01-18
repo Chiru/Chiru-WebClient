@@ -1,6 +1,6 @@
 /**
  * Global namespace that holds highest level functionality
- * @namespace webnaali
+ * @namespace webtundra
  * @version 0.1 dev
  *
  */
@@ -36,9 +36,6 @@
             console.error( " ERROR: Create a scene before starting the client. " );
         }
     };
-
-
-
 
 
 

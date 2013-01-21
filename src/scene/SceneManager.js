@@ -14,8 +14,10 @@
 
     var SceneManager = namespace['SceneManager'] = function ( options ) {
 
-        var defaults = {eulerOrder: 'ZYX',
-                container: document.body},
+        var defaults = {
+                eulerOrder: 'ZYX',
+                container: document.body
+            },
             opts,
 
         // Shortcuts

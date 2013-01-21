@@ -12,7 +12,7 @@
 
     var Attribute = namespace.Attribute = function ( name, value, type ) {
 
-        type = type || -1;
+        type = type || -1;
 
         this.type = parseInt( type, 10 );
 
@@ -22,11 +22,13 @@
     };
 
     Attribute.parse = function ( value, type ) {
-        var val;
-        if ( value !== null ) {
+        var val = value;
+
+        if ( value !== null /*&& typeof value === "string"*/) {
 
             switch (type) {
                 // Int
+            case types.real:
             case types.int:
             case types.uint:
                 val = parseInt( value, 10 );
@@ -39,14 +41,32 @@
             case types.transform:
                 val = value.split( /,/ ).map( parseFloat );
                 break;
-            default:
+            case types.string:
+            case types.assetref:
                 val = value;
+                break;
+            default:
+                val = null;
                 break;
 
             }
         }
 
         return val;
+    };
+
+    Attribute.prototype.update = function ( value ) {
+        var val = Attribute.parse( value, this.type );
+
+        if ( val !== null ) {
+            // Just hacky Transform update test
+
+            if ( this.type === types.transform ) {
+                for ( var i = val.length; i--; ) {
+                    this.val[i] = val[i];
+                }
+            }
+        }
     };
 
 

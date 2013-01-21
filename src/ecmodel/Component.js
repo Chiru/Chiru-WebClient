@@ -73,12 +73,8 @@
         var val = attr['val'], typeId = attr['typeId'], parsed;
 
         if ( this.attributes.hasOwnProperty( id ) && val ) {
-            parsed = namespace.Attribute.parse( val, this.attributes[id]['typeId'] );
+            this.attributes[id].update( val );
 
-            // Testing transform update (hacky)
-            for ( var i = parsed.length; i--; ) {
-                this.attributes[id]['val'][i] = parsed[i];
-            }
             this.onAttributeUpdated( this.attributes[id], 1 );
         }
     };
@@ -97,7 +93,9 @@
         if ( parent ) {
             this.parent = parent;
             this.onParentAdded( this.parent );
+            return true;
         }
+        return false;
     };
 
 }( window['webtundra'] = window['webtundra'] || {}, jQuery ));

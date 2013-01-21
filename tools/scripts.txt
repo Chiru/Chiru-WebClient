@@ -1,16 +1,24 @@
-#Libs must be placed before other js files
+#Libs and utilities must be placed before other js files
 ../src/libs/jquery-1.8.3.min.js
-../src/libs/three.min.js
+../src/libs/three.js
+../src/general/Util.js
 
-../src/WebNaali.js
-../src/util/general/Signals.js
-../src/util/parsers/ColladaLoader.js
-../src/util/parsers/parseUri.js
-../src/util/controls/PointerLockControls.js
-../src/util/general/Detector.js
-../src/util/networking/WSManager.js
-../src/util/scene/AssetManager.js
-../src/util/scene/ECModel.js
-../src/util/scene/SceneParser.js
-../src/util/scene/SceneManager.js
-../src/util/scene/Renderer.js
+# Source files
+../src/WebClient.js
+../src/general/Workers.js
+../src/general/Signals.js
+../src/parsers/ColladaLoader.js
+../src/parsers/parseUri.js
+../src/parsers/MeshParser.js
+../src/controls/PointerLockControls.js
+../src/general/Detector.js
+../src/networking/WSManager.js
+../src/scene/AssetManager.js
+../src/scene/ECManager.js
+../src/scene/Entity.js
+../src/components/Component.js
+../src/components/ECMesh.js
+../src/components/ECPlaceable.js
+../src/scene/SceneParser.js
+../src/scene/SceneManager.js
+../src/scene/Renderer.js

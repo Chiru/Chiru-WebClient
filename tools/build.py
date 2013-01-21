@@ -37,8 +37,6 @@ def main():
     # Parsing the scripts file
     scriptsList =  [line.strip() for line in open(scripts) if not line.startswith('#') and line.strip()]
 
-    print scriptsList
-
     print '## Compressing JavaScript files into %s' % out
     compress(scriptsList, out, externs, out_uncompressed, args.advanced, args.verbose)
 

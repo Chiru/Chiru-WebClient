@@ -16,14 +16,6 @@
     namespace.NAME = 'WebTundra';
     namespace.ENUMS = {};
 
-    // ENUMS
-    namespace.ENUMS.ATTRIBUTES = namespace.util.createEnum(
-        'none', 'string', 'int', 'real', 'color', 'float2', 'float3','float4', 'bool', 'uint', 'quat',
-        'assetref', 'assetreflist', 'entityref', 'qvariant', 'qvariantlist', 'transform', 'qpoint',
-        'numattributetypes'
-    );
-
-
     // Basic methods
     namespace.initScene = function ( options ) {
 

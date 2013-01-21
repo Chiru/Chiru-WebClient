@@ -17,8 +17,8 @@
         namespace.Component.call( this, sceneMgr ); //Inherit component properties
 
         // ECMesh specific properties
-        this.meshChanged = new Signal();
-        this.materialChanged = new Signal();
+        this.meshChanged = new namespace.Signal();
+        this.materialChanged = new namespace.Signal();
         this.meshRef = null;
         this.placeable = null;
         this.castShadows = false;

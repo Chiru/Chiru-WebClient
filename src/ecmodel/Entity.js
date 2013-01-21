@@ -20,7 +20,7 @@
          * @name componentAdded
          * @type Signal
          */
-        this.componentAdded = new Signal();
+        this.componentAdded = new namespace.Signal();
 
         /**
          * A Signal that is dispatched when a component is removed from this entity.
@@ -29,7 +29,7 @@
          * @name componentRemoved
          * @type Signal
          */
-        this.componentRemoved = new Signal();
+        this.componentRemoved = new namespace.Signal();
 
         /**
          * Storage for entity actions.

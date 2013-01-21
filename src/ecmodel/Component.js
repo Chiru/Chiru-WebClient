@@ -54,49 +54,13 @@
     Component.prototype.onAttributeUpdated = function ( attr, state ) {
     };
 
-    Component.prototype.parseAttrVal = function ( value, type ) {
-        var val = '';
-        if (value) {
-
-            switch (type) {
-                // Int
-            case 2:
-            case 9:
-                val = parseInt( value, 10 );
-                break;
-                // Boolean
-            case 8:
-                val = value === 'true';
-                break;
-                // Transform
-            case 16:
-                val = value.split(/,/).map(parseFloat);
-                break;
-            default:
-                val = value;
-                break;
-
-            }
-        }
-
-        return val;
-    };
-
-    Component.prototype.cleanAttribute = function ( attr ) {
-        var name = attr['name'],
-            typeId = parseInt(attr['typeId'], 10 ) || -1 ,
-            val = this.parseAttrVal(attr['val'], typeId);
-
-        name = name.replace( /\s/g, '' ).toLowerCase();
-
-        return {name: name, val: val, typeId: typeId};
-
-    };
-
     Component.prototype.addAttribute = function ( id, data ) {
         if ( !this.attributes.hasOwnProperty( id ) ) {
-            if ( data['val'] && data['name'] && id ) {
-                var attr = this.cleanAttribute( data );
+            var val = data['val'], name = data['name'];
+
+            if ( val && name && id ) {
+                var attr = new namespace.Attribute( name, val, data['typeId'] );
+
                 if ( attr ) {
                     this.attributes[id] = attr;
                     this.onAttributeUpdated( this.attributes[id], 0 );
@@ -107,9 +71,12 @@
 
     Component.prototype.updateAttribute = function ( id, attr ) {
         var val = attr['val'], typeId = attr['typeId'], parsed;
+
         if ( this.attributes.hasOwnProperty( id ) && val ) {
-            parsed = this.parseAttrVal(val, this.attributes[id]['typeId']);
-            for (var i = parsed.length; i--;) {
+            parsed = namespace.Attribute.parse( val, this.attributes[id]['typeId'] );
+
+            // Testing transform update (hacky)
+            for ( var i = parsed.length; i--; ) {
                 this.attributes[id]['val'][i] = parsed[i];
             }
             this.onAttributeUpdated( this.attributes[id], 1 );

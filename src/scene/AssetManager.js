@@ -118,7 +118,7 @@
             console.log( 'error', "Your browser can't handle XML." );
         }
 
-        request.assetReady = new Signal();
+        request.assetReady = new namespace.Signal();
 
         return request.assetReady;
 

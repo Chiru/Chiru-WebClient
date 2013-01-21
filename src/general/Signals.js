@@ -1,8 +1,8 @@
-/** @license
+/**
  * JS Signals <http://millermedeiros.github.com/js-signals/>
  * Released under the MIT license
- * Author: Miller Medeiros
- * Enhanced by: Toni Dahl
+ * @author Miller Medeiros
+ * @author Toni Dahl / https://github.com/K1ll3rF0x
  * Version: 1.0.0 - Build: 268 (2012/11/29 05:48 PM)
  */
 

@@ -1,3 +1,6 @@
+// For conditions of distribution and use, see copyright notice in LICENSE
+
+
 (function ( namespace, $, undefined ) {
 
     var WSManager = namespace.WSManager = function ( host, port, options ) {
@@ -5,8 +8,11 @@
                 reconnectInterval: 8000,
                 timeout: 8000,
                 allowReconnect: true
-            },
-            settings = $.extend( {}, defaults, options );
+            }, settings,
+
+            extend = namespace.util.extend;
+
+        settings = extend( {}, defaults, options );
 
         this.ws = null;
         this.url = "ws://" + host + ":" + port;
@@ -167,7 +173,7 @@
             console.log( "Error: Received an unknown event: " + eventName );
             return;
         }
-        for ( i = 0; i < eventChain.length; i ++ ) {
+        for ( i = 0; i < eventChain.length; i++ ) {
             eventChain[i]( message );
         }
     };

@@ -1,3 +1,6 @@
+// For conditions of distribution and use, see copyright notice in LICENSE
+
+
 (function ( namespace, $, undefined ) {
 
     var AssetManager = namespace.AssetManager = function ( gui, remoteStorage ) {

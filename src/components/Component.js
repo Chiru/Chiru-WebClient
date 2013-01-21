@@ -1,3 +1,6 @@
+// For conditions of distribution and use, see copyright notice in LICENSE
+
+
 (function ( namespace, $, undefined ) {
 
     /**
@@ -5,7 +8,6 @@
      *
      * @constructor
      * @name Component
-     * @type Function
      * @param {object} sceneMgr Pointer to scene manager.
      */
 
@@ -24,8 +26,31 @@
     };
 
 
+    /**
+     * Internal callback function that is triggered when component is added into parent entity.
+     * Actual implementation of this function will be in the child component.
+     *
+     * @name onAttributeUpdated
+     * @function
+     * @memberOf Component.prototype
+     * @param {Object} parent Parent entity.
+     */
+
+
     Component.prototype.onParentAdded = function ( parent ) {
     };
+
+    /**
+     * Internal callback function, triggered when attribute is changed.
+     * Actual implementation of this function will be in the child component.
+     *
+     * @name onAttributeUpdated
+     * @function
+     * @memberOf Component.prototype
+     * @param {Object} attr Attribute object.
+     * @param {Object} state Update state 0 - attribute added, 1 - attribute updated, 2 - attribute removed.
+     */
+
     Component.prototype.onAttributeUpdated = function ( attr, state ) {
     };
 

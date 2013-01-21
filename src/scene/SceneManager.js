@@ -1,3 +1,6 @@
+// For conditions of distribution and use, see copyright notice in LICENSE
+
+
 (function ( namespace, $, undefined ) {
 
     /**
@@ -9,9 +12,24 @@
      * @param {object} container Container DOM element for WebGL renderer.
      */
 
-    var SceneManager = namespace['SceneManager'] = function ( container, options ) {
+    var SceneManager = namespace['SceneManager'] = function ( options ) {
+
+        var defaults = {eulerOrder: 'ZYX',
+                container: document.body},
+            opts,
+
+        // Shortcuts
+            extend = namespace.util.extend;
+
+        // Setting options
+        opts = extend( {}, defaults, options );
+
+        // Three.js settings
+        THREE.Object3D.defaultEulerOrder = opts.eulerOrder;
+
+
         this.time = Date.now();
-        this.container = container;
+        this.container = opts.container;
         this.controls = null;
         this.renderer = null;
         this.scene = null;

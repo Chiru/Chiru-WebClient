@@ -1,6 +1,11 @@
-// parseUri 1.2.2
-// (c) Steven Levithan <stevenlevithan.com>
-// MIT License
+// For conditions of distribution and use, see copyright notice in LICENSE
+
+
+/**
+ * @version parseUri 1.2.2
+ * @author Steven Levithan <stevenlevithan.com>
+ *
+**/
 
 function parseUri (str) {
     var	o   = parseUri.options,

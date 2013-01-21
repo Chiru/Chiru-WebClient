@@ -1,9 +1,13 @@
+// For conditions of distribution and use, see copyright notice in LICENSE
+
 /**
- * Global namespace that holds highest level functionality
- * @namespace webtundra
- * @version 0.1 dev
+ * Container for all classes, top level functions, etc.
  *
- */
+ * @version 0.1
+ * @namespace webtundra
+ * @memberOf window
+ **/
+
 
 (function ( namespace, $, undefined ) {
 
@@ -12,10 +16,18 @@
     namespace.NAME = 'WebTundra';
     namespace.ENUMS = {};
 
-    // Basic methods
+    // ENUMS
+    namespace.ENUMS.ATTRIBUTES = namespace.util.createEnum(
+        'none', 'string', 'int', 'real', 'color', 'float2', 'float3','float4', 'bool', 'uint', 'quat',
+        'assetref', 'assetreflist', 'entityref', 'qvariant', 'qvariantlist', 'transform', 'qpoint',
+        'numattributetypes'
+    );
 
-    namespace.initScene = function ( container, options ) {
-       return this.scene = new namespace.SceneManager( container );
+
+    // Basic methods
+    namespace.initScene = function ( options ) {
+
+        return this.scene = new namespace.SceneManager( options );
     };
 
     namespace.initConnection = function ( host, port, options ) {
@@ -24,7 +36,7 @@
         if ( this.scene !== undefined ) {
             this.scene.bindConnection( socket );
         } else {
-            console.error( " ERROR: Create scene before creating a WebSocket connection. " );
+            console.error( " ERROR: Create a scene before creating a WebSocket connection. " );
         }
         return socket;
     };
@@ -33,22 +45,10 @@
         if ( this.scene !== undefined ) {
             this.scene.start();
         } else {
-            console.error( " ERROR: Create a scene before starting the client. " );
+            console.error( " ERROR: Create a scene manager before starting the client. " );
         }
     };
 
-
-
-    // ENUMS
-    namespace.ENUMS.ATTRIBUTES = namespace.util.createEnum(
-        'none', 'string', 'int', 'real', 'color', 'float2', 'float3','float4', 'bool', 'uint', 'quat',
-        'assetref', 'assetreflist', 'entityref', 'qvariant', 'qvariantlist', 'transform', 'qpoint',
-        'numattributetypes'
-    );
-
-    // Three.js Settings
-
-    THREE.Object3D.defaultEulerOrder = 'ZYX';
 
 
     namespace.util.log( namespace.NAME + ' v' + namespace.VERSION );

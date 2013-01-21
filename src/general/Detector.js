@@ -1,6 +1,10 @@
+// For conditions of distribution and use, see copyright notice in LICENSE
+
+
 /**
  * @author alteredq / http://alteredqualia.com/
  * @author mr.doob / http://mrdoob.com/
+ * @author Toni Dahl / https://github.com/K1ll3rF0x
  */
 
 (function ( namespace, $, undefined ) {

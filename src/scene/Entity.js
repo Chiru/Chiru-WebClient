@@ -1,3 +1,6 @@
+// For conditions of distribution and use, see copyright notice in LICENSE
+
+
 (function ( namespace, $, undefined ) {
 
     /**
@@ -5,7 +8,6 @@
      *
      * @constructor
      * @name Entity
-     * @type Function
      * @param {Number} id Unique entity id.
      */
 
@@ -25,7 +27,7 @@
          *
          * @memberOf Entity#
          * @name componentRemoved
-         * @type {Signal}
+         * @type Signal
          */
         this.componentRemoved = new Signal();
 
@@ -34,7 +36,7 @@
          *
          * @memberOf Entity#
          * @name entityActions
-         * @type {Object}
+         * @type Object
          */
 
         this.entityActions = {};
@@ -44,7 +46,7 @@
          *
          * @memberOf Entity#
          * @name components
-         * @type {Object}
+         * @type Object
          */
 
         this.components = {};
@@ -54,7 +56,7 @@
          *
          * @memberOf Entity#
          * @name id
-         * @type {Number}
+         * @type Number
          */
         this.id = id;
 
@@ -64,9 +66,9 @@
      * Gets a component of an entity by component type id.
      *
      * @name getComponent
-     * @type Function
+     * @function
      * @memberOf Entity.prototype
-     * @param {Function} type Pointer to object constructor e.g. namespace.ECPlaceable.
+     * @param {Component} type Pointer to object constructor e.g. namespace.ECPlaceable.
      * @return {*}
      */
 
@@ -87,7 +89,7 @@
      *  Gets a component of an entity by unique component id.
      *
      * @name getComponentById
-     * @type Function
+     * @function
      * @memberOf Entity.prototype
      * @param {Number} id Unique component id.
      * @return {Component|Boolean}
@@ -104,7 +106,7 @@
      * Adds a component to an entity
      *
      * @name addComponent
-     * @type Function
+     * @function
      * @memberOf Entity.prototype
      * @param {Component} component Component of a specific type. e.g. ECMesh
      */
@@ -126,7 +128,7 @@
      * Removes a component from an entity.
      *
      * @name removeComponent
-     * @type Function
+     * @function
      * @memberOf Entity.prototype
      * @param {Component} component Component of a specific type.
      * @return {Boolean}

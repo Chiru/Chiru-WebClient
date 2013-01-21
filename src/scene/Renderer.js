@@ -1,3 +1,6 @@
+// For conditions of distribution and use, see copyright notice in LICENSE
+
+
 var Renderer = function(options) {
 
     function setColorMode( o3d, colorMode ) {

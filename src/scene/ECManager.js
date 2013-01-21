@@ -1,3 +1,6 @@
+// For conditions of distribution and use, see copyright notice in LICENSE
+
+
 (function ( namespace, $, undefined ) {
 
     /**
@@ -5,7 +8,6 @@
      *
      * @constructor
      * @name ECManager
-     * @type Function
      * @param {object} sceneMgr Pointer to scene manager.
      */
 

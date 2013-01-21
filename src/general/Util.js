@@ -1,9 +1,69 @@
+// For conditions of distribution and use, see copyright notice in LICENSE
+
 (function ( namespace, undefined ) {
 
     var util = namespace.util = (function () {
 
 
         return {
+
+            log: function ( msg ) {
+                var str, el;
+                if ( typeof(msg) === 'string' ) {
+                    str = msg;
+                } else if ( typeof(msg) === 'object' ) {
+                    str = JSON.stringify( msg );
+                } else {
+                    str = "ERROR: Use Strings or Objects with log().";
+                }
+                el = document.getElementById( "log" );
+                if ( el !== null ) {
+                    el.innerHTML +=
+                        "&nbsp[" + new Date().toTimeString().replace( /.*(\d{2}:\d{2}:\d{2}).*/, "$1" ) + "] " + str + "<br>";
+                    el.scrollTop = el.scrollHeight;
+                } else {
+                    console.log( msg );
+                }
+            },
+
+
+            //Polyfills
+
+            extend: function ( orig ) {
+                if ( orig === null ) {
+                    return orig;
+                }
+
+                var i, argsLen = arguments.length,
+                    obj, prop, getter, setter;
+
+                for ( i = 1; i < argsLen; i++ ) {
+                    obj = arguments[i];
+
+                    if ( obj !== null ) {
+                        for ( prop in obj ) {
+                            if ( obj.hasOwnProperty( prop ) ) {
+                                getter = obj.__lookupGetter__( prop );
+                                setter = obj.__lookupSetter__( prop );
+
+                                if ( getter || setter ) {
+                                    if ( getter ) {
+                                        orig.__defineGetter__( prop, getter );
+                                    }
+                                    if ( setter ) {
+                                        orig.__defineSetter__( prop, setter );
+                                    }
+                                } else {
+                                    orig[ prop ] = obj[ prop ];
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return orig;
+            },
+
             toType: (function ( global ) {
                 return function ( obj ) {
                     if ( obj === global ) {
@@ -28,26 +88,8 @@
                     forEach.call( arguments, assign, e );
                     return freeze( e );
                 };
-            }()),
+            }())
 
-            log: function ( msg ) {
-                    var str, el;
-                    if ( typeof(msg) === 'string' ) {
-                        str = msg;
-                    } else if ( typeof(msg) === 'object' ) {
-                        str = JSON.stringify(msg);
-                    }else {
-                        str = "ERROR: Use Strings or Objects with log().";
-                    }
-                    el = document.getElementById( "log" );
-                    if ( el !== null ) {
-                        el.innerHTML +=
-                            "&nbsp[" + new Date().toTimeString().replace( /.*(\d{2}:\d{2}:\d{2}).*/, "$1" ) + "] " + str + "<br>";
-                        el.scrollTop = el.scrollHeight;
-                    } else {
-                        console.log( msg );
-                    }
-                }
         };
     }());
 

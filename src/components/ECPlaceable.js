@@ -1,4 +1,16 @@
+// For conditions of distribution and use, see copyright notice in LICENSE
+
+
 (function ( namespace, $, undefined ) {
+
+    /**
+     * ECPlaceable constructor
+     *
+     * @constructor
+     * @augments Component
+     * @name ECPlaceable
+     * @param {object} sceneMgr Pointer to scene manager.
+     */
 
     var ECPlaceable = namespace.ECPlaceable = function ( sceneMgr ) {
 

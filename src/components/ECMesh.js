@@ -1,3 +1,6 @@
+// For conditions of distribution and use, see copyright notice in LICENSE
+
+
 (function ( namespace, $, undefined ) {
 
     /**
@@ -6,7 +9,6 @@
      * @constructor
      * @augments Component
      * @name ECMesh
-     * @type Function
      * @param {object} sceneMgr Pointer to scene manager.
      */
 

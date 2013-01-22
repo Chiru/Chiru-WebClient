@@ -23,7 +23,6 @@
         this.placeable = null;
         this.castShadows = false;
         this.offsetNode = new THREE.Object3D();
-        this.meshObject = null;
         this.mesh = null;
         this.transform = null;
         this.attached = false;
@@ -96,12 +95,15 @@
 
     ECMesh.prototype.loadMesh = function () {
 
-        var self = this, request, mesh;
         if ( this.meshRef === null ) {
             return;
         }
 
-        request = this.assetManager.requestAsset( this.meshRef );
+        var assetManager = this.sceneManager.assetManager,
+            self = this, request, mesh;
+
+
+        request = assetManager.requestAsset( this.meshRef );
         if ( request ) {
             request.add( function ( asset ) {
                 if ( asset ) {
@@ -110,7 +112,7 @@
                 }
             } );
         } else {
-            mesh = this.assetManager.getAsset( this.meshRef );
+            mesh = assetManager.getAsset( this.meshRef );
             if ( mesh ) {
                 this.mesh = mesh;
                 this.onMeshLoaded();
@@ -128,7 +130,7 @@
 
         if ( mesh.geometry && mesh.material ) {
             newMesh = new THREE.Mesh( mesh.geometry, mesh.material );
-        }else{
+        } else {
             return false;
         }
 
@@ -161,16 +163,20 @@
         node = this.offsetNode;
         mesh = this.prepareMesh( this.mesh );
 
-        if ( mesh ) {
-
-            node.add (mesh);
-            node['castShadow'] = this.castShadows;
-            transVal = this.transform['val'];
-            node.position.set( transVal[0], transVal[1], transVal[2] );
-            node.rotation.set(transVal[3]*(Math.PI/180), transVal[4]*(Math.PI/180), transVal[5]*(Math.PI/180));
-            node.scale.set( transVal[6], transVal[7], transVal[8] );
-            this.attachMesh();
+        if ( !mesh ) {
+            return false;
         }
+
+
+        node.add( mesh );
+        node['castShadow'] = this.castShadows;
+        transVal = this.transform['val'];
+        node.position.set( transVal[0], transVal[1], transVal[2] );
+        node.rotation.set( transVal[3] * (Math.PI / 180), transVal[4] * (Math.PI / 180), transVal[5] * (Math.PI / 180) );
+        node.scale.set( transVal[6], transVal[7], transVal[8] );
+        this.attachMesh();
+        return true;
+
 
     };
 
@@ -184,11 +190,11 @@
         }
 
         sceneNode = placeable.getSceneNode();
-        if(sceneNode) {
+        if ( sceneNode ) {
             offsetNode.visible = placeable.visible;
-            sceneNode.add(offsetNode);
-        this.sceneManager.addToScene( sceneNode );
-        this.attached = true;
+            sceneNode.add( offsetNode );
+            this.sceneManager.addToScene( sceneNode );
+            this.attached = true;
         }
 
 

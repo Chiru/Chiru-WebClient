@@ -47,7 +47,7 @@
                 console.log( "Placeable: transform attr added", state );
                 this.transform = attr;
             }
-            var transVal = this.transform['val'], quat;
+            var transVal = this.transform['val'];
             node.position.set( transVal[0], transVal[1], transVal[2] );
             node.rotation.set(transVal[3]*(Math.PI/180), transVal[4]*(Math.PI/180), transVal[5]*(Math.PI/180));
             node.scale.set( transVal[6], transVal[7], transVal[8] );

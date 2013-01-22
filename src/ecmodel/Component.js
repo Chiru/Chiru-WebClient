@@ -14,7 +14,6 @@
     var Component = namespace.Component = function ( sceneMgr ) {
 
         this.sceneManager = sceneMgr;
-        this.assetManager = sceneMgr.assetManager;
 
         this.id = null;
         this.parent = null;

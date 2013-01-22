@@ -16,14 +16,64 @@
         return;
     }
 
-    // Defining the rendering container
-    var body = document.body, container;
+    // Getting the webgl container
+    namespace.container = document.getElementById( 'webglContainer' );
 
-    container = document.getElementById( 'webglContainer' );
 
-    webtundra.initScene( {container: container} );
-    webtundra.initConnection( '127.0.0.1', '9002', {allowReconnect: false} );
-    webtundra.start();
+    //Initializing the websocket connection and adding some basic events
+    namespace.ws = webtundra.initConnection( '127.0.0.1', '9002', {allowReconnect: false} );
+    namespace.ws.bindEvent( "connected", function ( url ) {
+        console.log( "WebSocket connection opened." );
+    } );
+
+    namespace.ws.bindEvent( "disconnected", function ( e ) {
+        console.log( "WebSocket closed." );
+        /*
+         self.websocket.parseMessage(JSON.stringify({event:'EntityAdded',
+         data: {entityId: '1',
+         components:{1:
+         {typeId: '17', id:'1',
+         attributes:
+         {1:{name:"Mesh ref", val:"WoodPallet.mesh"}, 0:{name:"Transform", val:"0,0,0,0,0,0,0.14,0.2,0.14", typeId: '16'}}},
+         2:{typeId: '20', id:'1',
+         attributes:
+         {0:{name: "Transform", val:"0,-5,0,0,0,0,100,1,100"}}}
+         }
+         }
+         }))
+         self.websocket.parseMessage(JSON.stringify({event:'EntityAdded',
+         data: {entityId: '2',
+         components:{1:
+         {typeId: '17', id:'1',
+         attributes:
+         {1:{name: "Mesh ref", val:"fish.mesh"}, 0:{name: "Transform", val:"0,0,0,0,0,0,1,1,1", typeId: '16'}}},
+         2:{typeId: '20', id:'1',
+         attributes:
+         {0:{name: "Transform", val:"1.45201,-4.65185,5.40487,-47.8323,42.1262,-145.378,1,1,1"}}}
+         }
+         }
+         }))
+         */
+
+    } );
+
+    namespace.ws.bindEvent( "reconnecting", function ( e ) {
+        console.log( "Attempting to reconnect to " + e.host + " (Attempt: " + e.attempt + ")" );
+
+    } );
+
+    namespace.ws.bindEvent( "error", function ( e ) {
+        console.log( "WebSocket error" + e );
+    } );
+
+
+
+    //Initializing the scene manager
+    namespace.scene = webtundra.initScene( {container: namespace.container, websocket: namespace.ws} );
+
+
+    // Starting the scene manager
+    namespace.scene.start();
 
     /** Worker example
      var script =

@@ -18,29 +18,24 @@
 
     // Basic methods
     namespace.initScene = function ( options ) {
-
-        return this.scene = new namespace.SceneManager( options );
+        try {
+            return this.scene = new namespace.SceneManager( options );
+        } catch (e) {
+            console.log( e.stack );
+        }
     };
 
     namespace.initConnection = function ( host, port, options ) {
-        var socket = new namespace.WSManager( host, port, options );
+        var socket;
 
-        if ( this.scene !== undefined ) {
-            this.scene.bindConnection( socket );
-        } else {
-            console.error( " ERROR: Create a scene before creating a WebSocket connection. " );
+        try {
+            socket = new namespace.WSManager( host, port, options );
+        } catch (e) {
+            console.error( 'ERROR:', e.stack );
         }
+
         return socket;
     };
-
-    namespace.start = function () {
-        if ( this.scene !== undefined ) {
-            this.scene.start();
-        } else {
-            console.error( " ERROR: Create a scene manager before starting the client. " );
-        }
-    };
-
 
 
     namespace.util.log( namespace.NAME + ' v' + namespace.VERSION );

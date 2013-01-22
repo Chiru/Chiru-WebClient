@@ -16,7 +16,8 @@
 
         var defaults = {
                 eulerOrder: 'ZYX',
-                container: document.body
+                container: document.body,
+                websocket: null
             },
             opts,
 
@@ -33,15 +34,21 @@
         this.time = Date.now();
         this.container = opts.container;
         this.controls = null;
-        this.renderer = null;
-        this.scene = null;
+        this.renderer = new THREE.WebGLRenderer( {
+            antiAlias: true, // to get smoother output
+            preserveDrawingBuffer: false, // true to allow screen shot
+            precision: 'highp'
+        } );
+        this.scene = new THREE.Scene();
         this.camera = null;
         this.loadedObjects = [];
 
-        this.websocket = null;
+        this.websocket = opts.websocket;
         // In future implementation the storage url will come through a websocket, but it's now defined here for testing
         this.assetManager = new namespace.AssetManager( {}, "http://localhost:8000/scenes/avatar/" );
+
         this.ecManager = new namespace.ECManager( this );
+
 
         this.init();
     };
@@ -94,121 +101,7 @@
             // Binding events
 
             try {
-                this.websocket.bindEvent( "connected", function ( url ) {
-                    console.log( "WebSocket connection opened." );
-                } );
 
-                this.websocket.bindEvent( "disconnected", function ( e ) {
-                    console.log( "WebSocket closed." );
-                    /*
-                     self.websocket.parseMessage(JSON.stringify({event:'EntityAdded',
-                     data: {entityId: '1',
-                     components:{1:
-                     {typeId: '17', id:'1',
-                     attributes:
-                     {1:{name:"Mesh ref", val:"WoodPallet.mesh"}, 0:{name:"Transform", val:"0,0,0,0,0,0,0.14,0.2,0.14", typeId: '16'}}},
-                     2:{typeId: '20', id:'1',
-                     attributes:
-                     {0:{name: "Transform", val:"0,-5,0,0,0,0,100,1,100"}}}
-                     }
-                     }
-                     }))
-                     self.websocket.parseMessage(JSON.stringify({event:'EntityAdded',
-                     data: {entityId: '2',
-                     components:{1:
-                     {typeId: '17', id:'1',
-                     attributes:
-                     {1:{name: "Mesh ref", val:"fish.mesh"}, 0:{name: "Transform", val:"0,0,0,0,0,0,1,1,1", typeId: '16'}}},
-                     2:{typeId: '20', id:'1',
-                     attributes:
-                     {0:{name: "Transform", val:"1.45201,-4.65185,5.40487,-47.8323,42.1262,-145.378,1,1,1"}}}
-                     }
-                     }
-                     }))
-                     */
-
-                } );
-
-                this.websocket.bindEvent( "reconnecting", function ( e ) {
-                    console.log( "Attempting to reconnect to " + e.host + " (Attempt: " + e.attempt + ")" );
-
-                } );
-
-                this.websocket.bindEvent( "error", function ( e ) {
-                    console.log( "WebSocket error" + e );
-                } );
-
-
-                this.websocket.bindEvent( "EntityAdded", function ( data ) {
-                    console.log( data );
-                    namespace.util.log( "Got 'EntityAdded'-event, entity id: " + data );
-
-                    if ( data['entityId'] !== undefined ) {
-                        var e = self.ecManager.createEntity( data['entityId'] ),
-                            component;
-
-                        if ( data.hasOwnProperty( 'components' ) ) {
-                            for ( var id in data['components'] ) {
-                                component = self.ecManager.createComponent( id, data['components'][id] );
-                                if ( component ) {
-                                    component.setParentEnt( e );
-                                    console.log( component );
-                                    e.addComponent( component );
-                                }
-                            }
-                        }
-                    }
-                    console.log( self.ecManager.listEntities() );
-
-                } );
-
-                this.websocket.bindEvent( "ComponentsRemoved", function ( data ) {
-                    console.log( "ComponentsRemoved:" );
-                    console.log( data );
-                    //namespace.util.log("Got 'ComponentsRemoved'-event, entity id: " + data.entityId);
-
-                } );
-
-                this.websocket.bindEvent( "ComponentsAdded", function ( data ) {
-                    console.log( "ComponentsAdded:" );
-                    console.log( data );
-                    //namespace.util.log("Got 'ComponentsAdded'-event, entity id: " + data.entityId);
-
-                } );
-
-                this.websocket.bindEvent( "AttributesRemoved", function ( data ) {
-                    console.log( "AttributesRemoved:" );
-                    console.log( data );
-                    //namespace.util.log("Got 'Entity Added'-event, entity id: " + data);
-
-                } );
-
-                this.websocket.bindEvent( "AttributesAdded", function ( data ) {
-                    console.log( "AttributesAdded:" );
-                    console.log( data );
-                    //namespace.util.log("Got 'AttributesAdded'-event, entity id: " + data.entityId);
-
-
-                } );
-
-                this.websocket.bindEvent( "AttributesChanged", function ( data ) {
-                    //console.log( "AttributesChanged:" );
-                    //console.log( data );
-                    //namespace.util.log("Got 'AttributesChanged'-event, entity id: " + data.entityId);
-                    var ent, attrs = data['attrs'], cId, comp;
-                    ent = self.ecManager.getEntity( data['entityId'] );
-                    if ( ent ) {
-                        for ( var i in attrs ) {
-                            cId = attrs[i]['compId'];
-                            comp = ent.getComponentById( cId );
-                            if ( comp ) {
-                                comp.updateAttribute( i, attrs[i] );
-                            }
-                        }
-                    }
-
-
-                } );
 
                 return true;
 
@@ -328,44 +221,68 @@
 
     };
 
+    SceneManager.prototype.setAmbientLight = function ( color ) {
+        if ( namespace.util.toType( color ) !== 'array' ) {
+            return;
+        }
+
+        var scene = this.scene, light;
+        if ( scene ) {
+            light = this.getSceneObject( function ( obj ) {
+                return obj instanceof THREE.AmbientLight;
+            } );
+
+            if ( light ) {
+                light.color.setRGB( color[0], color[1], color[2] );
+            } else {
+                light = new THREE.AmbientLight();
+                light.color.setRGB( color[0], color[1], color[2] );
+                scene.add( light );
+            }
+        }
+
+    };
+
+    SceneManager.prototype.getSceneObject = function ( callBack ) {
+        if ( typeof callBack !== "function" ) {
+            return false;
+        }
+
+        var children = this.scene.children,
+            childLength = this.scene.children.length,
+            obj, i;
+
+        if ( children ) {
+            for ( i = childLength; i--; ) {
+                obj = children[i];
+                if ( callBack( obj ) ) {
+                    return obj;
+                }
+            }
+        }
+        return false;
+
+    };
+
     SceneManager.prototype.init = function () {
 
         var body = document.body,
             self = this,
             dirLight;
 
-
-        this.renderer = new THREE.WebGLRenderer( {
-            antiAlias: true, // to get smoother output
-            preserveDrawingBuffer: false, // true to allow screen shot
-            precision: 'highp'
-        } );
-
+        // Renderer settings
         this.renderer.setClearColorHex( 0xBBBBBB, 1 );
         this.renderer.setSize( $( this.container ).innerWidth(), $( this.container ).innerHeight() );
         this.container.appendChild( this.renderer.domElement );
 
-
-        this.scene = new THREE.Scene();
-
-        /** TEMP SCENE **/
-        this.scene.fog = new THREE.FogExp2( 0x000000, 0.00000025 );
+        // Fog
+        //this.scene.fog = new THREE.FogExp2( 0x000000, 0.00000025 );
 
         // Camera
         this.camera = new THREE.PerspectiveCamera( 45, ( $( this.container ).innerWidth() / $( this.container ).innerHeight()), 1, 5000 );
         this.camera.lookAt( this.scene.position );
 
         this.scene.add( this.camera );
-
-
-        // Lights
-
-        dirLight = new THREE.DirectionalLight( 0xffffff );
-        dirLight.intensity = 2;
-        dirLight.position.set( 17, 10, 15 );
-        dirLight.lookAt( this.scene.position );
-        this.scene.add( dirLight );
-        this.scene.add( new THREE.AmbientLight( 0xffffff ) );
 
         // Controls
         this.controls = new THREE.PointerLockControls( this.camera );
@@ -402,25 +319,29 @@
 
 
         // Just testing custom shaders
-        var vertex = "varying vec3 vNormal;void main() { vNormal = normal;gl_Position = projectionMatrix *modelViewMatrix *vec4(position,1.0);}";
-        var fragment = "varying vec3 vNormal;void main() {vec3 light = vec3(0.5,0.2,1.0);light = normalize(light);float dProd = max(0.0, dot(vNormal, light));gl_FragColor = vec4(dProd, dProd, dProd, 1.0);}";
-        var material = new THREE.ShaderMaterial( {
-            vertexShader: vertex,
-            fragmentShader: fragment
-        } );
+        /*
+         var vertex = "varying vec3 vNormal;void main() { vNormal = normal;gl_Position = projectionMatrix *modelViewMatrix *vec4(position,1.0);}";
+         var fragment = "varying vec3 vNormal;void main() {vec3 light = vec3(0.5,0.2,1.0);light = normalize(light);float dProd = max(0.0, dot(vNormal, light));gl_FragColor = vec4(dProd, dProd, dProd, 1.0);}";
+         var material = new THREE.ShaderMaterial( {
+         vertexShader: vertex,
+         fragmentShader: fragment
+         } );
 
-        var mesh = new THREE.Mesh( new THREE.TorusKnotGeometry( 200, 50, 64, 10 ), material );
-        this.loadedObjects.push( mesh );
-        this.scene.add( mesh );
-
+         var mesh = new THREE.Mesh( new THREE.TorusKnotGeometry( 200, 50, 64, 10 ), material );
+         this.loadedObjects.push( mesh );
+         this.scene.add( mesh );
+         */
     };
 
     SceneManager.prototype.start = function () {
         try {
+            if ( !this.websocket ) {
+                throw new Error( ["Invalid WebSocket connection."] );
+            }
             this.renderLoop();
             this.websocket.connect();
         } catch (e) {
-            console.error( 'ERROR:', e.stack );
+            console.error( 'SceneManager:', e.stack );
         }
     };
 

@@ -145,6 +145,9 @@
             }
         }
 
+        newMesh['castShadow'] = this.castShadows;
+        newMesh['receiveShadow'] = this.castShadows;
+
         return newMesh;
 
     };
@@ -169,12 +172,13 @@
 
 
         node.add( mesh );
-        node['castShadow'] = this.castShadows;
+
         transVal = this.transform['val'];
         node.position.set( transVal[0], transVal[1], transVal[2] );
         node.rotation.set( transVal[3] * (Math.PI / 180), transVal[4] * (Math.PI / 180), transVal[5] * (Math.PI / 180) );
         node.scale.set( transVal[6], transVal[7], transVal[8] );
         this.attachMesh();
+
         return true;
 
 

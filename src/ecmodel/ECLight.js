@@ -80,14 +80,30 @@
 
     ECEnvironmentLight.prototype.updateSunLight = function () {
         var sunLight = this.sunLight, sunColor = this.sunColor['val'],
-            dir = this.sunDirection['val'], b;
+            dir = this.sunDirection['val'];
 
         if ( sunLight ) {
-            b = this.sunBrightness['val'];
             sunLight.color.setRGB( sunColor[0], sunColor[1], sunColor[2] );
-            sunLight.color.multiplyScalar(b);
-            sunLight.castShadow = this.sunCastShadows['val'];
+            //sunLight.color.multiplyScalar(this.sunBrightness['val']);
+            if ( this.sunCastShadows['val'] ) {
+                sunLight.castShadow = true;
+                //sunLight.shadowCameraVisible = true;
+                sunLight.shadowDarkness = 0.6;
+                sunLight.shadowBias = 0.000065;
+                sunLight.shadowCascade = false;
+                sunLight.shadowCascadeCount = 3;
+                sunLight.shadowCascadeNearZ = [ -1.000, 0.9, 0.975 ];
+                sunLight.shadowCascadeFarZ  = [  0.9, 0.975, 1.000 ];
+                sunLight.shadowCascadeWidth = [ 1024, 1024, 1024 ];
+                sunLight.shadowCascadeHeight = [ 1024, 1024, 1024 ];
+                sunLight.shadowCascadeBias = [ 0.00005, 0.000065, 0.000065 ];
+                //sunLight.shadowCascadeOffset.set( 0, 0, -5 );
+                sunLight.shadowMapWidth = 1024;
+                sunLight.shadowMapHeight = 1024;
+            }
+            sunLight.position.set( 100, 55, 50 );
             sunLight.target.position.set( dir[0], dir[1], dir[2] );
+            console.log( sunLight )
         }
 
     };

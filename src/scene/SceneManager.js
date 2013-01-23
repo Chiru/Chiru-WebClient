@@ -3,6 +3,9 @@
 
 (function ( namespace, $, undefined ) {
 
+    // Util shortcuts
+    var extend = namespace.util.extend;
+
     /**
      * Creates a scene manager object
      *
@@ -19,10 +22,7 @@
                 container: document.body,
                 websocket: null
             },
-            opts,
-
-        // Shortcuts
-            extend = namespace.util.extend;
+            opts;
 
         // Setting options
         opts = extend( {}, defaults, options );
@@ -34,12 +34,8 @@
         this.time = Date.now();
         this.container = opts.container;
         this.controls = null;
-        this.renderer = new THREE.WebGLRenderer( {
-            antiAlias: true, // to get smoother output
-            preserveDrawingBuffer: false, // true to allow screen shot
-            precision: 'highp'
-        } );
-        this.scene = new THREE.Scene();
+        this.renderer = null;
+        this.scene = null;
         this.camera = null;
         this.loadedObjects = [];
 
@@ -266,32 +262,47 @@
 
     SceneManager.prototype.init = function () {
 
-        var body = document.body,
-            self = this,
-            dirLight;
+        var body = document.body, renderer, scene, camera, controls,
+            container = this.container, self = this;
 
-        // Renderer settings
-        this.renderer.setClearColorHex( 0xBBBBBB, 1 );
-        this.renderer.setSize( $( this.container ).innerWidth(), $( this.container ).innerHeight() );
-        this.container.appendChild( this.renderer.domElement );
 
-        // Fog
-        //this.scene.fog = new THREE.FogExp2( 0x000000, 0.00000025 );
+        scene = this.scene = new THREE.Scene();
 
         // Camera
-        this.camera = new THREE.PerspectiveCamera( 45, ( $( this.container ).innerWidth() / $( this.container ).innerHeight()), 1, 5000 );
-        this.camera.lookAt( this.scene.position );
 
-        this.scene.add( this.camera );
+        camera = this.camera = new THREE.PerspectiveCamera( 45, ( $( container ).innerWidth() / $( container ).innerHeight()), 1, 4000 );
+        camera.lookAt( scene.position );
+        scene.add( camera );
+
+
+        // Renderer settings
+        renderer = this.renderer = new THREE.WebGLRenderer( {
+            antialias: true,
+            clearColor: 0x87CEEB,
+            clearAlpha: 1,
+            preserveDrawingBuffer: false
+        } );
+        renderer.gammaInput = true;
+        renderer.gammaOutput = true;
+        /*
+        renderer.shadowMapEnabled = true;
+        renderer.shadowMapSoft = true;
+        renderer.shadowMapCascade = false;
+        */
+        //renderer.physicallyBasedShading = true;
+
+        renderer.setSize( $( this.container ).innerWidth(), $( this.container ).innerHeight() );
+        container.appendChild( this.renderer.domElement );
+
 
         // Controls
-        this.controls = new THREE.PointerLockControls( this.camera );
-        this.scene.add( this.controls.getObject() );
+        controls = this.controls = new THREE.PointerLockControls( this.camera );
+        scene.add( this.controls.getObject() );
 
-        this.controls.rayCaster = new THREE.Raycaster();
-        this.controls.rayCaster.ray.direction.set( 0, -1, 0 );
+        controls.rayCaster = new THREE.Raycaster();
+        controls.rayCaster.ray.direction.set( 0, -1, 0 );
 
-        this.controls.enabled = false;
+        controls.enabled = false;
 
         function pointerLockChange() {
             if ( document.mozPointerLockElement === body ||
@@ -317,20 +328,6 @@
         //Windows resize listener
         this.windowResize();
 
-
-        // Just testing custom shaders
-        /*
-         var vertex = "varying vec3 vNormal;void main() { vNormal = normal;gl_Position = projectionMatrix *modelViewMatrix *vec4(position,1.0);}";
-         var fragment = "varying vec3 vNormal;void main() {vec3 light = vec3(0.5,0.2,1.0);light = normalize(light);float dProd = max(0.0, dot(vNormal, light));gl_FragColor = vec4(dProd, dProd, dProd, 1.0);}";
-         var material = new THREE.ShaderMaterial( {
-         vertexShader: vertex,
-         fragmentShader: fragment
-         } );
-
-         var mesh = new THREE.Mesh( new THREE.TorusKnotGeometry( 200, 50, 64, 10 ), material );
-         this.loadedObjects.push( mesh );
-         this.scene.add( mesh );
-         */
     };
 
     SceneManager.prototype.start = function () {

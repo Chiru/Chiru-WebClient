@@ -93,7 +93,7 @@
                 sunLight.shadowCascade = false;
                 sunLight.shadowCascadeCount = 3;
                 sunLight.shadowCascadeNearZ = [ -1.000, 0.9, 0.975 ];
-                sunLight.shadowCascadeFarZ  = [  0.9, 0.975, 1.000 ];
+                sunLight.shadowCascadeFarZ = [  0.9, 0.975, 1.000 ];
                 sunLight.shadowCascadeWidth = [ 1024, 1024, 1024 ];
                 sunLight.shadowCascadeHeight = [ 1024, 1024, 1024 ];
                 sunLight.shadowCascadeBias = [ 0.00005, 0.000065, 0.000065 ];
@@ -101,9 +101,9 @@
                 sunLight.shadowMapWidth = 1024;
                 sunLight.shadowMapHeight = 1024;
             }
-            sunLight.position.set( 100, 55, 50 );
-            sunLight.target.position.set( dir[0], dir[1], dir[2] );
-            console.log( sunLight )
+            sunLight.position.set( -1000 * dir[0], -1000 * dir[1], -1000 * dir[2] );
+            sunLight.target.position.set( 0, 0, 0 );
+            //console.log( sunLight )
         }
 
     };

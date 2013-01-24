@@ -1,7 +1,7 @@
 // For conditions of distribution and use, see copyright notice in LICENSE
 
 
-(function ( namespace, $, undefined ) {
+(function ( namespace, undefined ) {
 
     /**
      * ECMaterial constructor
@@ -13,13 +13,15 @@
      * @param {object} sceneMgr Pointer to scene manager.
      */
 
-    var ECMaterial = namespace.ECMaterial = function ( assetMgr ) {
-
+    var ECMaterial = namespace.ECMaterial = function ( sceneMgr ) {
+        //Inherit component properties
+        namespace.Component.call( this, sceneMgr );
 
 
 
     };
 
+    ECMaterial.prototype = Object.create( namespace.Component.prototype );
 
 
-}( window['webtundra'] = window['webtundra'] || {}, jQuery ));
+}( window['webtundra'] = window['webtundra'] || {} ));

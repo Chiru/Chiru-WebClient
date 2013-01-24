@@ -106,6 +106,9 @@
      namespace.worker.postMessage( '' );
      **/
 
+    console.log("Supported WebGL extensions:");
+    console.log(namespace.container.children[0].getContext( 'experimental-webgl' ).getSupportedExtensions());
+
 
 }( window.myNamespace = window.myNamespace || {} ));
 

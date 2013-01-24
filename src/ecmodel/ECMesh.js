@@ -103,7 +103,7 @@
             self = this, request, mesh;
 
 
-        request = assetManager.requestAsset( this.meshRef );
+        request = assetManager.requestAsset( this.meshRef, 'mesh' );
         if ( request ) {
             request.add( function ( asset ) {
                 if ( asset ) {

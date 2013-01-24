@@ -13,6 +13,10 @@
 
     var Component = namespace.Component = function ( sceneMgr ) {
 
+        if ( !sceneMgr ) {
+            throw new Error( "Component: Could not get SceneManager object." );
+        }
+
         this.sceneManager = sceneMgr;
 
         this.id = null;

@@ -21,7 +21,7 @@
 
         if ( connection ) {
             connection.bindEvent( "EntityAdded", function ( data ) {
-                console.log( data );
+                //console.log( data );
                 namespace.util.log( "Got 'EntityAdded'-event, entity id: " + data );
 
                 if ( data['entityId'] !== undefined ) {
@@ -33,7 +33,7 @@
                             component = self.createComponent( id, data['components'][id] );
                             if ( component ) {
                                 component.setParentEnt( e );
-                                console.log( component );
+                                //console.log( component );
                                 e.addComponent( component );
                             }
                         }
@@ -89,7 +89,7 @@
 
             } );
         } else {
-            throw new Error(["ECManager: Could not get WebSocket connection pointer."] );
+            throw new Error( ["ECManager: Could not get WebSocket connection pointer."] );
         }
     };
 
@@ -130,6 +130,7 @@
 
             switch (typeId) {
 
+                // EC_EnvironmentLight
             case '8':
             {
                 console.log( "Creating ECEnvironmentLight..." );
@@ -137,6 +138,13 @@
 
             }
 
+                break;
+
+            case '10':
+            {
+                console.log( "Creating ECSky..." );
+                component = new namespace.ECSky( sceneManager );
+            }
                 break;
 
                 // EC_Mesh
@@ -157,6 +165,16 @@
 
                 console.log( "Creating ECPlaceable..." );
                 component = new namespace.ECPlaceable( sceneManager );
+            }
+
+                break;
+
+                // EC_Material
+            case '31':
+            {
+
+                console.log( "Creating ECMaterial..." );
+                component = new namespace.ECMaterial( sceneManager );
             }
 
                 break;

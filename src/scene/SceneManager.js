@@ -207,7 +207,7 @@
     SceneManager.prototype.addToScene = function ( object ) {
 
         this.scene.add( object );
-        console.log( object )
+        //console.log( object )
 
     };
 
@@ -270,7 +270,7 @@
 
         // Camera
 
-        camera = this.camera = new THREE.PerspectiveCamera( 45, ( $( container ).innerWidth() / $( container ).innerHeight()), 1, 4000 );
+        camera = this.camera = new THREE.PerspectiveCamera( 45, ( $( container ).innerWidth() / $( container ).innerHeight()), 1, 10000 );
         camera.lookAt( scene.position );
         scene.add( camera );
 
@@ -278,17 +278,17 @@
         // Renderer settings
         renderer = this.renderer = new THREE.WebGLRenderer( {
             antialias: true,
-            clearColor: 0x87CEEB,
+            clearColor: 0xFEFEFE, //0x87CEEB,
             clearAlpha: 1,
             preserveDrawingBuffer: false
         } );
         renderer.gammaInput = true;
         renderer.gammaOutput = true;
         /*
-        renderer.shadowMapEnabled = true;
-        renderer.shadowMapSoft = true;
-        renderer.shadowMapCascade = false;
-        */
+         renderer.shadowMapEnabled = true;
+         renderer.shadowMapSoft = true;
+         renderer.shadowMapCascade = false;
+         */
         //renderer.physicallyBasedShading = true;
 
         renderer.setSize( $( this.container ).innerWidth(), $( this.container ).innerHeight() );
@@ -314,19 +314,53 @@
             }
         }
 
-        document.addEventListener( 'webkitpointerlockchange', pointerLockChange, false );
-        body.addEventListener( 'click', function ( event ) {
-            if ( document.mozPointerLockElement !== body &&
-                document.webkitPointerLockElement !== body &&
-                document.pointerLockElement !== body ) {
-                body.requestPointerLock = body.requestPointerLock || body.mozRequestPointerLock || body.webkitRequestPointerLock;
+        function fullScreenChange() {
+            if ( document.webkitFullscreenElement === body ||
+                document.mozFullscreenElement === body ||
+                document.mozFullScreenElement === body ) { // Older API upper case 'S'.
+                // Element is fullscreen, now we can request pointer lock
+                body.requestPointerLock = body.requestPointerLock ||
+                    body.mozRequestPointerLock ||
+                    body.webkitRequestPointerLock;
                 body.requestPointerLock();
+            }
+        }
+
+        document.addEventListener( 'webkitpointerlockchange', pointerLockChange, false );
+        document.addEventListener( 'mozpointerlockchange', pointerLockChange, false );
+        document.addEventListener( 'pointerlockchange', pointerLockChange, false );
+        document.addEventListener( 'fullscreenchange', fullScreenChange, false );
+        document.addEventListener( 'mozfullscreenchange', fullScreenChange, false );
+        document.addEventListener( 'webkitfullscreenchange', fullScreenChange, false );
+
+        body.addEventListener( 'click', function ( event ) {
+            if ( body.webkitRequestPointerLock ) {
+                if ( document.mozPointerLockElement !== body &&
+                    document.webkitPointerLockElement !== body &&
+                    document.pointerLockElement !== body ) {
+                    body.requestPointerLock = body.requestPointerLock ||
+                        body.mozRequestPointerLock ||
+                        body.webkitRequestPointerLock;
+                    body.requestPointerLock();
+                }
+            } else {
+                body.requestFullscreen = body.requestFullscreen ||
+                    body.mozRequestFullscreen ||
+                    body.mozRequestFullScreen || // Older API upper case 'S'.
+                    body.webkitRequestFullscreen;
+                body.requestFullscreen();
             }
 
         }, false );
 
         //Windows resize listener
         this.windowResize();
+
+
+
+        // Helpers for developing
+        var axes = new THREE.AxisHelper();
+        scene.add( axes );
 
     };
 
@@ -342,6 +376,8 @@
         }
     };
 
-}( window['webtundra'] = window['webtundra'] || {}, jQuery ));
+}( window['webtundra'] = window['webtundra'] || {}, jQuery )
+    )
+;
 
 

@@ -71,26 +71,127 @@
 
     };
 
+
     ECSky.prototype.createSky = function ( cubeTexture ) {
-        var shader, material, skyBox;
+        var shader, material, skyBox, geometry, distance = this.distance['val'];
+        //inverse = this.sceneManager.camera.inverse;
 
         shader = THREE.ShaderLib[ "cube" ];
         shader.uniforms[ "tCube" ].value = cubeTexture;
 
+        /*
+         shader.uniforms["cameraRotation"] = {type: 'm4', value: inverse};
+         shader.vertexShader = [
+         "uniform mat4 cameraRotation;",
+         "varying vec3 vWorldPosition;",
+
+         "void main() {",
+
+         "vec4 worldPosition = modelMatrix * vec4( position, 1.0 );",
+         "vWorldPosition = worldPosition.xyz;",
+
+         "gl_Position = (projectionMatrix * cameraRotation * vec4( position, 1.0 )).xyzw;",
+
+         "}"
+         ].join( "\n" );
+
+         shader.fragmentShader = [
+
+         "uniform samplerCube tCube;",
+         "uniform float tFlip;",
+
+         "varying vec3 vWorldPosition;",
+
+         "void main() {",
+
+         "gl_FragColor = textureCube( tCube, vec3( tFlip * vWorldPosition.x, vWorldPosition.yz ) );",
+
+         "}"
+         ].join( "\n" );
+         */
         material = new THREE.ShaderMaterial( {
 
             fragmentShader: shader.fragmentShader,
             vertexShader: shader.vertexShader,
             uniforms: shader.uniforms,
-            side: THREE.BackSide
+            depthWrite: false,
+            side: THREE.DoubleSide
 
         } );
 
-        skyBox = new THREE.Mesh( new THREE.CubeGeometry( 5000, 5000, 5000, 1, 1, 1 ), material );
+        geometry = new THREE.CubeGeometry( distance, distance, distance );
+        /*
+         geometry.faceVertexUvs[0][1] =
+         [
+         new THREE.Vector2( 0.1, 0 ),
+         new THREE.Vector2( 1, 1 ),
+         new THREE.Vector2( 0, 1.5 ),
+         new THREE.Vector2( 0, 0 )
+         ];
+         geometry.uvsNeedUpdate = true;
+         geometry.dynamic = true;
+         THREE.GeometryUtils.normalizeUVs( geometry )
+         */
+        skyBox = new THREE.Mesh( geometry, material );
+
+
         //this.sceneManager.camera.add(skyBox)
-        this.sceneManager.addToScene( skyBox );
+        this.sceneManager.skyBoxScene.add( skyBox );
 
 
+    };
+
+    ECSky.prototype.createCubeTexture = function ( textures ) {
+        var images = [], texture = new THREE.CompressedTexture(), dds,
+            texturesLen = textures.length, name, i, order;
+
+
+        function checkOrder( name ) {
+            if ( typeof name !== 'string' && name !== '' ) {
+                throw new Error( ["ECSky: Invalid SkyBox texture name!"] );
+            }
+
+            if ( name.indexOf( "front" ) !== -1 ) {
+                return 0;
+            } else if ( name.indexOf( "back" ) !== -1 ) {
+                return 1;
+            } else if ( name.indexOf( "top" ) !== -1 ) {
+                return 2;
+            } else if ( name.indexOf( "bot" ) !== -1 ) {
+                return 3;
+            } else if ( name.indexOf( "left" ) !== -1 ) {
+                return 4;
+            } else if ( name.indexOf( "right" ) !== -1 ) {
+                return 5;
+            } else {
+                throw new Error( ["ECSky: Invalid SkyBox texture: " + name] );
+            }
+        }
+
+        for ( i = texturesLen; i--; ) {
+            dds = textures[i];
+            name = dds.name;
+            order = checkOrder( name );
+
+            images[order] =
+            {
+                format: dds.format,
+                mipmaps: dds.mipmaps,
+                width: dds.width,
+                height: dds.height
+            };
+        }
+
+        texture.mapping = new THREE.CubeRefractionMapping();
+        texture.generateMipmaps = false;
+        texture.image = images;
+        texture.flipY = false;
+        texture.format = dds.format;
+        texture.needsUpdate = true;
+        texture.minFilter = texture.magFilter = THREE.LinearFilter;
+        texture.anisotropy = 4;
+
+        return texture;
     };
 
 
@@ -131,57 +232,6 @@
             }
         }
 
-    };
-
-    ECSky.prototype.createCubeTexture = function ( textures ) {
-        var images = [], texture = new THREE.CompressedTexture(), dds,
-            texturesLen = textures.length, name, i;
-
-
-        function checkOrder( name ) {
-            if ( typeof name !== 'string' && name !== '' ) {
-                throw new Error( ["ECSky: Invalid SkyBox texture name!"] );
-            }
-
-            if ( name.indexOf( "front" ) !== -1 ) {
-                return 0;
-            } else if ( name.indexOf( "back" ) !== -1 ) {
-                return 1;
-            } else if ( name.indexOf( "top" ) !== -1 ) {
-                return 2;
-            } else if ( name.indexOf( "bot" ) !== -1 ) {
-                return 3;
-            } else if ( name.indexOf( "left" ) !== -1 ) {
-                return 4;
-            } else if ( name.indexOf( "right" ) !== -1 ) {
-                return 5;
-            } else {
-                throw new Error( ["ECSky: Invalid SkyBox texture: " + name] );
-            }
-        }
-
-        for ( i = texturesLen; i--; ) {
-            dds = textures[i];
-            name = dds.name;
-
-            images[checkOrder( name )] =
-            {
-                format: dds.format,
-                mipmaps: dds.mipmaps,
-                width: dds.width,
-                height: dds.height
-            };
-        }
-
-        texture.generateMipmaps = false;
-        texture.image = images;
-        texture.flipY = false;
-        texture.format = dds.format;
-        texture.needsUpdate = true;
-        texture.minFilter = texture.magFilter = THREE.LinearFilter;
-        texture.anisotropy = 4;
-
-        return texture;
     };
 
 

@@ -36,7 +36,9 @@
         this.controls = null;
         this.renderer = null;
         this.scene = null;
+        this.skyBoxScene = null;
         this.camera = null;
+        this.skyBoxCamera = null;
         this.loadedObjects = [];
 
         this.websocket = opts.websocket;
@@ -77,7 +79,13 @@
             }
             self.controls.update( Date.now() - self.time );
 
-            self.renderer.render( self.scene, self.camera );
+            self.skyBoxCamera.rotation.setEulerFromRotationMatrix(
+                self.camera.parent.matrixWorld,
+                THREE.Object3D.defaultEulerOrder
+            );
+
+            self.renderer.render( self.skyBoxScene, self.skyBoxCamera  );
+            self.renderer.render( self.scene, self.camera  );
 
             self.time = Date.now();
         }());
@@ -117,6 +125,8 @@
 
             this.camera.aspect = $( this.container ).innerWidth() / $( this.container ).innerHeight();
             this.camera.updateProjectionMatrix();
+            this.skyBoxCamera.aspect = $( this.container ).innerWidth() / $( this.container ).innerHeight();
+            this.skyBoxCamera.updateProjectionMatrix();
 
         }.bind( this );
         window.addEventListener( 'resize', callback, false );
@@ -262,26 +272,31 @@
 
     SceneManager.prototype.init = function () {
 
-        var body = document.body, renderer, scene, camera, controls,
+        var body = document.body, renderer, scene, skyBoxScene, camera, skyBoxCamera, controls,
             container = this.container, self = this;
 
 
         scene = this.scene = new THREE.Scene();
+        skyBoxScene = this.skyBoxScene = new THREE.Scene();
+
 
         // Camera
 
         camera = this.camera = new THREE.PerspectiveCamera( 45, ( $( container ).innerWidth() / $( container ).innerHeight()), 1, 10000 );
+        //camera.inverse = new THREE.Matrix4();
         camera.lookAt( scene.position );
-        scene.add( camera );
-
+        skyBoxCamera = this.skyBoxCamera = new THREE.PerspectiveCamera( 45, ( $( container ).innerWidth() / $( container ).innerHeight()), 1, 10000 );
+        skyBoxCamera.lookAt( scene.position );
 
         // Renderer settings
         renderer = this.renderer = new THREE.WebGLRenderer( {
             antialias: true,
-            clearColor: 0xFEFEFE, //0x87CEEB,
+            clearColor: 0x87CEEB,
             clearAlpha: 1,
             preserveDrawingBuffer: false
         } );
+        renderer.setFaceCulling( THREE.CullFaceNone );
+        renderer.autoClear = false;
         renderer.gammaInput = true;
         renderer.gammaOutput = true;
         /*

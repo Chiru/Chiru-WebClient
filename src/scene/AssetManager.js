@@ -107,7 +107,7 @@
                 }
 
             } else if ( request.readyState === 2 ) {
-                console.log( 'Loading asset' );
+                console.log( 'Loading asset: ' + assetName );
 
                 trigger = setInterval( function () {
                     if ( request.readyState === 3 ) {
@@ -121,13 +121,13 @@
         request.onabort = function () {
             clearInterval( trigger );
             trigger = null;
-            //request = null;
+            request = null;
         };
 
         request.onerror = function ( e ) {
             clearInterval( trigger );
             trigger = null;
-            //request = null;
+            request = null;
             console.log( 'error', "Failed to download: " + self.remoteStorage + relPath + assetName );
         };
 
@@ -136,13 +136,15 @@
         request.open( "GET", this.remoteStorage + relPath + assetName, true );
         try {
             request.send( null );
+
+            if ( type === 'texture' ) {
+                request.responseType = "arraybuffer";
+            }
+
         } catch (e) {
             console.log( 'error', e.message + ", when requesting: " + url );
         }
 
-        if ( type === 'texture' ) {
-            request.responseType = "arraybuffer";
-        }
 
         return request.assetReady;
 

@@ -9,6 +9,8 @@ THREE.PointerLockControls = function ( camera ) {
 	var pitchObject = new THREE.Object3D();
 	pitchObject.add( camera );
 
+    var quat = new THREE.Quaternion();
+
 	var yawObject = new THREE.Object3D();
 	yawObject.position.y = 10;
 	yawObject.add( pitchObject );
@@ -37,6 +39,13 @@ THREE.PointerLockControls = function ( camera ) {
 
 		pitchObject.rotation.x = Math.max( - PI_2, Math.min( PI_2, pitchObject.rotation.x ) );
 
+
+        // Needed for skybox
+        /*
+        quat.setFromRotationMatrix( camera.parent.matrixWorld );
+        quat.w = quat.w * -1;
+        camera.inverse.setRotationFromQuaternion(quat);
+        */
 	};
 
 	var onKeyDown = function ( event ) {

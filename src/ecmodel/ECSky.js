@@ -25,6 +25,7 @@
 
         this.textureAssets = [];
         this.cubeTexture = null;
+        this.skyBox = null;
 
     };
 
@@ -77,9 +78,11 @@
         //inverse = this.sceneManager.camera.inverse;
 
         shader = THREE.ShaderLib[ "cube" ];
+        cubeTexture.mapping = new THREE.UVMapping();
         shader.uniforms[ "tCube" ].value = cubeTexture;
 
         /*
+          //Experimental shader implementation of skybox
          shader.uniforms["cameraRotation"] = {type: 'm4', value: inverse};
          shader.vertexShader = [
          "uniform mat4 cameraRotation;",
@@ -115,28 +118,53 @@
             vertexShader: shader.vertexShader,
             uniforms: shader.uniforms,
             depthWrite: false,
-            side: THREE.DoubleSide
+            side: THREE.BackSide
 
         } );
 
+
+
         geometry = new THREE.CubeGeometry( distance, distance, distance );
         /*
-         geometry.faceVertexUvs[0][1] =
-         [
-         new THREE.Vector2( 0.1, 0 ),
-         new THREE.Vector2( 1, 1 ),
-         new THREE.Vector2( 0, 1.5 ),
-         new THREE.Vector2( 0, 0 )
-         ];
-         geometry.uvsNeedUpdate = true;
-         geometry.dynamic = true;
-         THREE.GeometryUtils.normalizeUVs( geometry )
+        // For some reason changing uv mapping has no effect at all. Top face texture has wrong orientation.
+
+         function createUvMapping( uvMap ) {
+         var i, j, mapLen = uvMap.length, uvs = [],
+         faceUvs, tuple, faceUvLen, result = [];
+         for ( i = mapLen; i--; ) {
+         faceUvs = uvMap[i];
+         faceUvLen = faceUvs.length;
+
+         for ( j = faceUvLen; j--; ) {
+         tuple = faceUvs[j];
+         uvs.push( new THREE.Vector2( tuple[0], tuple[1] ) );
+         }
+         result.push(uvs);
+         uvs = [];
+         }
+
+         return result;
+         }
+
+        geometry.faceVertexUvs = [[]];
+        geometry.faceVertexUvs.push( createUvMapping(
+         [[[0,1],[0,0],[1,0],[1,1]],
+         [[0,1],[0,0],[1,0],[1,1]],
+         [[0,0],[1,1],[0,1],[0,0]],
+         [[0,1],[0,0],[1,0],[1,1]],
+         [[0,1],[0,0],[1,0],[1,1]],
+         [[0,1],[0,0],[1,0],[1,1]]]) );
+
+        geometry.uvsNeedUpdate = true;
+        geometry.computeCentroids();
+        geometry.mergeVertices();
          */
-        skyBox = new THREE.Mesh( geometry, material );
+
+        skyBox = this.skyBox = new THREE.Mesh( geometry.clone(), material );
 
 
         //this.sceneManager.camera.add(skyBox)
-        this.sceneManager.skyBoxScene.add( skyBox );
+        this.sceneManager.addSkyBox( skyBox );
 
 
     };
@@ -182,7 +210,6 @@
             };
         }
 
-        texture.mapping = new THREE.CubeRefractionMapping();
         texture.generateMipmaps = false;
         texture.image = images;
         texture.flipY = false;
@@ -190,6 +217,7 @@
         texture.needsUpdate = true;
         texture.minFilter = texture.magFilter = THREE.LinearFilter;
         texture.anisotropy = 4;
+
 
         return texture;
     };

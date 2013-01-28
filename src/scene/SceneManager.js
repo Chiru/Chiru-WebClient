@@ -84,8 +84,8 @@
                 THREE.Object3D.defaultEulerOrder
             );
 
-            self.renderer.render( self.skyBoxScene, self.skyBoxCamera  );
-            self.renderer.render( self.scene, self.camera  );
+            self.renderer.render( self.skyBoxScene, self.skyBoxCamera );
+            self.renderer.render( self.scene, self.camera );
 
             self.time = Date.now();
         }());
@@ -154,10 +154,12 @@
 
      };
      */
-    SceneManager.prototype.clearScene = function ( filter ) {
-        //TODO: Clean this up
+    SceneManager.prototype.clearScene = function ( filter, scene ) {
+        var obj, i;
 
-        var obj, scene = this.scene, i;
+        if ( !scene ) {
+            scene = this.scene;
+        }
 
         if ( filter === undefined ) {
             filter = THREE.Object3D;
@@ -227,6 +229,32 @@
 
     };
 
+    SceneManager.prototype.addSkyBox = function ( skyBox ) {
+        var scene = this.skyBoxScene;
+        if ( scene ) {
+            if ( this.getSceneObject( function ( obj ) {
+                return obj.name === 'skyBox';
+            }, scene ) ) {
+                return;
+            }
+            skyBox.name = 'skyBox';
+            scene.add( skyBox );
+        }
+    };
+
+    SceneManager.prototype.removeSkyBox = function ( skyBox ) {
+        var scene = this.skyBoxScene, sky;
+        if ( this.skyBoxScene ) {
+            sky = this.getSceneObject( function ( obj ) {
+                return obj.name === 'skyBox';
+            }, scene );
+
+            if ( sky ) {
+                scene.remove( sky );
+            }
+        }
+    };
+
     SceneManager.prototype.setAmbientLight = function ( color ) {
         if ( namespace.util.toType( color ) !== 'array' ) {
             return;
@@ -249,13 +277,17 @@
 
     };
 
-    SceneManager.prototype.getSceneObject = function ( callBack ) {
+    SceneManager.prototype.getSceneObject = function ( callBack, scene ) {
         if ( typeof callBack !== "function" ) {
             return false;
         }
 
-        var children = this.scene.children,
-            childLength = this.scene.children.length,
+        if ( !scene ) {
+            scene = this.scene;
+        }
+
+        var children = scene.children,
+            childLength = scene.children.length,
             obj, i;
 
         if ( children ) {
@@ -275,15 +307,14 @@
         var body = document.body, renderer, scene, skyBoxScene, camera, skyBoxCamera, controls,
             container = this.container, self = this;
 
-
+        // Initializing scene and skyBoxScene
         scene = this.scene = new THREE.Scene();
         skyBoxScene = this.skyBoxScene = new THREE.Scene();
 
 
-        // Camera
+        // Initializing cameras
 
         camera = this.camera = new THREE.PerspectiveCamera( 45, ( $( container ).innerWidth() / $( container ).innerHeight()), 1, 10000 );
-        //camera.inverse = new THREE.Matrix4();
         camera.lookAt( scene.position );
         skyBoxCamera = this.skyBoxCamera = new THREE.PerspectiveCamera( 45, ( $( container ).innerWidth() / $( container ).innerHeight()), 1, 10000 );
         skyBoxCamera.lookAt( scene.position );
@@ -324,9 +355,9 @@
                 document.webkitPointerLockElement === body ||
                 document.pointerLockElement === body ) {
                 self.controls.enabled = true;
-            } else {
-                self.controls.enabled = false;
+                return;
             }
+            self.controls.enabled = false;
         }
 
         function fullScreenChange() {
@@ -370,7 +401,6 @@
 
         //Windows resize listener
         this.windowResize();
-
 
 
         // Helpers for developing

@@ -3119,7 +3119,7 @@ THREE.ColladaLoader = function () {
 								var image = images[surface.init_from];
 
 								if (image) {
-
+                                    /*
 									var texture = THREE.ImageUtils.loadTexture(baseUrl + image.init_from);
 									texture.wrapS = cot.texOpts.wrapU ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping;
 									texture.wrapT = cot.texOpts.wrapV ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping;
@@ -3127,6 +3127,21 @@ THREE.ColladaLoader = function () {
 									texture.offset.y = cot.texOpts.offsetV;
 									texture.repeat.x = cot.texOpts.repeatU;
 									texture.repeat.y = cot.texOpts.repeatV;
+*/
+
+
+                                    var texture = THREE.ImageUtils.loadCompressedTexture(baseUrl + image.init_from);
+                                    texture.wrapS = THREE.RepeatWrapping;
+                                    texture.wrapT = THREE.RepeatWrapping;
+                                    texture.repeat.x = 1.0;
+                                    texture.repeat.y = 1.0;
+                                    //texture.offset.x = 2;
+                                    //texture.offset.y = 4;
+                                    texture.minFilter = texture.magFilter = THREE.LinearFilter;
+                                    texture.anisotropy = 4;
+                                    texture.flipY = false;
+                                    texture.mapping = new THREE.UVMapping();
+
 									props['map'] = texture;
 
 									// Texture with baked lighting?
@@ -3178,6 +3193,7 @@ THREE.ColladaLoader = function () {
 
 						props[ 'transparent' ] = true;
 						props[ 'opacity' ] = this[ prop ];
+                        props[ 'alphaTest'] = 0.5;
 						transparent = true;
 
 					}

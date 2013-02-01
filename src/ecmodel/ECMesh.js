@@ -121,35 +121,31 @@
     };
 
     ECMesh.prototype.prepareMesh = function ( mesh ) {
-        var node, meshChildren, meshChildLen, newMesh, i;
-
+        var group = new THREE.Object3D(), newMesh, i;
 
         if ( !mesh ) {
             return false;
         }
 
-        if ( mesh.geometry && mesh.material ) {
-            newMesh = new THREE.Mesh( mesh.geometry, mesh.material );
-        } else {
-            return false;
-        }
-
-        if ( this.mesh.children && this.mesh.children.length > 0 ) {
-            meshChildren = this.mesh.children;
-            meshChildLen = this.mesh.children.length;
-
-            for ( i = meshChildLen; i--; ) {
-                if ( meshChildren[i].geometry && meshChildren[i].material ) {
-                    newMesh.add( new THREE.Mesh( meshChildren[i].geometry, meshChildren[i].material ) );
-                }
+        mesh.traverse( function ( child ) {
+            if ( child instanceof THREE.Mesh ) {
+                newMesh = new THREE.Mesh( child.geometry, child.material );
+                newMesh['castShadow'] = this.castShadows;
+                newMesh['receiveShadow'] = this.castShadows;
+                group.add( newMesh );
             }
-        }
+        } );
 
-        newMesh['castShadow'] = this.castShadows;
-        newMesh['receiveShadow'] = this.castShadows;
+        return group;
 
-        return newMesh;
+        /*
 
+
+         newMesh['castShadow'] = this.castShadows;
+         newMesh['receiveShadow'] = this.castShadows;
+
+         return newMesh;
+         */
     };
 
     ECMesh.prototype.setMesh = function () {

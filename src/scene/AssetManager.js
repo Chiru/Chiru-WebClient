@@ -2,6 +2,7 @@
 
 
 (function ( namespace, $, undefined ) {
+    var utils = namespace.util;
 
     var AssetManager = namespace.AssetManager = function ( gui, remoteStorage ) {
         //Ref to GUI
@@ -13,6 +14,119 @@
         this.textureAssets = {};
         this.materialAssets = {};
 
+        var requestQueue = {
+            queue: [],
+            requests: {}
+        };
+
+
+        this.createRequest = function ( options ) {
+
+            var defaults = {
+                    url: '',
+                    responseType: '',
+                    mimeType: null,
+                    assetName: null,
+                    assetType: null
+                },
+                opts, request, trigger = null, queue = requestQueue.queue, queueLen = queue.length,
+                requests = requestQueue.requests, assetReady = new namespace.Signal(),
+                self = this, i;
+
+            // Setting options
+            opts = utils.extend( {}, defaults, options );
+
+            if ( opts.assetName === null || opts.assetType === null ) {
+                return false;
+            }
+
+            // Checking if duplicate request exists already in the queue
+            for ( i = queueLen; i--; ) {
+                if ( queue[i].assetName === opts.assetName ) {
+                    return queue[i].signal;
+                }
+            }
+
+            request = new XMLHttpRequest();
+            if ( !requests.hasOwnProperty( opts.assetName ) ) {
+                requests[opts.assetName] = request;
+
+                queue.push( {assetName: opts.assetName, signal: assetReady} );
+            }
+
+
+            request.open( "GET", opts.url, true );
+            request.responseType = opts.responseType;
+            request.assetName = opts.assetName;
+
+            if ( typeof opts.mimeType === 'string' ) {
+                request.overrideMimeType( opts.mimeType );
+            }
+
+            request.onreadystatechange = function () {
+
+                if ( request.readyState === 4 ) {
+                    //clearInterval( trigger );
+                    //trigger = null;
+
+                    if ( request.status === 200 ) {
+
+
+                        console.log( opts.assetName, "downloaded." );
+
+                        //The final download progress update
+                        //console.log( Math.ceil( (request.responseText.length / 1000024) * 100 ) / 100 );
+
+                        //Gives the program some time to breath after download so it has time to update the viewport
+                        setTimeout( function () {
+                            self.processAsset( request, assetReady, opts.assetName, opts.assetType );
+                        }, 500 );
+
+
+                    } else if ( request.status === 404 ) {
+                        console.log( 'error', "File not found from: " + opts.url );
+                        //request = null;
+                    }
+
+                } else if ( request.readyState === 2 ) {
+                    console.log( 'Loading asset: ' + opts.assetName );
+
+                    /*
+                     trigger = setInterval( function () {
+                     if ( request.readyState === 3 ) {
+                     //console.log( Math.ceil( (request.responseText.length / 1000024) * 100 ) / 100 );
+                     }
+                     }, 200 );
+                     */
+                }
+            };
+
+            request.onabort = function () {
+                //clearInterval( trigger );
+                //trigger = null;
+                request = null;
+            };
+
+            request.onerror = function ( e ) {
+                //clearInterval( trigger );
+                //trigger = null;
+                request = null;
+                console.log( 'error', "Failed to download: " + opts.url );
+            };
+
+
+                try {
+                    console.log( "Requesting: " + opts.url );
+                    request.send( null );
+
+                } catch (e) {
+                    console.log( 'error', e.message + ", when requesting: " + opts.url );
+                }
+
+
+            return assetReady;
+        };
+
 
     };
 
@@ -22,7 +136,7 @@
 
     AssetManager.prototype.cleanFileName = function ( assetFileName, forceType ) {
 
-        var fileName = assetFileName.split( '.' ),
+        var fileName = assetFileName.split( '//' ).pop().split( '.' ),
             type = fileName.slice( -1 )[0];
 
         if ( forceType ) {
@@ -37,7 +151,7 @@
 
 
     AssetManager.prototype.requestAsset = function ( assetName, type, relPath ) {
-        var trigger, request, asset,
+        var trigger, request, asset, responseType = "", mimeType = null,
             self = this;
 
         if ( typeof type === 'string' ) {
@@ -45,14 +159,22 @@
 
             switch (type) {
             case 'mesh':
+            {
                 if ( !document.implementation || !document.implementation.createDocument ) {
                     throw new Error( ["AssetManager: Your browser can't process XML!"] );
                 }
                 assetName = this.cleanFileName( assetName, this.meshType );
+
+                mimeType = 'text/xml';
+
+            }
                 break;
             case 'material':
             case 'texture':
+            {
+                responseType = "arraybuffer";
                 assetName = this.cleanFileName( assetName );
+            }
                 break;
             default:
                 throw new Error( ["AssetManager: Invalid asset type requested: " + type] );
@@ -72,126 +194,79 @@
             return false;
         }
 
-        console.log( "Requesting: " + this.remoteStorage + relPath + assetName );
+
+        request = this.createRequest( {
+            url: this.remoteStorage + relPath + assetName,
+            responseType: responseType,
+            mimeType: mimeType,
+            assetName: assetName,
+            assetType: type
+        } );
 
 
-        request = new XMLHttpRequest();
-
-        if ( type === 'mesh' ) {
-            request.overrideMimeType( 'text/xml' );
-        }
-
-        request.onreadystatechange = function () {
-
-            if ( request.readyState === 4 ) {
-                clearInterval( trigger );
-                trigger = null;
-
-                if ( request.status === 200 ) {
-
-
-                    console.log( 'Download complete' );
-
-                    //The final download progress update
-                    //console.log( Math.ceil( (request.responseText.length / 1000024) * 100 ) / 100 );
-
-                    //Gives the program some time to breath after download so it has time to update the viewport
-                    setTimeout( function () {
-                        self.processAsset( request, assetName, type );
-                    }, 500 );
-
-
-                } else if ( request.status === 404 ) {
-                    console.log( 'error', "File not found from: " + self.remoteStorage + relPath );
-                    //request = null;
-                }
-
-            } else if ( request.readyState === 2 ) {
-                console.log( 'Loading asset: ' + assetName );
-
-                trigger = setInterval( function () {
-                    if ( request.readyState === 3 ) {
-                        //console.log( Math.ceil( (request.responseText.length / 1000024) * 100 ) / 100 );
-                    }
-                }, 200 );
-            }
-        };
-
-
-        request.onabort = function () {
-            clearInterval( trigger );
-            trigger = null;
-            request = null;
-        };
-
-        request.onerror = function ( e ) {
-            clearInterval( trigger );
-            trigger = null;
-            request = null;
-            console.log( 'error', "Failed to download: " + self.remoteStorage + relPath + assetName );
-        };
-
-        request.assetReady = new namespace.Signal();
-
-        request.open( "GET", this.remoteStorage + relPath + assetName, true );
-        try {
-            request.send( null );
-
-            if ( type === 'texture' ) {
-                request.responseType = "arraybuffer";
-            }
-
-        } catch (e) {
-            console.log( 'error', e.message + ", when requesting: " + url );
-        }
-
-
-        return request.assetReady;
+        return request;
 
     };
 
-    AssetManager.prototype.processAsset = function ( request, name, type ) {
+    AssetManager.prototype.processAsset = function ( request, signal, name, type ) {
         switch (type) {
         case 'mesh':
-            this.processMesh( request, name );
+            this.processMesh( request, signal, name );
             break;
         case 'texture':
-            this.processTexture( request, name );
+            this.processTexture( request, signal, name );
             break;
         case 'material':
-            this.processMaterial( request, name );
+            this.processMaterial( request, signal, name );
             break;
 
         }
     };
 
-    AssetManager.prototype.processMesh = function ( request, name ) {
+    AssetManager.prototype.processMesh = function ( request, signal, name ) {
 
         var loader = new THREE.ColladaLoader(), xml = request.responseXML,
-            scene, mesh, self = this;
+            scene, meshGroup = new THREE.Object3D(), self = this;
 
+        console.time('Processing time');
+        console.log( "Processing", name, "..." );
         //loader.options.convertUpAxis = true;
         loader.parse( xml, function colladaReady( collada ) {
+            delete request.responseXML;
             scene = collada.scene;
-            if ( scene && scene.children && scene.children.length > 0 ) {
-                mesh = scene.children[0];
-                if ( mesh ) {
-                    mesh.name = name;
-                }
-            }
 
-            loader = null;
+            console.log( scene );
+
+            endTime = startTime = null;
+
+            scene.traverse( function ( child ) {
+                if ( child instanceof THREE.Mesh ) {
+                    meshGroup.add( child.clone() );
+                }
+            } );
+
+
 
             if ( !self.meshAssets.hasOwnProperty( name ) ) {
-                self.meshAssets[name] = mesh;
+                meshGroup.name = name;
+                self.meshAssets[name] = meshGroup;
+            }
+            if ( signal instanceof namespace.Signal ) {
+                signal.dispatch( self.meshAssets[name] );
             }
 
-            request.assetReady.dispatch( self.meshAssets[name] );
 
         }, this.remoteStorage );
+
+        console.timeEnd('Processing time');
+
+        console.log( "Processing complete." );
+
+        loader = null;
+        request = null;
     };
 
-    AssetManager.prototype.processTexture = function ( request, name ) {
+    AssetManager.prototype.processTexture = function ( request, signal, name ) {
         var buffer = request.response,
             dds = THREE.ImageUtils.parseDDS( buffer, true ),
             self = this;
@@ -202,7 +277,9 @@
             self.textureAssets[name] = dds;
         }
 
-        request.assetReady.dispatch( self.textureAssets[name] );
+        if ( signal instanceof namespace.Signal ) {
+            signal.dispatch( self.textureAssets[name] );
+        }
 
     };
 
@@ -215,6 +292,6 @@
             return this.meshAssets[assetRef];
         }
         return false;
-    }
+    };
 
 }( window['webtundra'] = window['webtundra'] || {}, jQuery ));

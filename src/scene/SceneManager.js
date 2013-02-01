@@ -43,7 +43,7 @@
 
         this.websocket = opts.websocket;
         // In future implementation the storage url will come through a websocket, but it's now defined here for testing
-        this.assetManager = new namespace.AssetManager( {}, "http://localhost:8000/scenes/avatar/" );
+        this.assetManager = new namespace.AssetManager( {}, "http://192.168.0.50:8000/scenes/ouluWebTest_low/" );
 
         this.ecManager = new namespace.ECManager( this );
 
@@ -326,11 +326,11 @@
             clearAlpha: 1,
             preserveDrawingBuffer: false
         } );
-        renderer.setFaceCulling( THREE.CullFaceNone );
+        //renderer.setFaceCulling( THREE.CullFaceNone );
         renderer.autoClear = false;
         renderer.gammaInput = true;
         renderer.gammaOutput = true;
-        /*
+         /*
          renderer.shadowMapEnabled = true;
          renderer.shadowMapSoft = true;
          renderer.shadowMapCascade = false;

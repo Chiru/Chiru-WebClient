@@ -132,6 +132,7 @@
                 newMesh = new THREE.Mesh( child.geometry, child.material );
                 newMesh['castShadow'] = this.castShadows;
                 newMesh['receiveShadow'] = this.castShadows;
+                newMesh.material.side = THREE.DoubleSide;
                 group.add( newMesh );
             }
         } );

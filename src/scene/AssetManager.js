@@ -19,6 +19,19 @@
             requests: {}
         };
 
+        this.removeRequest = function ( name ) {
+            var requests = requestQueue.requests, queue = requestQueue.queue;
+
+            if ( requests.hasOwnProperty( name ) ) {
+                queue.splice( queue.indexOf( name ), 1 );
+                delete requests[name];
+                //console.log( "Request:", name, "deleted" );
+            }
+
+            if ( queue.length === 0 ) {
+                console.log( "All requests processed!" );
+            }
+        };
 
         this.createRequest = function ( options ) {
 
@@ -115,13 +128,13 @@
             };
 
 
-                try {
-                    console.log( "Requesting: " + opts.url );
-                    request.send( null );
+            try {
+                console.log( "Requesting: " + opts.url );
+                request.send( null );
 
-                } catch (e) {
-                    console.log( 'error', e.message + ", when requesting: " + opts.url );
-                }
+            } catch (e) {
+                console.log( 'error', e.message + ", when requesting: " + opts.url );
+            }
 
 
             return assetReady;
@@ -224,46 +237,44 @@
     };
 
     AssetManager.prototype.processMesh = function ( request, signal, name ) {
+        var loader = new THREE.ColladaLoader(), material, geometry, xml = request.responseXML,
+            scene, meshGroup = [], self = this, result, index;
 
-        var loader = new THREE.ColladaLoader(), xml = request.responseXML,
-            scene, meshGroup = new THREE.Object3D(), self = this;
-
-        console.time('Processing time');
+        //console.time( 'Processing time' );
         console.log( "Processing", name, "..." );
         //loader.options.convertUpAxis = true;
-        loader.parse( xml, function colladaReady( collada ) {
-            delete request.responseXML;
-            scene = collada.scene;
 
-            console.log( scene );
+        result = loader.parse( xml, undefined, this.remoteStorage );
+        console.log( "Asset parsed. Post-processing..." );
+        scene = result.scene;
 
-            endTime = startTime = null;
+        //console.log( scene );
 
-            scene.traverse( function ( child ) {
-                if ( child instanceof THREE.Mesh ) {
-                    meshGroup.add( child.clone() );
-                }
-            } );
-
-
-
-            if ( !self.meshAssets.hasOwnProperty( name ) ) {
-                meshGroup.name = name;
-                self.meshAssets[name] = meshGroup;
+        scene.traverse( function ( child ) {
+            if ( child instanceof THREE.Mesh ) {
+                meshGroup.push( [child.geometry.clone(), child.material.clone()]);
             }
-            if ( signal instanceof namespace.Signal ) {
-                signal.dispatch( self.meshAssets[name] );
-            }
+        } );
 
 
-        }, this.remoteStorage );
+        if ( !this.meshAssets.hasOwnProperty( name ) ) {
+            meshGroup.name = name;
+            self.meshAssets[name] = meshGroup;
+        }
+        if ( signal instanceof namespace.Signal ) {
+            //signal.dispatch( self.meshAssets[name] );
+        }
 
-        console.timeEnd('Processing time');
+        this.removeRequest( name );
+
+        scene = null;
+        result = null;
+        loader = null;
+
+        //console.timeEnd( 'Processing time' );
 
         console.log( "Processing complete." );
 
-        loader = null;
-        request = null;
     };
 
     AssetManager.prototype.processTexture = function ( request, signal, name ) {

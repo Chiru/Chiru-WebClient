@@ -56,7 +56,7 @@
     };
 
     ECSky.prototype.onParentAdded = function ( parent ) {
-        this.getTextures();
+        //this.getTextures();
     };
 
     ECSky.prototype.onTextureAssetLoaded = function ( texture ) {

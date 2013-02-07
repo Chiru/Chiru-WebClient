@@ -77,10 +77,19 @@
                 }
 
             }
+
+            /*
+            self.camera.position.y = 10;
+            self.camera.position.x = Math.floor(Math.cos( self.time*0.0005) * 200);
+            self.camera.position.z = Math.floor(Math.sin( self.time *0.0005) * 200);
+            self.camera.lookAt( new THREE.Vector3(0,0,0) );
+            */
             self.controls.update( Date.now() - self.time );
+
 
             self.skyBoxCamera.rotation.setEulerFromRotationMatrix(
                 self.camera.parent.matrixWorld,
+                //self.camera.matrixWorld,
                 THREE.Object3D.defaultEulerOrder
             );
 
@@ -342,6 +351,7 @@
 
 
         // Controls
+
         controls = this.controls = new THREE.PointerLockControls( this.camera );
         scene.add( this.controls.getObject() );
 
@@ -399,12 +409,14 @@
 
         }, false );
 
+
         //Windows resize listener
         this.windowResize();
 
 
         // Helpers for developing
-        var axes = new THREE.AxisHelper();
+        var axes = new THREE.AxisHelper(50);
+        axes.position.y = 10;
         scene.add( axes );
 
     };

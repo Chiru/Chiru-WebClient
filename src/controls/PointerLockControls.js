@@ -8,17 +8,19 @@ THREE.PointerLockControls = function ( camera ) {
 
 	var pitchObject = new THREE.Object3D();
 	pitchObject.add( camera );
-
-    var quat = new THREE.Quaternion();
+    camera.position.set(0,0,0);
+    pitchObject.position.set(0, -16, 0);
 
 	var yawObject = new THREE.Object3D();
-	yawObject.position.y = 10;
+    yawObject.position.set(0, 30, 0);
 	yawObject.add( pitchObject );
 
 	var moveForward = false;
 	var moveBackward = false;
 	var moveLeft = false;
 	var moveRight = false;
+    var touchStartX = 0;
+    var touchStartY = 0;
 
 	var isOnObject = false;
 	var canJump = false;
@@ -39,13 +41,6 @@ THREE.PointerLockControls = function ( camera ) {
 
 		pitchObject.rotation.x = Math.max( - PI_2, Math.min( PI_2, pitchObject.rotation.x ) );
 
-
-        // Needed for skybox
-        /*
-        quat.setFromRotationMatrix( camera.parent.matrixWorld );
-        quat.w = quat.w * -1;
-        camera.inverse.setRotationFromQuaternion(quat);
-        */
 	};
 
 	var onKeyDown = function ( event ) {
@@ -72,7 +67,7 @@ THREE.PointerLockControls = function ( camera ) {
 				break;
 
 			case 32: // space
-				if ( canJump === true ) velocity.y += 10;
+				if ( canJump === true ) velocity.y += 4;
 				canJump = false;
 				break;
 
@@ -107,10 +102,47 @@ THREE.PointerLockControls = function ( camera ) {
 		}
 
 	};
+    var onTouchStart = function (event){
+        if ( event.touches.length === 1 ) {
+
+            var touch = event.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+
+        }else if ( event.touches.length === 2) {
+            event.keyCode = 38;
+            onKeyDown(event);
+        }
+
+    };
+
+    var onTouchMove = function (event) {
+        if ( event.touches.length === 1 ) {
+
+            var touch = event.touches[0];
+            event['movementX'] = touchStartX -touch.clientX;
+            event['movementY'] = touchStartY - touch.clientY;
+            onMouseMove(event);
+
+        }
+    };
+    var onTouchEnd = function (event){
+        if ( event.touches.length === 1 ) {
+            touchStartX = 0;
+            touchStartY = 0;
+        }else if ( event.touches.length === 2) {
+            event.keyCode = 38;
+            onKeyUp(event);
+        }
+    };
 
 	document.addEventListener( 'mousemove', onMouseMove, false );
 	document.addEventListener( 'keydown', onKeyDown, false );
 	document.addEventListener( 'keyup', onKeyUp, false );
+
+    document.addEventListener( 'touchmove', onTouchMove, false );
+    document.addEventListener( 'touchstart', onTouchStart, false );
+    document.addEventListener( 'touchend', onTouchEnd, false );
 
 	this.enabled = false;
 
@@ -120,10 +152,10 @@ THREE.PointerLockControls = function ( camera ) {
 
 	};
 
-	this.isOnObject = function ( boolean ) {
+	this.isOnObject = function ( bool ) {
 
-		isOnObject = boolean;
-		canJump = boolean;
+		isOnObject = bool;
+		canJump = bool;
 
 	};
 
@@ -131,15 +163,15 @@ THREE.PointerLockControls = function ( camera ) {
 
 		if ( scope.enabled === false ) return;
 
-		delta *= 0.1;
+		delta *= 0.05;
 
 		velocity.x += ( - velocity.x ) * 0.08 * delta;
 		velocity.z += ( - velocity.z ) * 0.08 * delta;
 
-		velocity.y -= 0.25 * delta;
+		velocity.y -= 0.15 * delta;
 
-		if ( moveForward ) velocity.z -= 0.12 * delta;
-		if ( moveBackward ) velocity.z += 0.12 * delta;
+		if ( moveForward ) velocity.z -= 0.15 * delta;
+		if ( moveBackward ) velocity.z += 0.15 * delta;
 
 		if ( moveLeft ) velocity.x -= 0.12 * delta;
 		if ( moveRight ) velocity.x += 0.12 * delta;
@@ -154,10 +186,10 @@ THREE.PointerLockControls = function ( camera ) {
 		yawObject.translateY( velocity.y ); 
 		yawObject.translateZ( velocity.z );
 
-		if ( yawObject.position.y < 10 ) {
+		if ( yawObject.position.y < 8 ) {
 
 			velocity.y = 0;
-			yawObject.position.y = 10;
+			yawObject.position.y = 8;
 
 			canJump = true;
 

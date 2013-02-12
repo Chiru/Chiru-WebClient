@@ -146,7 +146,7 @@
 
     AssetManager.prototype.setRemoteStorage = function ( url ) {
         console.log("Setting remote asset storage to: " + url);
-        utils.log("Settings remote asset storage to: " + url);
+        utils.log("Setting remote asset storage to: " + url);
         this.remoteStorage = url;
     };
 

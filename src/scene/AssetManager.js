@@ -92,8 +92,8 @@
 
                         //Gives the program some time to breath after download so it has time to update the viewport
                         //setTimeout( function () {
-                            request.downloaded = true;
-                            self.processAsset( request, assetReady, opts.assetName, opts.assetType );
+                        request.downloaded = true;
+                        self.processAsset( request, assetReady, opts.assetName, opts.assetType );
                         //}, 500 );
 
 
@@ -145,8 +145,8 @@
     };
 
     AssetManager.prototype.setRemoteStorage = function ( url ) {
-        console.log("Setting remote asset storage to: " + url);
-        utils.log("Setting remote asset storage to: " + url);
+        console.log( "Setting remote asset storage to: " + url );
+        utils.log( "Setting remote asset storage to: " + url );
         this.remoteStorage = url;
     };
 
@@ -255,7 +255,7 @@
 
         scene.traverse( function ( child ) {
             if ( child instanceof THREE.Mesh ) {
-                meshGroup.push( [child.geometry.clone(), child.material.clone()]);
+                meshGroup.push( [child.geometry.clone(), child.material.clone()] );
             }
         } );
 

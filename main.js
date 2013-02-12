@@ -21,7 +21,7 @@
 
 
     //Initializing the websocket connection and adding some basic events
-    namespace.ws = webtundra.initConnection( '192.168.0.50', '9002', {allowReconnect: false} );
+    namespace.ws = webtundra.initConnection( /*'130.231.12.58'*/'192.168.0.50', '9002', {allowReconnect: false} );
     namespace.ws.bindEvent( "connected", function ( url ) {
         console.log( "WebSocket connection opened." );
     } );

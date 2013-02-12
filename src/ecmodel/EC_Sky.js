@@ -29,6 +29,9 @@
 
     };
 
+    namespace.storeComponent(10, ECSky);
+
+
     ECSky.prototype = Object.create( namespace.Component.prototype );
 
     ECSky.prototype.onAttributeUpdated = function ( attr, state ) {
@@ -56,7 +59,7 @@
     };
 
     ECSky.prototype.onParentAdded = function ( parent ) {
-        //this.getTextures();
+        this.getTextures();
     };
 
     ECSky.prototype.onTextureAssetLoaded = function ( texture ) {

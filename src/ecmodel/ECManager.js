@@ -16,13 +16,15 @@
         this.sceneManager = sceneMgr;
         this.entities = {};
 
+
         var connection = this.connection = sceneMgr.websocket,
             self = this;
 
         if ( connection ) {
             connection.bindEvent( "EntityAdded", function ( data ) {
                 //console.log( data );
-                namespace.util.log( "Got 'EntityAdded'-event, entity id: " + data );
+                namespace.util.log( "Got new Entity " + "( id: " + data['entityId'] + ", name: " + data['name'] +
+                    ", components: " + data['numReplComps'] + " )" );
 
                 if ( data['entityId'] !== undefined ) {
                     var e = self.createEntity( data['entityId'] ),
@@ -114,7 +116,13 @@
 
         createComponent: function ( id, data ) {
             var component, typeId, name, attributes,
-                sceneManager = this.sceneManager;
+                sceneManager = this.sceneManager, components = namespace.ECOMPONENTS;
+
+            if(!components){
+                console.error("ECManager: Component storage namespace.ECOMPONENTS was not available," +
+                    " unable to create component object.");
+                return false;
+            }
 
             if ( !id || !data['typeId'] ) {
                 return false;
@@ -128,60 +136,8 @@
             typeId = data['typeId'];
             name = data['name'] || "";
 
-            switch (typeId) {
-
-                // EC_EnvironmentLight
-            case '8':
-            {
-                console.log( "Creating ECEnvironmentLight..." );
-                component = new namespace.ECEnvironmentLight( sceneManager );
-
-            }
-
-                break;
-
-            case '10':
-            {
-                console.log( "Creating ECSky..." );
-                component = new namespace.ECSky( sceneManager );
-            }
-                break;
-
-                // EC_Mesh
-            case '17':
-            {
-                console.log( "Creating ECMesh..." );
-                component = new namespace.ECMesh( sceneManager );
-                component.meshChanged.add( function () {
-                    console.log( "Mesh of ECMesh component of entity", component.parent.id, "changed" );
-                } );
-
-            }
-                break;
-
-                // EC_Placeable
-            case '20':
-            {
-
-                console.log( "Creating ECPlaceable..." );
-                component = new namespace.ECPlaceable( sceneManager );
-            }
-
-                break;
-
-                // EC_Material
-            case '31':
-            {
-
-                console.log( "Creating ECMaterial..." );
-                component = new namespace.ECMaterial( sceneManager );
-            }
-
-                break;
-
-            default:
-                component = false;
-
+            if ( components.hasOwnProperty( typeId ) ) {
+                component = new components[typeId]( sceneManager );
             }
 
             if ( component ) {

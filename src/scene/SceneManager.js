@@ -20,7 +20,8 @@
         var defaults = {
                 eulerOrder: 'ZYX',
                 container: document.body,
-                websocket: null
+                websocket: null,
+                remoteStorage: 'http://127.0.0.1:8000/'
             },
             opts;
 
@@ -40,10 +41,11 @@
         this.camera = null;
         this.skyBoxCamera = null;
         this.loadedObjects = [];
+        this.remoteStorage = opts.remoteStorage;
 
         this.websocket = opts.websocket;
         // In future implementation the storage url will come through a websocket, but it's now defined here for testing
-        this.assetManager = new namespace.AssetManager( {}, "http://192.168.0.50:8000/scenes/ouluWebTest_low/" );
+        this.assetManager = new namespace.AssetManager( {}, this.remoteStorage );
 
         this.ecManager = new namespace.ECManager( this );
 
@@ -79,11 +81,11 @@
             }
 
             /*
-            self.camera.position.y = 10;
-            self.camera.position.x = Math.floor(Math.cos( self.time*0.0005) * 200);
-            self.camera.position.z = Math.floor(Math.sin( self.time *0.0005) * 200);
-            self.camera.lookAt( new THREE.Vector3(0,0,0) );
-            */
+             self.camera.position.y = 10;
+             self.camera.position.x = Math.floor(Math.cos( self.time*0.0005) * 200);
+             self.camera.position.z = Math.floor(Math.sin( self.time *0.0005) * 200);
+             self.camera.lookAt( new THREE.Vector3(0,0,0) );
+             */
             self.controls.update( Date.now() - self.time );
 
 
@@ -226,8 +228,14 @@
     };
 
     SceneManager.prototype.addToScene = function ( object ) {
-
+        var self = this;
         this.scene.add( object );
+        object.traverse( function ( child ) {
+            if ( child instanceof THREE.Mesh ) {
+                self.loadedObjects.push( child );
+            }
+
+        } );
         //console.log( object )
 
     };
@@ -314,7 +322,14 @@
     SceneManager.prototype.init = function () {
 
         var body = document.body, renderer, scene, skyBoxScene, camera, skyBoxCamera, controls,
-            container = this.container, self = this;
+            container = this.container, websocket = this.websocket,
+            assetManager = this.assetManager, self = this;
+
+        if ( websocket ) {
+            websocket.bindEvent( "RemoteStorage", function ( data ) {
+                assetManager.setRemoteStorage(data);
+            } );
+        }
 
         // Initializing scene and skyBoxScene
         scene = this.scene = new THREE.Scene();
@@ -323,9 +338,9 @@
 
         // Initializing cameras
 
-        camera = this.camera = new THREE.PerspectiveCamera( 45, ( $( container ).innerWidth() / $( container ).innerHeight()), 1, 10000 );
+        camera = this.camera = new THREE.PerspectiveCamera( 35, ( $( container ).innerWidth() / $( container ).innerHeight()), 1, 10000 );
         camera.lookAt( scene.position );
-        skyBoxCamera = this.skyBoxCamera = new THREE.PerspectiveCamera( 45, ( $( container ).innerWidth() / $( container ).innerHeight()), 1, 10000 );
+        skyBoxCamera = this.skyBoxCamera = new THREE.PerspectiveCamera( 35, ( $( container ).innerWidth() / $( container ).innerHeight()), 1, 10000 );
         skyBoxCamera.lookAt( scene.position );
 
         // Renderer settings
@@ -339,7 +354,7 @@
         renderer.autoClear = false;
         renderer.gammaInput = true;
         renderer.gammaOutput = true;
-         /*
+        /*
          renderer.shadowMapEnabled = true;
          renderer.shadowMapSoft = true;
          renderer.shadowMapCascade = false;
@@ -415,7 +430,7 @@
 
 
         // Helpers for developing
-        var axes = new THREE.AxisHelper(50);
+        var axes = new THREE.AxisHelper( 50 );
         axes.position.y = 10;
         scene.add( axes );
 

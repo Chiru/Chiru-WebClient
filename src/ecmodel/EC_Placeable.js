@@ -27,6 +27,8 @@
 
     };
 
+    namespace.storeComponent(20, ECPlaceable);
+
 
     //Inherit component prototype methods
     ECPlaceable.prototype = Object.create( namespace.Component.prototype );

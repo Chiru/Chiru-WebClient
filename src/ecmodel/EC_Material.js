@@ -21,6 +21,8 @@
 
     };
 
+    namespace.storeComponent(31, ECMaterial);
+
     ECMaterial.prototype = Object.create( namespace.Component.prototype );
 
 

@@ -29,6 +29,9 @@
 
     };
 
+    namespace.storeComponent(17, ECMesh);
+
+
     //Inherit component prototype methods
     ECMesh.prototype = Object.create( namespace.Component.prototype );
 
@@ -121,32 +124,23 @@
     };
 
     ECMesh.prototype.prepareMesh = function ( mesh ) {
-        var group = new THREE.Object3D(), newMesh, i;
+        var group = new THREE.Object3D(), newMesh, groupLen, i;
 
         if ( !mesh ) {
             return false;
         }
+        groupLen = mesh.length;
+        for ( i = groupLen; i--; ) {
 
-        mesh.traverse( function ( child ) {
-            if ( child instanceof THREE.Mesh ) {
-                newMesh = new THREE.Mesh( child.geometry, child.material );
-                newMesh['castShadow'] = this.castShadows;
-                newMesh['receiveShadow'] = this.castShadows;
-                newMesh.material.side = THREE.DoubleSide;
-                group.add( newMesh );
-            }
-        } );
+            newMesh = new THREE.Mesh( mesh[i][0], mesh[i][1] );
+            newMesh['castShadow'] = this.castShadows;
+            newMesh['receiveShadow'] = this.castShadows;
+            newMesh.material.side = THREE.DoubleSide;
+            group.add( newMesh );
+
+        }
 
         return group;
-
-        /*
-
-
-         newMesh['castShadow'] = this.castShadows;
-         newMesh['receiveShadow'] = this.castShadows;
-
-         return newMesh;
-         */
     };
 
     ECMesh.prototype.setMesh = function () {
@@ -175,7 +169,6 @@
         node.rotation.set( transVal[3] * (Math.PI / 180), transVal[4] * (Math.PI / 180), transVal[5] * (Math.PI / 180) );
         node.scale.set( transVal[6], transVal[7], transVal[8] );
         this.attachMesh();
-
         return true;
 
 

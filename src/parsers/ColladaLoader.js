@@ -52,6 +52,7 @@ THREE.ColladaLoader = function () {
 	var colladaUp = 'Y';
 	var upConversion = null;
 
+    /*
 	function load ( url, readyCallback, progressCallback ) {
 
 		var length = 0;
@@ -115,8 +116,10 @@ THREE.ColladaLoader = function () {
 		}
 
 	};
+*/
 
-	function parse( doc, callBack, url ) {
+
+	this.parse = function( doc, callBack, url ) {
 
 		COLLADA = doc;
 		callBack = callBack || readyCallbackFunc;
@@ -135,8 +138,8 @@ THREE.ColladaLoader = function () {
 		materials = parseLib( "//dae:library_materials/dae:material", Material, "material" );
 		effects = parseLib( "//dae:library_effects/dae:effect", Effect, "effect" );
 		geometries = parseLib( "//dae:library_geometries/dae:geometry", Geometry, "geometry" );
-		cameras = parseLib( ".//dae:library_cameras/dae:camera", Camera, "camera" );
-		controllers = parseLib( "//dae:library_controllers/dae:controller", Controller, "controller" );
+		//cameras = parseLib( ".//dae:library_cameras/dae:camera", Camera, "camera" );
+		//controllers = parseLib( "//dae:library_controllers/dae:controller", Controller, "controller" );
 		animations = parseLib( "//dae:library_animations/dae:animation", Animation, "animation" );
 		visualScenes = parseLib( ".//dae:library_visual_scenes/dae:visual_scene", VisualScene, "visual_scene" );
 
@@ -148,18 +151,26 @@ THREE.ColladaLoader = function () {
 
 		for ( var i = 0; i < daeScene.nodes.length; i ++ ) {
 
-			scene.add( createSceneGraph( daeScene.nodes[ i ] ) );
+			scene.add( createSceneGraph( daeScene.nodes[ i ] ).clone() );
 
 		}
 
 		createAnimations();
+
+        materials = null;
+        geometries = null;
+        visualScenes = null;
+        daeScene = null;
+        animations = null;
+
 
 		var result = {
 
 			scene: scene,
 			morphs: morphs,
 			skins: skins,
-			animations: animData,
+			animations: animData/*,
+
 			dae: {
 				images: images,
 				materials: materials,
@@ -171,6 +182,7 @@ THREE.ColladaLoader = function () {
 				visualScenes: visualScenes,
 				scene: daeScene
 			}
+			*/
 
 		};
 
@@ -3138,9 +3150,9 @@ THREE.ColladaLoader = function () {
                                     //texture.offset.x = 2;
                                     //texture.offset.y = 4;
                                     texture.minFilter = texture.magFilter = THREE.LinearFilter;
-                                    texture.anisotropy = 4;
+                                    //texture.anisotropy = 4;
                                     texture.flipY = false;
-                                    texture.mapping = new THREE.UVMapping();
+                                    //texture.mapping = new THREE.UVMapping();
 
 									props['map'] = texture;
 
@@ -4502,15 +4514,16 @@ THREE.ColladaLoader = function () {
 
 	};
 
-	return {
+	return;/*{
 
 		load: load,
 		parse: parse,
+
 		setPreferredShading: setPreferredShading,
 		applySkin: applySkin,
 		geometries : geometries,
 		options: options
 
-	};
+	};*/
 
 };

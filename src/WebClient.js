@@ -9,7 +9,7 @@
  **/
 
 
-(function ( namespace, $, undefined ) {
+(function ( namespace, undefined ) {
 
     // Attributes
     namespace.VERSION = '0.1 dev';
@@ -60,4 +60,4 @@
         }
     };
 
-}( window['webtundra'] = window['webtundra'] || {}, jQuery ));
+}( window['webtundra'] = window['webtundra'] || {} ));

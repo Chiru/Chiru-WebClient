@@ -1,10 +1,13 @@
 // For conditions of distribution and use, see copyright notice in LICENSE
 
 
-(function ( namespace, $, undefined ) {
+(function ( namespace, undefined ) {
 
     // Util shortcuts
-    var extend = namespace.util.extend;
+    var extend = namespace.util.extend,
+        innerWidth = namespace.util.innerWidth,
+        innerHeight = namespace.util.innerHeight;
+
 
     /**
      * Creates a scene manager object
@@ -132,11 +135,11 @@
 
     SceneManager.prototype.windowResize = function () {
         var callback = function () {
-            this.renderer.setSize( $( this.container ).innerWidth(), $( this.container ).innerHeight() );
+            this.renderer.setSize( innerWidth( this.container ), innerHeight( this.container ) );
 
-            this.camera.aspect = $( this.container ).innerWidth() / $( this.container ).innerHeight();
+            this.camera.aspect = innerWidth( this.container ) / innerHeight( this.container );
             this.camera.updateProjectionMatrix();
-            this.skyBoxCamera.aspect = $( this.container ).innerWidth() / $( this.container ).innerHeight();
+            this.skyBoxCamera.aspect = this.camera.aspect;
             this.skyBoxCamera.updateProjectionMatrix();
 
         }.bind( this );
@@ -327,7 +330,7 @@
 
         if ( websocket ) {
             websocket.bindEvent( "RemoteStorage", function ( data ) {
-                assetManager.setRemoteStorage(data);
+                assetManager.setRemoteStorage( data );
             } );
         }
 
@@ -338,9 +341,9 @@
 
         // Initializing cameras
 
-        camera = this.camera = new THREE.PerspectiveCamera( 35, ( $( container ).innerWidth() / $( container ).innerHeight()), 1, 10000 );
+        camera = this.camera = new THREE.PerspectiveCamera( 35, ( innerWidth( container ) / innerHeight( container )), 1, 10000 );
         camera.lookAt( scene.position );
-        skyBoxCamera = this.skyBoxCamera = new THREE.PerspectiveCamera( 35, ( $( container ).innerWidth() / $( container ).innerHeight()), 1, 10000 );
+        skyBoxCamera = this.skyBoxCamera = new THREE.PerspectiveCamera( 35, (innerWidth( container ) / innerHeight( container )), 1, 10000 );
         skyBoxCamera.lookAt( scene.position );
 
         // Renderer settings
@@ -361,7 +364,7 @@
          */
         //renderer.physicallyBasedShading = true;
 
-        renderer.setSize( $( this.container ).innerWidth(), $( this.container ).innerHeight() );
+        renderer.setSize( innerWidth( this.container ), innerHeight( this.container ) );
         container.appendChild( this.renderer.domElement );
 
 
@@ -448,7 +451,7 @@
         }
     };
 
-}( window['webtundra'] = window['webtundra'] || {}, jQuery )
+}( window['webtundra'] = window['webtundra'] || {} )
     )
 ;
 

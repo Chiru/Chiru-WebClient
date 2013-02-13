@@ -1,7 +1,7 @@
 // For conditions of distribution and use, see copyright notice in LICENSE
 
 
-(function ( namespace, $, undefined ) {
+(function ( namespace, undefined ) {
 
     /**
      * Component parent constructor
@@ -101,4 +101,4 @@
         return false;
     };
 
-}( window['webtundra'] = window['webtundra'] || {}, jQuery ));
+}( window['webtundra'] = window['webtundra'] || {} ));

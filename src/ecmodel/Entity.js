@@ -1,7 +1,7 @@
 // For conditions of distribution and use, see copyright notice in LICENSE
 
 
-(function ( namespace, $, undefined ) {
+(function ( namespace, undefined ) {
 
     /**
      * Defines Entity object
@@ -143,4 +143,4 @@
 
 
 
-}( window['webtundra'] = window['webtundra'] || {}, jQuery ));
+}( window['webtundra'] = window['webtundra'] || {} ));

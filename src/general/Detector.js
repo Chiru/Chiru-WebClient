@@ -7,7 +7,7 @@
  * @author Toni Dahl / https://github.com/K1ll3rF0x
  */
 
-(function ( namespace, $, undefined ) {
+(function ( namespace, undefined ) {
 
     var Detector = namespace['Detector'] = {
 
@@ -83,4 +83,4 @@
         }
     };
 
-}( window['webtundra'] = window['webtundra'] || {}, jQuery ));
+}( window['webtundra'] = window['webtundra'] || {} ));

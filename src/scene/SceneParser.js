@@ -1,7 +1,7 @@
 // For conditions of distribution and use, see copyright notice in LICENSE
 
 
-(function ( namespace, $, undefined ) {
+(function ( namespace, undefined ) {
 
     var SceneParser = namespace.SceneParser = function ( ecModel ) {
 
@@ -88,4 +88,4 @@
         return this.ecModel;
     };
 
-}( window['webtundra'] = window['webtundra'] || {}, jQuery ));
+}( window['webtundra'] = window['webtundra'] || {} ));

@@ -1,7 +1,7 @@
 // For conditions of distribution and use, see copyright notice in LICENSE
 
 
-(function ( namespace, $, undefined ) {
+(function ( namespace, undefined ) {
     var utils = namespace.util;
 
     var AssetManager = namespace.AssetManager = function ( gui, remoteStorage ) {
@@ -308,4 +308,4 @@
         return false;
     };
 
-}( window['webtundra'] = window['webtundra'] || {}, jQuery ));
+}( window['webtundra'] = window['webtundra'] || {} ));

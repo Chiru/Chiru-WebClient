@@ -1,7 +1,7 @@
 // For conditions of distribution and use, see copyright notice in LICENSE
 
 
-(function ( namespace, $, undefined ) {
+(function ( namespace, undefined ) {
 
     var WSManager = namespace.WSManager = function ( host, port, options ) {
         var defaults = {
@@ -178,4 +178,4 @@
         }
     };
 
-}( window['webtundra'] = window['webtundra'] || {}, jQuery ));
+}( window['webtundra'] = window['webtundra'] || {} ));

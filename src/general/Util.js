@@ -88,10 +88,30 @@
                     forEach.call( arguments, assign, e );
                     return freeze( e );
                 };
-            }())
+            }()),
 
-        };
-    }());
+            innerWidth: function ( el ) {
+                    if ( el instanceof window.Element ) {
+                        return el.clientWidth;
+                    } else if ( el instanceof window.Document || el instanceof window.Window) {
+                        return el.width;
+                    }
+                    throw new TypeError(["Could not get innerWidth of given object."]);
+                },
+            innerHeight: function ( el ) {
+                if ( el instanceof window.Element ) {
+                    return el.clientHeight;
+                } else if ( el instanceof window.Document || el instanceof window.Window) {
+                    return el.height;
+                }
+                throw new TypeError(["Could not get innerHeight of given object."]);
+            }
+
+    };
+}());
 
 
-}( window['webtundra'] = window['webtundra'] || {} ));
+}
+( window['webtundra'] = window['webtundra'] || {} )
+)
+;

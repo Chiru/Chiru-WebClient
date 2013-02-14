@@ -3,13 +3,42 @@
 
 (function ( namespace, undefined ) {
     var Workers = namespace.Workers = function () {
-        var workers = {};
+        var workers = {},
+            workerCount = 0,
+            queue = [];
+
 
         window.URL = window.URL || window.webkitURL;
 
 
         return {
-            spawnWorker: function ( script, scriptId ) {
+            spawnWorker: function ( scriptPath, options ) {
+                var w;
+                try {
+                    if ( workerCount < 5 ) {
+                        w = new Worker( scriptPath );
+                        if ( options && options.onmessage ) {
+                            w.onmessage = options.onmessage;
+                        }
+
+                        w.id = (Math.random() + '' + new Date().getMilliseconds()).substring( 2 );
+                        workers[w.id] = w;
+                        workerCount += 1;
+
+                        return w;
+                    } else {
+                        queue.push( {path: scriptPath, onmessage: function () {
+                        }} );
+                        console.log("Added worker to queue...");
+                        return queue[queue.length];
+                    }
+
+                } catch (e) {
+                    console.error( 'ERROR: ', e.stack );
+                    return false;
+                }
+            },
+            spawnInlineWorker: function ( script, scriptId ) {
                 var s, blob, path, w;
 
                 if ( scriptId === undefined ) {
@@ -46,7 +75,7 @@
 
                 w.id = (Math.random() + '' + new Date().getMilliseconds()).substring( 2 );
                 w.url = path;
-                console.log(path)
+                console.log( path )
                 w.scriptId = scriptId;
                 workers[w.id] = w;
 
@@ -62,7 +91,14 @@
                             window.URL.revokeObjectURL( workers[workerId].url );
                         }
                         delete workers[workerId];
+                        workerCount -= 1;
+
                         console.log( "Worker (" + workerId + ") killed." );
+
+                        if ( queue.length > 0 ) {
+                            var item = queue.pop();
+                            this.spawnWorker( item.path, {onmessage: item.onmessage} );
+                        }
 
                     } catch (e) {
                         console.log( 'ERROR: ', e.stack );

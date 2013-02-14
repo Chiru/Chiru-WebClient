@@ -16,6 +16,7 @@
         return;
     }
 
+
     // Getting the webgl container
     namespace.container = document.getElementById( 'webglContainer' );
 
@@ -67,7 +68,6 @@
     } );
 
 
-
     //Initializing the scene manager
     namespace.scene = webtundra.initScene( {container: namespace.container, websocket: namespace.ws} );
 
@@ -75,14 +75,28 @@
     // Starting the scene manager
     namespace.scene.start();
 
-    /** Worker example
+
+    console.log( "Supported WebGL extensions:" );
+    console.log( namespace.container.children[0].getContext( 'experimental-webgl' ).getSupportedExtensions() );
+
+    /** Worker test
      var script =
      "self.onmessage = function(event) {" +
                 // "self.postMessage(THREE.REVISION);" +
+    "var data = event.data;"+
+    "if (data.url) {"+
+        "var url = data.url;"+
+        "var index = url.indexOf('index.html');"+
+        "if (index != -1) {"+
+            "url = url.substring(0, index);"+
+        "}"+
+        "importScripts(url + '/src/libs/three.js');"+
+         "self.postMessage();"+
+    "}"+
                 "self.postMessage('kill');" +
                 "};";
 
-     namespace.worker = webnaali.Workers.spawnWorker( script );
+     namespace.worker = webtundra.Workers.spawnWorker( script );
      namespace.worker.onmessage = function ( event ) {
             if ( event.data === 'kill' ) {
                 console.log( 'worker ' + this.id + ' sent message: ' + event.data );
@@ -93,21 +107,80 @@
             }
         };
      var scriptId = namespace.worker.scriptId;
-     namespace.worker2 = webnaali.Workers.spawnWorker( '', scriptId );
+     namespace.worker2 = webtundra.Workers.spawnWorker( '', scriptId );
      namespace.worker2.onmessage = function ( event ) {
             if ( event.data === 'kill' ) {
                 console.log( 'worker ' + this.id + ' sent message: ' + event.data );
                 //Deal the final blow: remove a worker script -> kills all workers related to that script
-                webnaali.Workers.removeScript( scriptId );
+                webtundra.Workers.removeScript( scriptId );
             } else {
                 console.log( 'worker ' + this.id + ' echoed message: ' + event.data );
             }
         };
-     namespace.worker.postMessage( '' );
-     **/
+     namespace.worker.postMessage(  {url:document.location.href});
+     */
 
-    console.log("Supported WebGL extensions:");
-    console.log(namespace.container.children[0].getContext( 'experimental-webgl' ).getSupportedExtensions());
+
+
+    //Testing OgreXML parsing
+
+    var ogreparser = webtundra.OgreXMLParser, pos, geom;
+
+    function load( url, callback ) {
+        var request = new XMLHttpRequest();
+
+        request.open( "GET", url , false );
+
+        request.onreadystatechange = function () {
+
+            if ( request.readyState === 4 ) {
+
+                if ( request.status === 200 ) {
+                    console.log( "Downloaded." );
+
+                    if ( request.responseXML ) {
+                        callback( request.responseXML );
+                    } else if ( request.responseText ) {
+                        callback( request.responseText );
+                    }
+
+                }
+            }
+        };
+        request.send( null );
+
+    }
+
+    function processMesh( xml) {
+        geom = ogreparser.parseMeshXML( xml );
+
+        load( '/scenes/avatar/default.material', processMaterial );
+    }
+
+    function processMaterial( string ) {
+        var mat, mesh;
+        mat = ogreparser.parseMaterial( string );
+        mesh = new THREE.Mesh( geom[0], mat );
+        mesh.position.set( 0, pos * 2, 0 );
+
+        console.log(mesh);
+
+        namespace.scene.addToScene( mesh );
+
+    }
+
+    function parseTest() {
+        load( '/scenes/avatar/fish.mesh.xml', processMesh );
+
+
+
+    }
+
+    for ( var i = 1; i--; )
+    {
+        pos = i;
+        parseTest( );
+    }
 
 
 }( window.myNamespace = window.myNamespace || {} ));

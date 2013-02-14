@@ -445,7 +445,7 @@
                 throw new Error( ["Invalid WebSocket connection."] );
             }
             this.renderLoop();
-            this.websocket.connect();
+            //this.websocket.connect();
         } catch (e) {
             console.error( 'SceneManager:', e.stack );
         }

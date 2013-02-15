@@ -223,7 +223,7 @@
 
 
                 }
-                console.log( matContext );
+                //console.log( matContext );
 
                 delete matContext.material;
 

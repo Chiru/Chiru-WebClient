@@ -14,24 +14,47 @@
         this.textureAssets = {};
         this.materialAssets = {};
 
+        /*
+        // Passed to settimeout function
+        var assetProcessDelay = function () {
+            this.processAsset( arguments[0], arguments[1], arguments[2], arguments[3] );
+        }.bind( this );
+        */
+
+        /**
+         *
+         * @type {Object}
+         */
         var requestQueue = {
             queue: [],
             requests: {}
         };
 
+        /**
+         *
+         * @param name
+         */
+
         this.removeRequest = function ( name ) {
-            var requests = requestQueue.requests, queue = requestQueue.queue;
+            var requests = requestQueue.requests, queue = requestQueue.queue, queueLen = queue.length, i;
 
             if ( requests.hasOwnProperty( name ) ) {
-                queue.splice( queue.indexOf( name ), 1 );
+                queue.splice(queue.indexOf(name), 1);
                 delete requests[name];
-                //console.log( "Request:", name, "deleted" );
+                console.log( "Request:", name, "deleted" );
             }
 
             if ( queue.length === 0 ) {
                 console.log( "All requests processed!" );
             }
         };
+
+
+        /**
+         *
+         * @param options
+         * @return {*}
+         */
 
         this.createRequest = function ( options ) {
 
@@ -43,7 +66,7 @@
                     assetType: null
                 },
                 opts, request, trigger = null, queue = requestQueue.queue, queueLen = queue.length,
-                requests = requestQueue.requests, assetReady = new namespace.Signal(),
+                requests = requestQueue.requests, assetReadySig = new namespace.Signal(),
                 self = this, i;
 
             // Setting options
@@ -53,18 +76,15 @@
                 return false;
             }
 
-            // Checking if duplicate request exists already in the queue
-            for ( i = queueLen; i--; ) {
-                if ( queue[i].assetName === opts.assetName ) {
-                    return queue[i].signal;
-                }
-            }
 
-            request = new XMLHttpRequest();
+            // Checking if duplicate request exists already in the queue, or creating a new request
             if ( !requests.hasOwnProperty( opts.assetName ) ) {
-                requests[opts.assetName] = request;
-
-                queue.push( {assetName: opts.assetName, signal: assetReady} );
+                request = new XMLHttpRequest();
+                requests[opts.assetName] = {request: request, signal: assetReadySig};
+                queue.push(opts.assetName);
+            } else{
+                // Returning the signal-object corresponding to requested asset that is already downloading
+                return requests[opts.assetName].signal;
             }
 
 
@@ -79,52 +99,33 @@
             request.onreadystatechange = function () {
 
                 if ( request.readyState === 4 ) {
-                    //clearInterval( trigger );
-                    //trigger = null;
-
                     if ( request.status === 200 ) {
-
 
                         console.log( opts.assetName, "downloaded." );
 
-                        //The final download progress update
-                        //console.log( Math.ceil( (request.responseText.length / 1000024) * 100 ) / 100 );
-
-                        //Gives the program some time to breath after download so it has time to update the viewport
-                        //setTimeout( function () {
                         request.downloaded = true;
-                        self.processAsset( request, assetReady, opts.assetName, opts.assetType );
-                        //}, 500 );
+
+                        //TODO: Convert this to queue system where assets are processed one by one after download is complete
+                        self.processAsset( request, assetReadySig, opts.assetName, opts.assetType );
+
+                        //Gives the program some time to breath after download to increase responsiveness
+                        /*
+                        setTimeout( assetProcessDelay, 1000 * queueLen, request,
+                            assetReady, opts.assetName, opts.assetType);
+                        */
 
 
                     } else if ( request.status === 404 ) {
                         console.log( 'error', "File not found from: " + opts.url );
-                        //request = null;
                     }
 
-                } else if ( request.readyState === 2 ) {
-                    console.log( 'Loading asset: ' + opts.assetName );
-
-                    /*
-                     trigger = setInterval( function () {
-                     if ( request.readyState === 3 ) {
-                     //console.log( Math.ceil( (request.responseText.length / 1000024) * 100 ) / 100 );
-                     }
-                     }, 200 );
-                     */
                 }
             };
 
             request.onabort = function () {
-                //clearInterval( trigger );
-                //trigger = null;
-                request = null;
             };
 
             request.onerror = function ( e ) {
-                //clearInterval( trigger );
-                //trigger = null;
-                request = null;
                 console.log( 'error', "Failed to download: " + opts.url );
             };
 
@@ -138,11 +139,16 @@
             }
 
 
-            return assetReady;
+            return assetReadySig;
         };
 
 
     };
+
+    /**
+     *
+     * @param url
+     */
 
     AssetManager.prototype.setRemoteStorage = function ( url ) {
         console.log( "Setting remote asset storage to: " + url );
@@ -150,6 +156,13 @@
         this.remoteStorage = url;
     };
 
+
+    /**
+     *
+     * @param assetFileName
+     * @param forceType
+     * @return {*}
+     */
     AssetManager.prototype.cleanFileName = function ( assetFileName, forceType ) {
 
         var fileName = assetFileName.split( '//' ).pop().split( '.' ),
@@ -166,9 +179,15 @@
     };
 
 
+    /**
+     *
+     * @param assetName
+     * @param type
+     * @param relPath
+     * @return {*}
+     */
     AssetManager.prototype.requestAsset = function ( assetName, type, relPath ) {
-        var trigger, request, asset, responseType = "", mimeType = null,
-            self = this;
+        var request, asset, responseType = "", mimeType = null;
 
         if ( typeof type === 'string' ) {
             type = type.toLowerCase();
@@ -204,12 +223,10 @@
             relPath = '';
         }
 
-
         if ( this.meshAssets.hasOwnProperty( assetName ) ) {
             console.log( "Asset:", assetName, "already downloaded" );
             return false;
         }
-
 
         request = this.createRequest( {
             url: this.remoteStorage + relPath + assetName,
@@ -221,8 +238,15 @@
 
 
         return request;
-
     };
+
+    /**
+     *
+     * @param request
+     * @param signal
+     * @param name
+     * @param type
+     */
 
     AssetManager.prototype.processAsset = function ( request, signal, name, type ) {
         switch (type) {
@@ -239,6 +263,12 @@
         }
     };
 
+    /**
+     *
+     * @param request
+     * @param signal
+     * @param name
+     */
     AssetManager.prototype.processMesh = function ( request, signal, name ) {
         var loader = new THREE.ColladaLoader(), material, geometry, xml = request.responseXML,
             scene, meshGroup = [], self = this, result, index;
@@ -251,8 +281,6 @@
         console.log( "Asset parsed. Post-processing..." );
         scene = result.scene;
 
-        //console.log( scene );
-
         scene.traverse( function ( child ) {
             if ( child instanceof THREE.Mesh ) {
                 meshGroup.push( [child.geometry.clone(), child.material.clone()] );
@@ -262,7 +290,7 @@
 
         if ( !this.meshAssets.hasOwnProperty( name ) ) {
             meshGroup.name = name;
-            self.meshAssets[name] = meshGroup;
+            this.meshAssets[name] = meshGroup;
         }
         if ( signal instanceof namespace.Signal ) {
             signal.dispatch( self.meshAssets[name] );
@@ -280,6 +308,12 @@
 
     };
 
+    /**
+     *
+     * @param request
+     * @param signal
+     * @param name
+     */
     AssetManager.prototype.processTexture = function ( request, signal, name ) {
         var buffer = request.response,
             dds = THREE.ImageUtils.parseDDS( buffer, true ),
@@ -287,20 +321,35 @@
 
         dds.name = name;
 
-        if ( !self.textureAssets.hasOwnProperty( name ) ) {
-            self.textureAssets[name] = dds;
+        if ( !this.textureAssets.hasOwnProperty( name ) ) {
+            this.textureAssets[name] = dds;
         }
 
         if ( signal instanceof namespace.Signal ) {
             signal.dispatch( self.textureAssets[name] );
         }
 
+        this.removeRequest( name );
+
+
     };
 
-    AssetManager.prototype.processMaterial = function ( request, name ) {
+    /**
+     *
+     * @param request
+     * @param signal
+     * @param name
+     */
+    AssetManager.prototype.processMaterial = function ( request, signal, name ) {
 
     };
 
+    /**
+     *
+     * @param assetRef
+     * @param type
+     * @return {*}
+     */
     AssetManager.prototype.getAsset = function ( assetRef, type ) {
         if ( this.meshAssets.hasOwnProperty( assetRef ) ) {
             return this.meshAssets[assetRef];

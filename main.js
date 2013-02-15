@@ -123,13 +123,13 @@
 
 
     //Testing OgreXML parsing
-
+/*
     var ogreparser = webtundra.OgreXMLParser, pos, geom;
 
     function load( url, callback ) {
         var request = new XMLHttpRequest();
 
-        request.open( "GET", url , false );
+        request.open( "GET", url, false );
 
         request.onreadystatechange = function () {
 
@@ -150,20 +150,25 @@
         request.send( null );
 
     }
-
-    function processMesh( xml) {
+    function processDelay(xml){
         geom = ogreparser.parseMeshXML( xml );
 
         load( '/scenes/avatar/default.material', processMaterial );
+    }
+
+    function processMesh( xml ) {
+
+        setTimeout(processDelay, 1000*pos, xml);
+
     }
 
     function processMaterial( string ) {
         var mat, mesh;
         mat = ogreparser.parseMaterial( string );
         mesh = new THREE.Mesh( geom[0], mat );
-        mesh.position.set( 0, pos * 2, 0 );
+        mesh.position.set( 0, mesh.id, 0 );
 
-        console.log(mesh);
+        console.log( mesh );
 
         namespace.scene.addToScene( mesh );
 
@@ -173,15 +178,13 @@
         load( '/scenes/avatar/fish.mesh.xml', processMesh );
 
 
-
     }
 
-    for ( var i = 1; i--; )
-    {
+    for ( var i = 100; i--; ) {
         pos = i;
-        parseTest( );
+        parseTest();
     }
-
+*/
 
 }( window.myNamespace = window.myNamespace || {} ));
 

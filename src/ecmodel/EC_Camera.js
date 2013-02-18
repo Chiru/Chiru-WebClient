@@ -20,7 +20,9 @@
 
 
     };
+
     namespace.storeComponent( 15, ECCamera );
+
 
     ECCamera.prototype = Object.create( namespace.Component.prototype );
 

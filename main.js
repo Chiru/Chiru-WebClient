@@ -9,6 +9,7 @@
 
 
 (function ( namespace, undefined ) {
+    var wsAddress, wsIp, wsPort;
 
     // Checking if WebGL context is available
     if ( !webtundra.Detector.webgl ) {
@@ -21,8 +22,15 @@
     namespace.container = document.getElementById( 'webglContainer' );
 
 
+    wsAddress = prompt("Enter Tundra server WebSocket address and port","192.168.0.50:9002");
+    if (!wsAddress)
+    {
+       wsAddress = "192.168.0.50:9002";
+    }
+
+
     //Initializing the websocket connection and adding some basic events
-    namespace.ws = webtundra.initConnection( /*'130.231.12.58'*/'192.168.0.50', '9002', {allowReconnect: false} );
+    namespace.ws = webtundra.initConnection( /*'130.231.12.58'*/wsAddress.split(":")[0], wsAddress.split(":")[1], {allowReconnect: false} );
     namespace.ws.bindEvent( "connected", function ( url ) {
         console.log( "WebSocket connection opened." );
     } );

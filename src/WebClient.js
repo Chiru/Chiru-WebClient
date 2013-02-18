@@ -20,7 +20,7 @@
     // Basic methods
     namespace.initScene = function ( options ) {
         try {
-            return this.scene = new namespace.SceneManager( options );
+            return new namespace.SceneManager( options );
         } catch (e) {
             console.log( e.stack );
             return false;

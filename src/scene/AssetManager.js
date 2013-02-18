@@ -41,7 +41,7 @@
             if ( requests.hasOwnProperty( name ) ) {
                 queue.splice(queue.indexOf(name), 1);
                 delete requests[name];
-                console.log( "Request:", name, "deleted" );
+                //console.log( "Request:", name, "deleted" );
             }
 
             if ( queue.length === 0 ) {
@@ -82,7 +82,7 @@
                 request = new XMLHttpRequest();
                 requests[opts.assetName] = {request: request, signal: assetReadySig};
                 queue.push(opts.assetName);
-            } else{
+           } else{
                 // Returning the signal-object corresponding to requested asset that is already downloading
                 return requests[opts.assetName].signal;
             }
@@ -195,6 +195,11 @@
             switch (type) {
             case 'mesh':
             {
+                if ( this.meshAssets.hasOwnProperty( assetName ) ) {
+                    console.log( "Mesh:", assetName, "already downloaded" );
+                    return false;
+                }
+
                 if ( !document.implementation || !document.implementation.createDocument ) {
                     throw new Error( ["AssetManager: Your browser can't process XML!"] );
                 }
@@ -207,6 +212,11 @@
             case 'material':
             case 'texture':
             {
+                if ( this.textureAssets.hasOwnProperty( assetName ) ) {
+                    console.log( "texture:", assetName, "already downloaded" );
+                    return false;
+                }
+
                 responseType = "arraybuffer";
                 assetName = this.cleanFileName( assetName );
             }
@@ -223,10 +233,6 @@
             relPath = '';
         }
 
-        if ( this.meshAssets.hasOwnProperty( assetName ) ) {
-            console.log( "Asset:", assetName, "already downloaded" );
-            return false;
-        }
 
         request = this.createRequest( {
             url: this.remoteStorage + relPath + assetName,

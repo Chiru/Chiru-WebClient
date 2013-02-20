@@ -173,7 +173,7 @@
                     component.addAttribute( cid, attributes[cid] );
                 }
             }
-            console.log(component)
+            //console.log(component)
 
             return component;
 

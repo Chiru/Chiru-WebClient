@@ -2,6 +2,9 @@
 
 
 (function ( namespace, undefined ) {
+    var util, ECMesh;
+
+    util = namespace.util;
 
     /**
      * ECMesh constructor
@@ -12,7 +15,7 @@
      * @param {object} sceneMgr Pointer to scene manager.
      */
 
-    var ECMesh = namespace.ECMesh = function ( sceneMgr ) {
+    ECMesh = namespace.ECMesh = function ( sceneMgr ) {
 
         namespace.Component.call( this, sceneMgr ); //Inherit component properties
 
@@ -29,214 +32,182 @@
 
     };
 
-    namespace.storeComponent(17, "EC_Mesh", ECMesh);
+    namespace.storeComponent( 17, "EC_Mesh", ECMesh );
 
 
     //Inherit component prototype methods
-    ECMesh.prototype = Object.create( namespace.Component.prototype );
-
-
-    ECMesh.prototype.onAttributeUpdated = function ( attr, state ) {
-        //console.log("Attribute", attr['name'], "of component", this.id, "added/updated.");
-        switch (attr['name']) {
-        case 'transform':
+    ECMesh.prototype = util.extend( Object.create( namespace.Component.prototype ),
         {
-            if ( attr['val'] instanceof Array && attr['val'].length === 9 ) {
-                if ( state === 0 ) {
-                    this.transform = attr;
-                } else if ( state === 1 ) {
+
+            onAttributeUpdated: function ( attr, state ) {
+                //console.log("Attribute", attr['name'], "of component", this.id, "added/updated.");
+                switch (attr['name']) {
+                case 'transform':
+                {
+                    if ( attr['val'] instanceof Array && attr['val'].length === 9 ) {
+                        if ( state === 0 ) {
+                            this.transform = attr;
+                        } else if ( state === 1 ) {
+
+                        }
+                    }
+                }
+                    break;
+                case 'meshref':
+                    this.meshRef = attr['val'];
+                    break;
+                case 'castshadows':
+                    this.castShadows = attr['val'];
+                    break;
+                default:
+                    break;
+                }
+
+            },
+
+            onParentAdded: function ( parent ) {
+                var self = this;
+                this.parent.componentAdded.add( function ( c ) {
+                    if ( c instanceof namespace.ECPlaceable ) {
+                        self.loadMesh();
+                        console.log( "ECMesh: ECplaceable addded to parent entity", self.parent.id );
+                    }
+                } );
+            },
+
+
+            onMeshLoaded: function () {
+                this.setMesh();
+
+            },
+
+            setPlaceable: function ( ECPlaceable ) {
+                if ( ECPlaceable instanceof namespace.ECPlaceable ) {
+                    this.placeable = ECPlaceable;
+                }
+            },
+
+            autoSetPlaceable: function () {
+                if ( this.parent !== null ) {
+                    var placeable;
+                    placeable = this.parent.getComponent( namespace.ECPlaceable );
+                    this.setPlaceable( placeable );
+                    return true;
 
                 }
-            }
-        }
-            break;
-        case 'meshref':
-            this.meshRef = attr['val'];
-            break;
-        case 'castshadows':
-            this.castShadows = attr['val'];
-            break;
-        default:
-            break;
-        }
-
-    };
-
-    ECMesh.prototype.onParentAdded = function ( parent ) {
-        var self = this;
-        this.parent.componentAdded.add( function ( c ) {
-            if ( c instanceof namespace.ECPlaceable ) {
-                self.loadMesh();
-                console.log( "ECMesh: ECplaceable addded to parent entity", self.parent.id );
-            }
-        } );
-    };
+                return false;
+            },
 
 
-    ECMesh.prototype.onMeshLoaded = function () {
-        this.setMesh();
+            loadMesh: function () {
 
-    };
-
-    ECMesh.prototype.setPlaceable = function ( ECPlaceable ) {
-        if ( ECPlaceable instanceof namespace.ECPlaceable ) {
-            this.placeable = ECPlaceable;
-        }
-    };
-
-    ECMesh.prototype.autoSetPlaceable = function () {
-        if ( this.parent !== null ) {
-            var placeable;
-            placeable = this.parent.getComponent( namespace.ECPlaceable );
-            this.setPlaceable( placeable );
-            return true;
-
-        }
-        return false;
-    };
-
-
-    ECMesh.prototype.loadMesh = function () {
-
-        if ( this.meshRef === null ) {
-            return;
-        }
-
-        var assetManager = this.sceneManager.assetManager,
-            self = this, request, mesh;
-
-
-        request = assetManager.requestAsset( this.meshRef, 'mesh' );
-        if ( request ) {
-            request.add( function ( asset ) {
-                if ( asset ) {
-                    self.mesh = asset;
-                    self.onMeshLoaded();
+                if ( this.meshRef === null ) {
+                    return;
                 }
-            } );
-        } else {
-            mesh = assetManager.getAsset( this.meshRef );
-            if ( mesh ) {
-                this.mesh = mesh;
-                this.onMeshLoaded();
+
+                var assetManager = this.sceneManager.assetManager,
+                    self = this, request, mesh;
+
+
+                request = assetManager.requestAsset( this.meshRef, 'mesh' );
+                if ( request ) {
+                    request.add( function ( asset ) {
+                        if ( asset ) {
+                            self.mesh = asset;
+                            self.onMeshLoaded();
+                        }
+                    } );
+                } else {
+                    mesh = assetManager.getAsset( this.meshRef );
+                    if ( mesh ) {
+                        this.mesh = mesh;
+                        this.onMeshLoaded();
+                    }
+                }
+            },
+
+            prepareMesh: function ( mesh ) {
+                var group = new THREE.Object3D(), newMesh, groupLen, i;
+
+                if ( !mesh ) {
+                    return false;
+                }
+                groupLen = mesh.length;
+                for ( i = groupLen; i--; ) {
+
+                    newMesh = new THREE.Mesh( mesh[i][0], mesh[i][1] );
+                    newMesh['castShadow'] = this.castShadows;
+                    newMesh['receiveShadow'] = this.castShadows;
+                    newMesh.material.side = THREE.DoubleSide;
+                    group.add( newMesh );
+
+                }
+
+                return group;
+            },
+
+            setMesh: function () {
+                var mesh, transVal, node;
+                if ( this.mesh === null ) {
+                    return false;
+                }
+
+
+                if ( this.placeable === null ) {
+                    this.autoSetPlaceable();
+                }
+
+                node = this.offsetNode;
+                mesh = this.prepareMesh( this.mesh );
+
+                if ( !mesh ) {
+                    return false;
+                }
+
+
+                node.add( mesh );
+
+                transVal = this.transform['val'];
+                node.position.set( transVal[0], transVal[1], transVal[2] );
+                node.rotation.set( transVal[3] * (Math.PI / 180), transVal[4] * (Math.PI / 180), transVal[5] * (Math.PI / 180) );
+                node.scale.set( transVal[6], transVal[7], transVal[8] );
+                this.attachMesh();
+                return true;
+
+
+            },
+
+            attachMesh: function () {
+                var sceneNode, placeable, offsetNode;
+                placeable = this.placeable;
+                offsetNode = this.offsetNode;
+
+                if ( this.attached || placeable === null ) {
+                    return;
+                }
+
+                sceneNode = placeable.getSceneNode();
+                if ( sceneNode ) {
+                    offsetNode.visible = placeable.visible;
+                    sceneNode.add( offsetNode );
+                    this.sceneManager.addToScene( sceneNode );
+                    this.attached = true;
+                }
+
+
+            },
+
+            detachFromScene: function () {
+                if ( !this.attached || this.sceneObject === null ) {
+                    return;
+                }
+
+                this.sceneManager.removeFromScene( this.sceneObject );
+                this.attached = false;
+
             }
         }
-    };
-
-    ECMesh.prototype.prepareMesh = function ( mesh ) {
-        var group = new THREE.Object3D(), newMesh, groupLen, i;
-
-        if ( !mesh ) {
-            return false;
-        }
-        groupLen = mesh.length;
-        for ( i = groupLen; i--; ) {
-
-            newMesh = new THREE.Mesh( mesh[i][0], mesh[i][1] );
-            newMesh['castShadow'] = this.castShadows;
-            newMesh['receiveShadow'] = this.castShadows;
-            newMesh.material.side = THREE.DoubleSide;
-            group.add( newMesh );
-
-        }
-
-        return group;
-    };
-
-    ECMesh.prototype.setMesh = function () {
-        var mesh, transVal, node;
-        if ( this.mesh === null ) {
-            return false;
-        }
-
-
-        if ( this.placeable === null ) {
-            this.autoSetPlaceable();
-        }
-
-        node = this.offsetNode;
-        mesh = this.prepareMesh( this.mesh );
-
-        if ( !mesh ) {
-            return false;
-        }
-
-
-        node.add( mesh );
-
-        transVal = this.transform['val'];
-        node.position.set( transVal[0], transVal[1], transVal[2] );
-        node.rotation.set( transVal[3] * (Math.PI / 180), transVal[4] * (Math.PI / 180), transVal[5] * (Math.PI / 180) );
-        node.scale.set( transVal[6], transVal[7], transVal[8] );
-        this.attachMesh();
-        return true;
-
-
-    };
-
-    ECMesh.prototype.attachMesh = function () {
-        var sceneNode, placeable, offsetNode;
-        placeable = this.placeable;
-        offsetNode = this.offsetNode;
-
-        if ( this.attached || placeable === null ) {
-            return;
-        }
-
-        sceneNode = placeable.getSceneNode();
-        if ( sceneNode ) {
-            offsetNode.visible = placeable.visible;
-            sceneNode.add( offsetNode );
-            this.sceneManager.addToScene( sceneNode );
-            this.attached = true;
-        }
-
-
-    };
-
-    ECMesh.prototype.detachFromScene = function () {
-        if ( !this.attached || this.sceneObject === null ) {
-            return;
-        }
-
-        this.sceneManager.removeFromScene( this.sceneObject );
-        this.attached = false;
-
-    };
-
-    ECMesh.prototype.setRotation = function ( x, y, z ) {
-        var trans = this.transform;
-        if ( !trans ) {
-            return;
-        }
-
-        if ( trans instanceof Array && trans.length === 9 ) {
-            trans.splice( 3, 3, x, y, z );
-        }
-    };
-    ECMesh.prototype.setScale = function ( x, y, z ) {
-        var trans = this.transform;
-        if ( !trans ) {
-            return;
-        }
-
-        if ( trans instanceof Array && trans.length === 9 ) {
-            trans.splice( 6, 3, x, y, z );
-        }
-    };
-
-    ECMesh.prototype.setTransform = function ( transArr ) {
-        var trans = this.transform, i;
-        if ( !trans ) {
-            return;
-        }
-        if ( trans instanceof Array && transArr instanceof Array && trans.length === 9 && transArr.length === 9 ) {
-            for ( i = trans.length; i--; ) {
-                trans[i] = transArr[i];
-            }
-        }
-
-    };
+    );
 
 
 }( window['webtundra'] = window['webtundra'] || {} ));

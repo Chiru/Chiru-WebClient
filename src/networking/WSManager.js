@@ -87,7 +87,7 @@
         }.bind( this );
 
         this.ws.onmessage = function ( evt ) {
-            console.log("Got msg: " + evt.data);
+            //console.log("Got msg: " + evt.data);
             this.parseMessage( evt.data );
         }.bind( this );
 

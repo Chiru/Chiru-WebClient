@@ -29,7 +29,7 @@
 
     };
 
-    namespace.storeComponent(10, ECSky);
+    namespace.storeComponent(10, "EC_Sky", ECSky);
 
 
     ECSky.prototype = Object.create( namespace.Component.prototype );

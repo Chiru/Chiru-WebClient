@@ -84,5 +84,13 @@
         }
     };
 
+    Attribute.prototype.copy = function ( attr ) {
+      if(attr instanceof namespace.Attribute){
+          this.type = attr.type;
+          this.name = attr.name;
+          this.val = attr.val;
+      }
+    };
+
 
 }( window['webtundra'] = window['webtundra'] || {} ));

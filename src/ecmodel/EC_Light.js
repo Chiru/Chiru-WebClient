@@ -26,7 +26,7 @@
 
     };
 
-    namespace.storeComponent(8, ECEnvironmentLight);
+    namespace.storeComponent(8, "EC_Light", ECEnvironmentLight);
 
     //Inherit component prototype methods
     ECEnvironmentLight.prototype = Object.create( namespace.Component.prototype );

@@ -41,13 +41,13 @@
         this.renderer = null;
         this.scene = null;
         this.skyBoxScene = null;
-        this.camera = null;
+        this.mainCamera = null;
         this.skyBoxCamera = null;
         this.loadedObjects = [];
         this.remoteStorage = opts.remoteStorage;
 
         this.websocket = opts.websocket;
-        // In future implementation the storage url will come through a websocket, but it's now defined here for testing
+
         this.assetManager = new namespace.AssetManager( {}, this.remoteStorage );
 
         this.ecManager = new namespace.ECManager( this );
@@ -56,6 +56,16 @@
         this.init();
     };
 
+    SceneManager.prototype.onEntityCreated = function ( entity ){
+        var name = entity.name, ecManager = this.ecManager, e, comp;
+
+        if(name){
+            if(name === "freelookcameraspawnpos"){
+                e = ecManager.createLocalEntity("freelookcamera", ["EC_Placeable", "EC_Name", "EC_Camera"]);
+                console.error(e);
+            }
+        }
+    };
 
     SceneManager.prototype.renderLoop = function () {
         var self = this;
@@ -93,13 +103,13 @@
 
 
             self.skyBoxCamera.rotation.setEulerFromRotationMatrix(
-                self.camera.parent.matrixWorld,
+                self.mainCamera.parent.matrixWorld,
                 //self.camera.matrixWorld,
                 THREE.Object3D.defaultEulerOrder
             );
 
             self.renderer.render( self.skyBoxScene, self.skyBoxCamera );
-            self.renderer.render( self.scene, self.camera );
+            self.renderer.render( self.scene, self.mainCamera );
 
             self.time = Date.now();
         }());
@@ -107,39 +117,13 @@
 
     };
 
-
-    SceneManager.prototype.bindConnection = function ( socket ) {
-
-        var self = this;
-
-        if ( socket !== undefined ) {
-            this.websocket = socket;
-
-
-            // Binding events
-
-            try {
-
-
-                return true;
-
-            } catch (e) {
-                console.error( 'ERROR:', e.stack );
-            }
-
-        }
-
-        return false;
-
-    };
-
     SceneManager.prototype.windowResize = function () {
         var callback = function () {
             this.renderer.setSize( innerWidth( this.container ), innerHeight( this.container ) );
 
-            this.camera.aspect = innerWidth( this.container ) / innerHeight( this.container );
-            this.camera.updateProjectionMatrix();
-            this.skyBoxCamera.aspect = this.camera.aspect;
+            this.mainCamera.aspect = innerWidth( this.container ) / innerHeight( this.container );
+            this.mainCamera.updateProjectionMatrix();
+            this.skyBoxCamera.aspect = this.mainCamera.aspect;
             this.skyBoxCamera.updateProjectionMatrix();
 
         }.bind( this );
@@ -150,84 +134,6 @@
                 window.removeEventListener( 'resize', callback );
             }
         };
-    };
-
-    /*
-     SceneManager.prototype.parseScene = function ( xml ) {
-     var that = this;
-
-     var sceneParser = new namespace.SceneParser( this.ecManager );
-     this.ecManager.meshAdded.add( function ( component ) {
-     that.addToScene( component.mesh );
-     console.log( "added to scene" )
-     } );
-     sceneParser.parse( xml );
-
-     sceneParser = null;
-
-
-     };
-     */
-    SceneManager.prototype.clearScene = function ( filter, scene ) {
-        var obj, i;
-
-        if ( !scene ) {
-            scene = this.scene;
-        }
-
-        if ( filter === undefined ) {
-            filter = THREE.Object3D;
-        }
-
-        //Removes all objects (but not camera/lights)
-        for ( i = scene.children.length - 1; i >= 0; i - 1 ) {
-            obj = scene.children[i];
-            if ( obj instanceof filter ) {
-                scene.remove( obj );
-            }
-        }
-    };
-
-    SceneManager.prototype.cleanMemory = function ( freeMemory, cleanAll ) {
-        // TODO: Clean this up
-
-        if ( freeMemory === undefined ) {
-            freeMemory = true;
-        }
-
-        if ( cleanAll === undefined ) {
-            cleanAll = false;
-        }
-
-        var objects = this.loadedObjects,
-            that = this, len;
-
-        if ( freeMemory ) {
-
-            len = 4;
-            if ( cleanAll ) {
-                len = 0;
-            }
-
-            if ( objects.length > len ) {
-                while ( objects.length > len ) {
-                    //console.log("removing object: " + objects[0].name)
-
-                    this.removeFromScene( objects[0] );
-
-                    this.renderer.deallocateObject( objects[0] );
-                    objects.splice( 0, 1 );
-
-                }
-            }
-            this.renderer.clear();
-
-        } else {
-            objects.forEach( function ( object ) {
-                that.renderer.deallocateObject( object );
-            } );
-            this.renderer.clear();
-        }
     };
 
     SceneManager.prototype.addToScene = function ( object ) {
@@ -247,6 +153,12 @@
 
         this.scene.remove( object );
 
+    };
+
+    SceneManager.prototype.changeMainCamera = function ( camera ) {
+        if(camera instanceof THREE.Camera){
+            this.mainCamera = camera;
+        }
     };
 
     SceneManager.prototype.addSkyBox = function ( skyBox ) {
@@ -322,31 +234,28 @@
 
     };
 
+
     SceneManager.prototype.init = function () {
 
         var body = document.body, renderer, scene, skyBoxScene, camera, skyBoxCamera, controls,
             container = this.container, websocket = this.websocket,
             assetManager = this.assetManager, self = this;
 
-        if ( websocket ) {
-            websocket.bindEvent( "RemoteStorage", function ( data ) {
-                assetManager.setRemoteStorage( data );
-            } );
-        }
 
-        // Initializing scene and skyBoxScene
+        // *** SCENE AND SKYBOX ***
         scene = this.scene = new THREE.Scene();
         skyBoxScene = this.skyBoxScene = new THREE.Scene();
 
 
-        // Initializing cameras
+        // *** CAMERAS ***
 
-        camera = this.camera = new THREE.PerspectiveCamera( 35, ( innerWidth( container ) / innerHeight( container )), 1, 10000 );
+        camera = this.mainCamera = new THREE.PerspectiveCamera( 35, ( innerWidth( container ) / innerHeight( container )), 1, 10000 );
         camera.lookAt( scene.position );
         skyBoxCamera = this.skyBoxCamera = new THREE.PerspectiveCamera( 35, (innerWidth( container ) / innerHeight( container )), 1, 10000 );
         skyBoxCamera.lookAt( scene.position );
 
-        // Renderer settings
+
+        // *** RENDERER ***
         renderer = this.renderer = new THREE.WebGLRenderer( {
             antialias: true,
             clearColor: 0x87CEEB,
@@ -368,9 +277,9 @@
         container.appendChild( this.renderer.domElement );
 
 
-        // Controls
+        // *** CONTROLS ***
 
-        controls = this.controls = new THREE.PointerLockControls( this.camera );
+        controls = this.controls = new THREE.PointerLockControls( this.mainCamera );
         scene.add( this.controls.getObject() );
 
         controls.rayCaster = new THREE.Raycaster();
@@ -428,11 +337,19 @@
         }, false );
 
 
+
+        // *** SIGNAL LISTENERS ***
         //Windows resize listener
         this.windowResize();
+        this.ecManager.entityCreated.add(this.onEntityCreated, this);
 
+        if ( websocket ) {
+            websocket.bindEvent( "RemoteStorage", function ( data ) {
+                assetManager.setRemoteStorage( data );
+            } );
+        }
 
-        // Helpers for developing
+        // *** HELPERS FOR DEVELOPING ***
         var axes = new THREE.AxisHelper( 50 );
         axes.position.y = 10;
         scene.add( axes );
@@ -451,8 +368,6 @@
         }
     };
 
-}( window['webtundra'] = window['webtundra'] || {} )
-    )
-;
+}( window['webtundra'] = window['webtundra'] || {} ));
 
 

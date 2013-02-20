@@ -9,7 +9,7 @@
 
 
     };
-    namespace.storeComponent(1, ECAvatar);
+    namespace.storeComponent(1, "EC_Avatar", ECAvatar);
 
     ECAvatar.prototype = Object.create( namespace.Component.prototype );
 

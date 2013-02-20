@@ -26,6 +26,7 @@
         this.typeId = null;
         this.typeName = null;
 
+
     };
 
 

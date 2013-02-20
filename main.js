@@ -25,7 +25,7 @@
     wsAddress = prompt("Enter Tundra server WebSocket address and port","192.168.0.50:9002");
     if (!wsAddress)
     {
-       wsAddress = "192.168.0.50:9002";
+       return;
     }
 
 

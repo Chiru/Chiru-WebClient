@@ -29,7 +29,7 @@
 
     };
 
-    namespace.storeComponent(17, ECMesh);
+    namespace.storeComponent(17, "EC_Mesh", ECMesh);
 
 
     //Inherit component prototype methods

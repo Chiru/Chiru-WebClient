@@ -27,7 +27,7 @@
 
     };
 
-    namespace.storeComponent(20, ECPlaceable);
+    namespace.storeComponent(20, "EC_Placeable", ECPlaceable);
 
 
     //Inherit component prototype methods
@@ -111,12 +111,12 @@
     };
 
     ECPlaceable.prototype.setTransform = function ( transArr ) {
-        var trans = this.transform, i;
+        var trans = this.transform,  i;
         if ( !trans ) {
             return;
         }
-        if ( trans instanceof Array && transArr instanceof Array && trans.length === 9 && transArr.length === 9 ) {
-            for ( i = trans.length; i--; ) {
+        if ( trans instanceof Array && transArr instanceof Array && trans.length ===  transArr.length === 9 ) {
+            for ( i = 9; i--; ) {
                 trans[i] = transArr[i];
             }
         }

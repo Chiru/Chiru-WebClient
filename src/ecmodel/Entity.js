@@ -11,7 +11,7 @@
      * @param {Number} id Unique entity id.
      */
 
-    var Entity = namespace.Entity = function ( id ) {
+    var Entity = namespace.Entity = function ( id, name ) {
 
         /**
          * A Signal that is dispatched when a new component is added to this entity.
@@ -58,7 +58,21 @@
          * @name id
          * @type Number
          */
+
+        this.numComponents = 0;
+
         this.id = id;
+
+
+        /**
+         * Name of the entity.
+         * Got from EC_Name if defined, or when Entity is created.
+         *
+         * @memberOf Entity#
+         * @name name
+         * @type String
+         */
+        this.name = name || null;
 
     };
 
@@ -95,8 +109,8 @@
      * @return {Component|Boolean}
      */
 
-    Entity.prototype.getComponentById = function( id ) {
-        if (this.components.hasOwnProperty(id)) {
+    Entity.prototype.getComponentById = function ( id ) {
+        if ( this.components.hasOwnProperty( id ) ) {
             return this.components[id];
         }
         return false;
@@ -109,18 +123,18 @@
      * @function
      * @memberOf Entity.prototype
      * @param {Component} component Component of a specific type. e.g. ECMesh
+     * @param {Number} id Unique id of the component
      */
 
-    Entity.prototype.addComponent = function ( component ) {
+    Entity.prototype.addComponent = function ( component, id ) {
+        id = id || component.id || this.numComponents;
 
-        //component.setParentEnt(this);
-
-        if ( component.typeId !== undefined ) {
-            if ( !this.components.hasOwnProperty(component.id) ) {
-                this.components[component.id] = component;
-                this.componentAdded.dispatch( component );
-            }
+        if ( !this.components.hasOwnProperty( id + '' ) ) {
+            this.components[id] = component;
+            this.componentAdded.dispatch( component );
+            this.numComponents += 1;
         }
+
 
     };
 
@@ -135,12 +149,10 @@
      */
 
     Entity.prototype.removeComponent = function ( component ) {
-        this.componentRemoved.dispatch ( component );
+        this.componentRemoved.dispatch( component );
 
         return false;
     };
-
-
 
 
 }( window['webtundra'] = window['webtundra'] || {} ));

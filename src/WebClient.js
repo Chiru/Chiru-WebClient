@@ -41,7 +41,7 @@
 
 
     /**
-     * Function for storing the Entity Component constructors into easily available storage object. ECManager creates
+     * Function for storing the Entity Component constructor-typeId pairs into easily available storage object. ECManager creates
      * entity component objects by searching the constructor functions of the components from this storage.
      *
      * @name storeComponent
@@ -51,12 +51,12 @@
      * @param {function} constructor Component constructor function.
      */
 
-    namespace.storeComponent = function (id, constructor) {
+    namespace.storeComponent = function (id, typeName, constructor) {
 
         var types = this.ECOMPONENTS = this.ECOMPONENTS || {};
 
         if(!types.hasOwnProperty(id)){
-            types[id] = constructor;
+            types[id] = {Constructor: constructor, typeName: typeName};
         }
     };
 

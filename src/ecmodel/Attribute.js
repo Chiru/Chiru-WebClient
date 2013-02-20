@@ -2,15 +2,18 @@
 
 
 (function ( namespace, undefined ) {
+    var Attribute, types, util;
 
-    var types = namespace.ENUMS.ATTRIBUTES = namespace.util.createEnum(
+    util = namespace.util;
+
+    types = namespace.ENUMS.ATTRIBUTES = namespace.util.createEnum(
         'none', 'string', 'int', 'real', 'color', 'float2', 'float3', 'float4', 'bool', 'uint', 'quat',
         'assetref', 'assetreflist', 'entityref', 'qvariant', 'qvariantlist', 'transform', 'qpoint',
         'numattributetypes'
     );
 
 
-    var Attribute = namespace.Attribute = function ( name, value, type ) {
+    Attribute = namespace.Attribute = function ( name, value, type ) {
 
         type = type || -1;
 
@@ -24,7 +27,7 @@
     Attribute.parse = function ( value, type ) {
         var val = value;
 
-        if ( value !== null /*&& typeof value === "string"*/ ) {
+        if ( value /*&& typeof value === "string"*/ ) {
 
             switch (type) {
                 // Int
@@ -59,11 +62,6 @@
             case types.assetreflist:
                 val = value.split( /;/ );
                 break;
-
-            default:
-                val = null;
-                break;
-
             }
         }
 
@@ -73,7 +71,7 @@
     Attribute.prototype.update = function ( value ) {
         var val = Attribute.parse( value, this.type );
 
-        if ( val !== null ) {
+        if ( val !== undefined ) {
             // Just hacky Transform update test
 
             if ( this.type === types.transform ) {
@@ -84,12 +82,25 @@
         }
     };
 
+    Attribute.prototype.copyValue = function ( attr ) {
+        var value = attr.val;
+
+        if ( value !== undefined && this.type === attr.type ) {
+
+            if ( value instanceof Array && this.val instanceof Array ) {
+                util.extend( this.val, value );
+            } else {
+                this.val = value;
+            }
+        }
+    };
+
     Attribute.prototype.copy = function ( attr ) {
-      if(attr instanceof namespace.Attribute){
-          this.type = attr.type;
-          this.name = attr.name;
-          this.val = attr.val;
-      }
+        if ( attr instanceof namespace.Attribute ) {
+            this.type = attr.type;
+            this.name = attr.name;
+            this.copyValue( attr );
+        }
     };
 
 

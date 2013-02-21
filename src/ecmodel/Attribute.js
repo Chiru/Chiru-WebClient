@@ -7,9 +7,25 @@
     util = namespace.util;
 
     types = namespace.ENUMS.ATTRIBUTES = namespace.util.createEnum(
-        'none', 'string', 'int', 'real', 'color', 'float2', 'float3', 'float4', 'bool', 'uint', 'quat',
-        'assetref', 'assetreflist', 'entityref', 'qvariant', 'qvariantlist', 'transform', 'qpoint',
-        'numattributetypes'
+        'none',             // 0
+        'string',           // 1
+        'int',              // 2
+        'real',             // 3
+        'color',            // 4
+        'float2',           // 5
+        'float3',           // 6
+        'float4',           // 7
+        'bool',             // 8
+        'uint',             // 9
+        'quat',             // 10
+        'assetref',         // 11
+        'assetreflist',     // 12
+        'entityref',        // 13
+        'qvariant',         // 14
+        'qvariantlist',     // 15
+        'transform',        // 16
+        'qpoint',           // 17
+        'numattributetypes' // 18
     );
 
 
@@ -19,13 +35,13 @@
 
         this.type = parseInt( type, 10 );
 
-        this.name = name.replace( /\s/g, '' ).toLowerCase();
+        this.name = Attribute.parseName( name );
         this.val = Attribute.parse( value, this.type );
 
     };
 
     Attribute.parse = function ( value, type ) {
-        var val = value;
+        var val;
 
         if ( value /*&& typeof value === "string"*/ ) {
 
@@ -41,31 +57,62 @@
             case types.float4:
             case types.quat:
             case types.color:
-                val = value.split( / / ).map( parseFloat );
+                if ( typeof value === 'string' ) {
+                    val = value.split( / / ).map( parseFloat );
+                } else if ( value instanceof Array ) {
+                    val = value;
+                } else {
+                    val = [];
+                }
                 break;
 
                 // Boolean
             case types.bool:
-                val = value === 'true';
+                if ( typeof value === 'string' ) {
+                    val = value === 'true';
+                } else if ( typeof value === 'boolean' ) {
+                    val = value;
+                } else {
+                    val = false;
+                }
                 break;
 
                 // Transform
             case types.transform:
-                val = value.split( /,/ ).map( parseFloat );
+                if ( typeof value === 'string' ) {
+
+                    val = value.split( /,/ ).map( parseFloat );
+                } else if ( value instanceof Array ) {
+                    val = value;
+                } else {
+                    val = [];
+                }
                 break;
 
             case types.string:
             case types.assetref:
-                val = value;
+                if ( typeof value === 'string' ) {
+                    val = value;
+                }
                 break;
 
             case types.assetreflist:
-                val = value.split( /;/ );
+                if ( typeof value === 'string' ) {
+                    val = value.split( /;/ );
+                } else if ( value instanceof Array ) {
+                    val = value;
+                } else {
+                    val = [];
+                }
                 break;
             }
         }
 
         return val;
+    };
+
+    Attribute.parseName = function ( name ) {
+        return name.replace( /\s/g, '' ).toLowerCase();
     };
 
 

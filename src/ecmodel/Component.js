@@ -3,6 +3,12 @@
 
 (function ( namespace, undefined ) {
 
+    var Component, util, attrTypes;
+
+    util = namespace.util;
+
+    attrTypes = namespace.ENUMS.ATTRIBUTES;
+
     /**
      * Component parent constructor
      *
@@ -11,7 +17,7 @@
      * @param {object} sceneMgr Pointer to scene manager.
      */
 
-    var Component = namespace.Component = function ( sceneMgr ) {
+    Component = namespace.Component = function ( sceneMgr ) {
 
         if ( !sceneMgr ) {
             throw new Error( "Component: Could not get SceneManager object." );
@@ -57,6 +63,24 @@
          */
 
         onAttributeUpdated: function ( attr, state ) {
+        },
+
+        createAttribute: function (name, value, type){
+            var attr, setter;
+
+            if( !name || value === undefined || !type ){
+                return false;
+            }
+
+            attr = new namespace.Attribute(name, value, type);
+
+            this.__defineSetter__(attr.name, function(val){
+                attr.copyValue(val);
+                this.onAttributeUpdated(attr);
+            }.bind(this));
+
+            return attr;
+
         },
 
         addAttribute: function ( id, data ) {

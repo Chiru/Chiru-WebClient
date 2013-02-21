@@ -21,12 +21,20 @@
         //Inherit component properties
         namespace.Component.call( this, sceneMgr );
 
-        this.materialRef = null;
-        this.textureRefs = null;
-        this.distance = null;
-        this.orientation = null;
-        this.drawFirst = null;
+        // Default attributes
+        //this.createAttribute("material", "RexSkyBox", 'assetref');
+        this.createAttribute( "texture", ["rex_sky_front.dds",
+                                          "rex_sky_back.dds",
+                                          "rex_sky_left.dds",
+                                          "rex_sky_right.dds",
+                                          "rex_sky_top.dds",
+                                          "rex_sky_bot.dds" ], 'assetreflist', "textureRefs" );
+        this.createAttribute( "distance", 3, 'real' );
+        this.createAttribute( "orientation", [0.0, 0.0, 0.0, 1.0], 'quat' );
+        this.createAttribute( "drawfirst", true, 'bool', "drawFirst");
 
+
+        // Other properties
         this.textureAssets = [];
         this.cubeTexture = null;
         this.skyBox = null;
@@ -39,28 +47,8 @@
     ECSky.prototype = util.extend( Object.create( namespace.Component.prototype ),
         {
 
-            onAttributeUpdated: function ( attr, state ) {
-                var name = attr.name;
-                if ( state === 0 ) {
-                    if ( name === 'material' ) {
-                        this.materialRef = attr;
-                    } else if ( name === 'texture' ) {
-                        this.textureRefs = attr;
+            onAttributeUpdated: function ( attr ) {
 
-                    } else if ( name === 'distance' ) {
-                        this.distance = attr;
-
-                    } else if ( name === 'orientation' ) {
-                        this.orientation = attr;
-
-                    } else if ( name === 'drawfirst' ) {
-                        this.drawFirst = attr;
-
-                    }
-                }
-                if ( state === 1 ) {
-
-                }
             },
 
             onParentAdded: function ( parent ) {
@@ -82,7 +70,7 @@
 
 
             createSky: function ( cubeTexture ) {
-                var shader, material, skyBox, geometry, distance = this.distance['val'];
+                var shader, material, skyBox, geometry, distance = this.distance;
                 //inverse = this.sceneManager.camera.inverse;
 
                 shader = THREE.ShaderLib[ "cube" ];
@@ -232,7 +220,7 @@
 
             getTextures: function () {
                 var request, texture, i,
-                    refs = this.textureRefs['val'],
+                    refs = this.textureRefs,
                     refsLen = refs.length,
                     assetManager = this.sceneManager.assetManager,
                     assets = this.textureAssets,

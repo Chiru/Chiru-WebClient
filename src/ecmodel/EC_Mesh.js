@@ -19,15 +19,19 @@
 
         namespace.Component.call( this, sceneMgr ); //Inherit component properties
 
-        // ECMesh specific properties
+        // Default attributes
+        this.createAttribute("transform", [0,0,0,0,0,0,1,1,1], 'transform');
+        this.createAttribute("meshref", "", 'assetref');
+        this.createAttribute("castshadows", false, 'bool');
+
+        // Signals
         this.meshChanged = new namespace.Signal();
         this.materialChanged = new namespace.Signal();
-        this.meshRef = null;
+
+        // Other properties
         this.placeable = null;
-        this.castShadows = false;
         this.offsetNode = new THREE.Object3D();
         this.mesh = null;
-        this.transform = null;
         this.attached = false;
 
     };
@@ -39,25 +43,14 @@
     ECMesh.prototype = util.extend( Object.create( namespace.Component.prototype ),
         {
 
-            onAttributeUpdated: function ( attr, state ) {
-                //console.log("Attribute", attr['name'], "of component", this.id, "added/updated.");
+            onAttributeUpdated: function ( attr ) {
+                //console.log("Attribute", attr['name'], "of component", this.id, "updated");
                 switch (attr['name']) {
                 case 'transform':
-                {
-                    if ( attr['val'] instanceof Array && attr['val'].length === 9 ) {
-                        if ( state === 0 ) {
-                            this.transform = attr;
-                        } else if ( state === 1 ) {
-
-                        }
-                    }
-                }
                     break;
                 case 'meshref':
-                    this.meshRef = attr['val'];
                     break;
                 case 'castshadows':
-                    this.castShadows = attr['val'];
                     break;
                 default:
                     break;
@@ -101,7 +94,7 @@
 
             loadMesh: function () {
 
-                if ( this.meshRef === null ) {
+                if ( this.meshref === "" ) {
                     return;
                 }
 
@@ -109,7 +102,7 @@
                     self = this, request, mesh;
 
 
-                request = assetManager.requestAsset( this.meshRef, 'mesh' );
+                request = assetManager.requestAsset( this.meshref, 'mesh' );
                 if ( request ) {
                     request.add( function ( asset ) {
                         if ( asset ) {
@@ -118,7 +111,7 @@
                         }
                     } );
                 } else {
-                    mesh = assetManager.getAsset( this.meshRef );
+                    mesh = assetManager.getAsset( this.meshref );
                     if ( mesh ) {
                         this.mesh = mesh;
                         this.onMeshLoaded();
@@ -136,8 +129,8 @@
                 for ( i = groupLen; i--; ) {
 
                     newMesh = new THREE.Mesh( mesh[i][0], mesh[i][1] );
-                    newMesh['castShadow'] = this.castShadows;
-                    newMesh['receiveShadow'] = this.castShadows;
+                    newMesh['castShadow'] = this.castshadows;
+                    newMesh['receiveShadow'] = this.castshadows;
                     newMesh.material.side = THREE.DoubleSide;
                     group.add( newMesh );
 
@@ -167,7 +160,7 @@
 
                 node.add( mesh );
 
-                transVal = this.transform['val'];
+                transVal = this.transform;
                 node.position.set( transVal[0], transVal[1], transVal[2] );
                 node.rotation.set( transVal[3] * (Math.PI / 180), transVal[4] * (Math.PI / 180), transVal[5] * (Math.PI / 180) );
                 node.scale.set( transVal[6], transVal[7], transVal[8] );

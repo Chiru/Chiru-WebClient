@@ -21,11 +21,14 @@
 
         namespace.Component.call( this, sceneMgr ); //Inherit component properties
 
-        // ECPlaceable specific properties
+        // Default attributes
+        this.createAttribute("transform", [0,0,0,0,0,0,1,1,1], 'transform');
+        this.createAttribute("showboundingbox", false, 'bool');
+        this.createAttribute("visible", true, 'bool');
+
+        // Other properties
         this.parentMesh = null;
         this.parentPlaceable = null;
-        this.visible = true;
-        this.transform = null;
         this.attached = false;
         this.sceneNode = new THREE.Object3D();
 
@@ -47,17 +50,15 @@
                 this.attach();
             },
 
-            onAttributeUpdated: function ( attr, state ) {
-                var i, node = this.sceneNode;
+            onAttributeUpdated: function ( attr ) {
+                var  node, trans;
                 if ( attr['name'] === 'transform' ) {
-                    if ( state === 0 ) {
-                        console.log( "Placeable: transform attr added", state );
-                        this.transform = attr;
-                    }
-                    var transVal = this.transform['val'];
-                    node.position.set( transVal[0], transVal[1], transVal[2] );
-                    node.rotation.set( transVal[3] * (Math.PI / 180), transVal[4] * (Math.PI / 180), transVal[5] * (Math.PI / 180) );
-                    node.scale.set( transVal[6], transVal[7], transVal[8] );
+
+                    trans = attr['val'];
+                    node = this.sceneNode;
+                    node.position.set( trans[0], trans[1], trans[2] );
+                    node.rotation.set( trans[3] * (Math.PI / 180), trans[4] * (Math.PI / 180), trans[5] * (Math.PI / 180) );
+                    node.scale.set( trans[6], trans[7], trans[8] );
                 }
             },
 
@@ -80,52 +81,6 @@
                         } );
                     }
                 }
-            },
-
-
-            setPosition: function ( x, y, z ) {
-                var trans = this.transform;
-                if ( !trans ) {
-                    return;
-                }
-
-                if ( trans instanceof Array && trans.length === 9 ) {
-                    trans.splice( 0, 3, x, y, z );
-                }
-
-            },
-            setRotation: function ( x, y, z ) {
-                var trans = this.transform;
-                if ( !trans ) {
-                    return;
-                }
-
-                if ( trans instanceof Array && trans.length === 9 ) {
-                    trans.splice( 3, 3, x, y, z );
-                }
-            },
-            setScale: function ( x, y, z ) {
-                var trans = this.transform;
-                if ( !trans ) {
-                    return;
-                }
-
-                if ( trans instanceof Array && trans.length === 9 ) {
-                    trans.splice( 6, 3, x, y, z );
-                }
-            },
-
-            setTransform: function ( transArr ) {
-                var trans = this.transform, i;
-                if ( !trans ) {
-                    return;
-                }
-                if ( trans instanceof Array && transArr instanceof Array && trans.length === transArr.length === 9 ) {
-                    for ( i = 9; i--; ) {
-                        trans[i] = transArr[i];
-                    }
-                }
-
             },
 
             toggleVisibility: function () {

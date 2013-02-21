@@ -22,11 +22,14 @@
         //Inherit component properties
         namespace.Component.call( this, sceneMgr );
 
-        this.sunColor = [163, 163, 163];
-        this.ambientColor = [93, 93, 93, 1];
-        this.sunDirection = [-1, -1, -1];
-        this.sunCastShadows = false;
-        this.sunBrightness = 1.0;
+        // Default attributes
+        this.createAttribute( "sunlightcolor", [0.639, 0.639, 0.639, 1.0], 'color', "sunColor" );
+        this.createAttribute( "ambientlightcolor", [0.364, 0.364, 0.364, 1.0], 'color', "ambientColor" );
+        this.createAttribute( "sunlightdirectionvector", [-1.0, -1.0, -1.0], 'float3', "sunDirection" );
+        this.createAttribute( "sunlightcastshadows", true, 'bool', "sunCastShadows" );
+        this.createAttribute( "brightness", 1, 'real' );
+
+        // Properties
         this.sunLight = null;
 
     };
@@ -38,34 +41,16 @@
     ECEnvironmentLight.prototype = util.extend( Object.create( namespace.Component.prototype ),
         {
 
-            onAttributeUpdated: function ( attr, state ) {
+            onAttributeUpdated: function ( attr ) {
                 var name = attr.name;
-                if ( state === 0 ) {
-                    if ( name === 'sunlightcolor' ) {
 
-                        this.sunColor = attr;
-                    } else if ( name === 'ambientlightcolor' ) {
-                        this.ambientColor = attr;
-
-                    } else if ( name === 'sunlightdirectionvector' ) {
-                        this.sunDirection = attr;
-
-                    } else if ( name === 'sunlightcastshadows' ) {
-                        this.sunCastShadows = attr;
-
-                    } else if ( name === 'brightness' ) {
-                        this.sunBrightness = attr;
-
-                    }
-                }
-                if ( state === 1 ) {
                     if ( name === 'sunlightcolor' || name === 'sunlightdirectionvector' || name === 'sunlightcastshadows' ||
                         name === 'brightness' ) {
                         this.updateSunLight();
                     } else if ( name === 'ambientlightcolor' ) {
                         this.updateAmbientLight();
                     }
-                }
+
 
             },
 
@@ -87,13 +72,13 @@
 
 
             updateSunLight: function () {
-                var sunLight = this.sunLight, sunColor = this.sunColor['val'],
-                    dir = this.sunDirection['val'];
+                var sunLight = this.sunLight, sunColor = this.sunColor,
+                    dir = this.sunDirection;
 
                 if ( sunLight ) {
                     sunLight.color.setRGB( sunColor[0], sunColor[1], sunColor[2] );
                     //sunLight.color.multiplyScalar(this.sunBrightness['val']);
-                    if ( this.sunCastShadows['val'] ) {
+                    if ( this.sunCastShadows ) {
                         sunLight.castShadow = true;
                         //sunLight.shadowCameraVisible = true;
                         sunLight.shadowDarkness = 0.6;
@@ -121,13 +106,13 @@
 
                 if ( sceneManager && sunLight ) {
                     sceneManager.remove( sunLight );
-                    sunLight = null;
+                    this.sunLight = null;
                 }
             },
 
 
             updateAmbientLight: function () {
-                var sceneManager = this.sceneManager, color = this.ambientColor['val'];
+                var sceneManager = this.sceneManager, color = this.ambientColor;
                 if ( sceneManager && color ) {
                     sceneManager.setAmbientLight( color );
                 }

@@ -170,7 +170,7 @@
                 component.id = id;
                 component.name = name;
                 for ( var cid in attributes ) {
-                    component.addAttribute( cid, attributes[cid] );
+                    component.updateAttribute( cid, attributes[cid] );
                 }
             }
             //console.log(component)

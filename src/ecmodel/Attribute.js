@@ -29,7 +29,7 @@
     );
 
 
-    Attribute = namespace.Attribute = function ( name, value, type ) {
+    Attribute = namespace.Attribute = function ( name, value, type, setterName ) {
 
         type = type || -1;
 
@@ -38,12 +38,14 @@
         this.name = Attribute.parseName( name );
         this.val = Attribute.parse( value, this.type );
 
+        this.setter = setterName || this.name;
+
     };
 
     Attribute.parse = function ( value, type ) {
-        var val;
+        var val = null;
 
-        if ( value /*&& typeof value === "string"*/ ) {
+        if ( value !== undefined/*&& typeof value === "string"*/ ) {
 
             switch (type) {
                 // Int
@@ -131,10 +133,14 @@
             }
         },
 
-        copyValue: function ( attr ) {
-            var value = attr.val;
+        updateValue: function ( value ) {
+            if ( value !== undefined ) {
 
-            if ( value !== undefined && this.type === attr.type ) {
+                value = Attribute.parse(value, this.type);
+
+                if(value === null) {
+                    return;
+                }
 
                 if ( value instanceof Array && this.val instanceof Array ) {
                     util.extend( this.val, value );

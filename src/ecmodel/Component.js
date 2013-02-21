@@ -41,65 +41,67 @@
      */
 
 
-    Component.prototype.onParentAdded = function ( parent ) {
-    };
+    Component.prototype = {
+        onParentAdded: function ( parent ) {
+        },
 
-    /**
-     * Internal callback function, triggered when attribute is changed.
-     * Actual implementation of this function will be in the child component.
-     *
-     * @name onAttributeUpdated
-     * @function
-     * @memberOf Component.prototype
-     * @param {Object} attr Attribute object.
-     * @param {Object} state Update state 0 - attribute added, 1 - attribute updated, 2 - attribute removed.
-     */
+        /**
+         * Internal callback function, triggered when attribute is changed.
+         * Actual implementation of this function will be in the child component.
+         *
+         * @name onAttributeUpdated
+         * @function
+         * @memberOf Component.prototype
+         * @param {Object} attr Attribute object.
+         * @param {Object} state Update state 0 - attribute added, 1 - attribute updated, 2 - attribute removed.
+         */
 
-    Component.prototype.onAttributeUpdated = function ( attr, state ) {
-    };
+        onAttributeUpdated: function ( attr, state ) {
+        },
 
-    Component.prototype.addAttribute = function ( id, data ) {
-        if ( !this.attributes.hasOwnProperty( id ) ) {
-            var val = data['val'], name = data['name'];
+        addAttribute: function ( id, data ) {
+            if ( !this.attributes.hasOwnProperty( id ) ) {
+                var val = data['val'], name = data['name'];
 
-            if ( val && name && id ) {
-                var attr = new namespace.Attribute( name, val, data['typeId'] );
+                if ( val && name && id ) {
+                    var attr = new namespace.Attribute( name, val, data['typeId'] );
 
-                if ( attr ) {
-                    this.attributes[id] = attr;
-                    this.onAttributeUpdated( this.attributes[id], 0 );
+                    if ( attr ) {
+                        this.attributes[id] = attr;
+                        this.onAttributeUpdated( this.attributes[id], 0 );
+                    }
                 }
             }
-        }
-    };
+        },
 
-    Component.prototype.updateAttribute = function ( id, attr ) {
-        var val = attr['val'], typeId = attr['typeId'], parsed;
+        updateAttribute: function ( id, attr ) {
+            var val = attr['val'], typeId = attr['typeId'], parsed;
 
-        if ( this.attributes.hasOwnProperty( id ) && val ) {
-            this.attributes[id].update( val );
+            if ( this.attributes.hasOwnProperty( id ) && val ) {
+                this.attributes[id].update( val );
 
-            this.onAttributeUpdated( this.attributes[id], 1 );
-        }
-    };
-
-    Component.prototype.getAttribute = function ( name ) {
-        for ( var id in this.attributes ) {
-            if ( this.attributes[id].name === name ) {
-                return this.attributes[id]['val'];
+                this.onAttributeUpdated( this.attributes[id], 1 );
             }
-        }
-        return false;
+        },
 
-    };
+        getAttribute: function ( name ) {
+            for ( var id in this.attributes ) {
+                if ( this.attributes[id].name === name ) {
+                    return this.attributes[id]['val'];
+                }
+            }
+            return false;
 
-    Component.prototype.setParentEnt = function ( parent ) {
-        if ( parent ) {
-            this.parent = parent;
-            this.onParentAdded( this.parent );
-            return true;
+        },
+
+        setParentEnt: function ( parent ) {
+            if ( parent ) {
+                this.parent = parent;
+                this.onParentAdded( this.parent );
+                return true;
+            }
+            return false;
         }
-        return false;
     };
 
 }( window['webtundra'] = window['webtundra'] || {} ));

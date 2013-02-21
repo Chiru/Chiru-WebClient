@@ -1,5 +1,4 @@
 #Libs and utilities must be placed before other js files
-../src/libs/jquery-1.8.3.min.js
 ../src/libs/three.js
 ../src/general/Util.js
 
@@ -8,6 +7,7 @@
 ../src/general/Workers.js
 ../src/general/Signals.js
 ../src/parsers/ColladaLoader.js
+../src/parsers/OgreXMLParser.js
 ../src/parsers/parseUri.js
 ../src/parsers/MeshParser.js
 ../src/controls/PointerLockControls.js
@@ -16,10 +16,16 @@
 ../src/ecmodel/Entity.js
 ../src/ecmodel/Attribute.js
 ../src/ecmodel/Component.js
-../src/ecmodel/ECMesh.js
-../src/ecmodel/ECPlaceable.js
+../src/ecmodel/EC_Avatar.js
+../src/ecmodel/EC_Light.js
+../src/ecmodel/EC_Sky.js
+../src/ecmodel/EC_Camera.js
+../src/ecmodel/EC_Mesh.js
+../src/ecmodel/EC_Material.js
+../src/ecmodel/EC_Placeable.js
+../src/ecmodel/EC_Name.js
 ../src/ecmodel/ECManager.js
 ../src/scene/AssetManager.js
-../src/scene/SceneParser.js
+../src/scene/CameraManager.js
 ../src/scene/SceneManager.js
 ../src/scene/Renderer.js

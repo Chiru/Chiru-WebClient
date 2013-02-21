@@ -68,38 +68,41 @@
         return val;
     };
 
-    Attribute.prototype.update = function ( value ) {
-        var val = Attribute.parse( value, this.type );
 
-        if ( val !== undefined ) {
-            // Just hacky Transform update test
+    Attribute.prototype = {
+        update: function ( value ) {
+            var val = Attribute.parse( value, this.type );
 
-            if ( this.type === types.transform ) {
-                for ( var i = val.length; i--; ) {
-                    this.val[i] = val[i];
+            if ( val !== undefined ) {
+                // Just hacky Transform update test
+
+                if ( this.type === types.transform ) {
+                    for ( var i = val.length; i--; ) {
+                        this.val[i] = val[i];
+                    }
                 }
             }
-        }
-    };
+        },
 
-    Attribute.prototype.copyValue = function ( attr ) {
-        var value = attr.val;
+        copyValue: function ( attr ) {
+            var value = attr.val;
 
-        if ( value !== undefined && this.type === attr.type ) {
+            if ( value !== undefined && this.type === attr.type ) {
 
-            if ( value instanceof Array && this.val instanceof Array ) {
-                util.extend( this.val, value );
-            } else {
-                this.val = value;
+                if ( value instanceof Array && this.val instanceof Array ) {
+                    util.extend( this.val, value );
+                } else {
+                    this.val = value;
+                }
             }
-        }
-    };
+        },
 
-    Attribute.prototype.copy = function ( attr ) {
-        if ( attr instanceof namespace.Attribute ) {
-            this.type = attr.type;
-            this.name = attr.name;
-            this.copyValue( attr );
+        copy: function ( attr ) {
+            if ( attr instanceof namespace.Attribute ) {
+                this.type = attr.type;
+                this.name = attr.name;
+                this.copyValue( attr );
+            }
         }
     };
 

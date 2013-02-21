@@ -2,16 +2,25 @@
 
 
 (function ( namespace, undefined ) {
+    var ECAvatar, util;
 
-    var ECAvatar = namespace.ECAvatar = function ( sceneMgr ) {
+    util = namespace.util;
+
+
+    ECAvatar = namespace.ECAvatar = function ( sceneMgr ) {
 
         namespace.Component.call( this, sceneMgr ); //Inherit component properties
 
 
     };
-    namespace.storeComponent(1, "EC_Avatar", ECAvatar);
 
-    ECAvatar.prototype = Object.create( namespace.Component.prototype );
+    namespace.storeComponent( 1, "EC_Avatar", ECAvatar );
+
+    ECAvatar.prototype = util.extend( Object.create( namespace.Component.prototype ),
+        {
+
+        }
+    );
 
 
 }( window['webtundra'] = window['webtundra'] || {} ));

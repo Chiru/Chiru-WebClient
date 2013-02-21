@@ -3,6 +3,10 @@
 
 (function ( namespace, undefined ) {
 
+    var Entity, util;
+
+    util = namespace.util;
+
     /**
      * Defines Entity object
      *
@@ -11,7 +15,7 @@
      * @param {Number} id Unique entity id.
      */
 
-    var Entity = namespace.Entity = function ( id, name ) {
+    Entity = namespace.Entity = function ( id, name ) {
 
         /**
          * A Signal that is dispatched when a new component is added to this entity.
@@ -86,72 +90,75 @@
      * @return {*}
      */
 
-    Entity.prototype.getComponent = function ( type ) {
-        if ( Object.keys( this.components ).length !== 0 ) {
+    Entity.prototype = {
 
-            for ( var id in this.components ) {
-                if ( this.components[id] instanceof type ) {
-                    return this.components[id];
+        getComponent: function ( type ) {
+            if ( Object.keys( this.components ).length !== 0 ) {
+
+                for ( var id in this.components ) {
+                    if ( this.components[id] instanceof type ) {
+                        return this.components[id];
+                    }
                 }
             }
+
+            return false;
+        },
+
+        /**
+         *  Gets a component of an entity by unique component id.
+         *
+         * @name getComponentById
+         * @function
+         * @memberOf Entity.prototype
+         * @param {Number} id Unique component id.
+         * @return {Component|Boolean}
+         */
+
+        getComponentById: function ( id ) {
+            if ( this.components.hasOwnProperty( id ) ) {
+                return this.components[id];
+            }
+            return false;
+        },
+
+        /**
+         * Adds a component to an entity
+         *
+         * @name addComponent
+         * @function
+         * @memberOf Entity.prototype
+         * @param {Component} component Component of a specific type. e.g. ECMesh
+         * @param {Number} id Unique id of the component
+         */
+
+        addComponent: function ( component, id ) {
+            id = id || component.id || this.numComponents;
+
+            if ( !this.components.hasOwnProperty( id + '' ) ) {
+                this.components[id] = component;
+                this.componentAdded.dispatch( component );
+                this.numComponents += 1;
+            }
+
+
+        },
+
+        /**
+         * Removes a component from an entity.
+         *
+         * @name removeComponent
+         * @function
+         * @memberOf Entity.prototype
+         * @param {Component} component Component of a specific type.
+         * @return {Boolean}
+         */
+
+        removeComponent: function ( component ) {
+            this.componentRemoved.dispatch( component );
+
+            return false;
         }
-
-        return false;
-    };
-
-    /**
-     *  Gets a component of an entity by unique component id.
-     *
-     * @name getComponentById
-     * @function
-     * @memberOf Entity.prototype
-     * @param {Number} id Unique component id.
-     * @return {Component|Boolean}
-     */
-
-    Entity.prototype.getComponentById = function ( id ) {
-        if ( this.components.hasOwnProperty( id ) ) {
-            return this.components[id];
-        }
-        return false;
-    };
-
-    /**
-     * Adds a component to an entity
-     *
-     * @name addComponent
-     * @function
-     * @memberOf Entity.prototype
-     * @param {Component} component Component of a specific type. e.g. ECMesh
-     * @param {Number} id Unique id of the component
-     */
-
-    Entity.prototype.addComponent = function ( component, id ) {
-        id = id || component.id || this.numComponents;
-
-        if ( !this.components.hasOwnProperty( id + '' ) ) {
-            this.components[id] = component;
-            this.componentAdded.dispatch( component );
-            this.numComponents += 1;
-        }
-
-
-    };
-
-    /**
-     * Removes a component from an entity.
-     *
-     * @name removeComponent
-     * @function
-     * @memberOf Entity.prototype
-     * @param {Component} component Component of a specific type.
-     * @return {Boolean}
-     */
-
-    Entity.prototype.removeComponent = function ( component ) {
-        this.componentRemoved.dispatch( component );
-
-        return false;
     };
 
 

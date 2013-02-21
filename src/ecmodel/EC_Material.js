@@ -3,6 +3,10 @@
 
 (function ( namespace, undefined ) {
 
+    var ECMaterial, util;
+
+    util = namespace.util;
+
     /**
      * ECMaterial constructor
      *
@@ -13,17 +17,20 @@
      * @param {object} sceneMgr Pointer to scene manager.
      */
 
-    var ECMaterial = namespace.ECMaterial = function ( sceneMgr ) {
+    ECMaterial = namespace.ECMaterial = function ( sceneMgr ) {
         //Inherit component properties
         namespace.Component.call( this, sceneMgr );
 
 
-
     };
 
-    namespace.storeComponent(31, "EC_Material", ECMaterial);
+    namespace.storeComponent( 31, "EC_Material", ECMaterial );
 
-    ECMaterial.prototype = Object.create( namespace.Component.prototype );
+    ECMaterial.prototype = util.extend( Object.create( namespace.Component.prototype ),
+        {
+
+        }
+    );
 
 
 }( window['webtundra'] = window['webtundra'] || {} ));

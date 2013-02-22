@@ -13,13 +13,17 @@
 
         namespace.Component.call( this, sceneMgr ); //Inherit component properties
 
+        // Default attributes
+        this.createAttribute( "upvector", [0, 1, 0], 'float3', "upVector" );
+        this.createAttribute( "nearplane", 0.1, 'real', "nearPlane" );
+        this.createAttribute( "farplane", 2000.0, 'real', "farPlane" );
+        this.createAttribute( "verticalfov", 45.0, 'real', "fov" );
+        this.createAttribute( "aspectratio", "", 'string', "aspectRatio" );
+
+        // Other properties
         this.camera = null;
-        this.upVector = null;
-        this.nearPlane = null;
-        this.farPlane = null;
-        this.verticalFov = null;
-        this.aspectRatio = null;
         this.placeable = null;
+        this.attached = false;
 
 
     };
@@ -32,8 +36,9 @@
 
             onParentAdded: function ( parent ) {
                 this.initialize();
+
             },
-            onAttributeUpdated: function ( attr, state ) {
+            onAttributeUpdated: function ( attr ) {
             },
 
             initialize: function () {
@@ -43,8 +48,8 @@
                     return;
                 }
 
-                if ( !camera ) {
-                    camera = this.camera = new THREE.PerspectiveCamera();
+                if ( !this.camera ) {
+                    this.camera = new THREE.PerspectiveCamera();
 
                     this.setFarClipDist( this.farPlane || 5000 );
                     this.setNearClipDist( this.nearPlane || 0.1 );
@@ -57,22 +62,56 @@
 
             // Attach camera to placeable component
             attachCamera: function () {
+                var sceneNode, placeable = this.placeable, camera = this.camera;
+
+                if ( this.attached || placeable === null ) {
+                    return;
+                }
+
+                sceneNode = placeable.getSceneNode();
+                if ( sceneNode ) {
+                    sceneNode.add( camera );
+                    this.attached = true;
+                }
             },
 
             // Detach camera from placeable component
             detachCamera: function () {
+                var sceneNode, placeable = this.placeable, camera = this.camera;
+
+                if ( !this.attached || placeable === null ) {
+                    return;
+                }
+
+                sceneNode = placeable.getSceneNode();
+
+                if ( sceneNode && camera ) {
+                    sceneNode.remove( camera );
+                    this.attached = false;
+                }
+
+
             },
 
             setActive: function () {
+                var sceneManager = this.sceneManager, camera = this.camera;
+
+                if ( !camera || !this.parent || !this.attached ) {
+                    return;
+                }
+
+                sceneManager.setMainCamera( this.camera );
+
+
             },
 
             isActive: function () {
             },
 
             getAspectRatio: function () {
-                var container = this.sceneManager.container, aspect = this.aspectRatio,
-                    str, arFloat, width, height;
+                var aspect = this.aspectRatio, str, arFloat, width, height;
 
+                // Trying to get the aspect ratio from attribute
                 if ( aspect && typeof aspect === "string" ) {
                     if ( aspect.indexOf( ":" ) === -1 ) {
                         arFloat = parseFloat( aspect );
@@ -91,8 +130,9 @@
                     }
                 }
 
-                if ( container ) {
-                    return innerWidth( container ) / innerHeight( container );
+                // Getting the aspect ratio from sceneManager if it cannot be defined otherwise
+                if ( this.sceneManager && this.sceneManager.container ) {
+                    return innerWidth( this.sceneManager.container ) / innerHeight( this.sceneManager.container );
                 }
 
                 return 1.0;

@@ -107,17 +107,17 @@
         },
 
         createLocalEntity: function ( name, components ) {
-            var entities = this.localEntities, e,  id = this.numLocalEntities, i, comp, numComps;
+            var entities = this.localEntities, e, id = this.numLocalEntities, i, comp, numComps;
 
             e = new namespace.Entity( this.numLocalEntities, name );
             this.numLocalEntities += 1;
 
-            if(components && util.toType(components) === 'array'){
+            if ( components && util.toType( components ) === 'array' ) {
                 numComps = components.length;
-                for(i = numComps; i--;){
-                    comp = this.createComponent(components[i]);
-                    if(comp){
-                        e.addComponent(comp, id);
+                for ( i = numComps; i--; ) {
+                    comp = this.createComponent( components[i] );
+                    if ( comp ) {
+                        e.addComponent( comp, id );
                     }
                 }
             }
@@ -127,7 +127,7 @@
             return entities[id];
         },
 
-        parseEntity: function( json ) {
+        parseEntity: function ( json ) {
             var e, component, id;
             if ( json['entityId'] ) {
                 e = this.createEntity( json['entityId'] );
@@ -183,34 +183,34 @@
             var components = namespace.ECOMPONENTS, isTypeId, i;
 
             if ( !components ) {
-                console.error( "ECManager: Component storage namespace.ECOMPONENTS was not available," +
+                console.warn( "ECManager: Component storage namespace.ECOMPONENTS was not available," +
                     " unable to create component object." );
                 return false;
             }
 
-            isTypeId = !isNaN(type);
+            isTypeId = !isNaN( type );
 
             if ( isTypeId ) {
                 if ( components.hasOwnProperty( type + '' ) ) {
                     return new components[type].Constructor( this.sceneManager );
                 }
-                console.error("ECManager: Error while creating component; Unknown type id:", type );
+                console.warn( "ECManager: Error while creating component; Unknown type id:", type );
                 return false;
 
             } else if ( type instanceof namespace.Component ) {
                 return type( this.sceneManager );
 
-            } else if ( !isTypeId && type.indexOf("EC_") !== -1) {
+            } else if ( !isTypeId && type.indexOf( "EC_" ) !== -1 ) {
                 for ( i in components ) {
                     if ( components[i].typeName === type ) {
                         return new components[i].Constructor( this.sceneManager );
                     }
                 }
-                console.error("ECManager: Error while creating component; Unknown type name:", type );
+                console.warn( "ECManager: Error while creating component; Unknown type name:", type );
                 return false;
 
             } else {
-                console.error("ECManager: Error while creating component; Unknown type:", type );
+                console.warn( "ECManager: Error while creating component; Unknown type:", type );
                 return false;
             }
 
@@ -229,10 +229,26 @@
         },
 
         getEntity: function ( id ) {
-            var entities = this.entities;
-            if ( entities.hasOwnProperty( id ) ) {
-                return entities[id];
+            if ( id === undefined ) {
+                return false;
             }
+
+            var entities = this.entities, index, ent;
+
+            if ( typeof id === "number" ) {
+                if ( entities.hasOwnProperty( id ) ) {
+                    return entities[id];
+                }
+            } else if ( typeof id === "string" ) {
+                for ( index in entities ) {
+                    ent = entities[index];
+
+                    if ( ent.name === id ) {
+                        return ent;
+                    }
+                }
+            }
+
             return false;
         }
 

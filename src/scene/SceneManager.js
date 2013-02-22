@@ -48,23 +48,14 @@
 
         this.websocket = opts.websocket;
 
-        this.assetManager = new namespace.AssetManager( {}, this.remoteStorage );
+        this.assetManager = new namespace.AssetManager( this.remoteStorage );
 
         this.ecManager = new namespace.ECManager( this );
 
+        this.cameraManager = new namespace.CameraManager( this );
+
 
         this.init();
-    };
-
-    SceneManager.prototype.onEntityCreated = function ( entity ){
-        var name = entity.name, ecManager = this.ecManager, e, comp;
-
-        if(name){
-            if(name === "freelookcameraspawnpos"){
-                e = ecManager.createLocalEntity("freelookcamera", ["EC_Placeable", "EC_Name", "EC_Camera"]);
-                console.error(e);
-            }
-        }
     };
 
     SceneManager.prototype.renderLoop = function () {
@@ -156,7 +147,7 @@
     };
 
     SceneManager.prototype.changeMainCamera = function ( camera ) {
-        if(camera instanceof THREE.Camera){
+        if ( camera instanceof THREE.Camera ) {
             this.mainCamera = camera;
         }
     };
@@ -209,6 +200,17 @@
 
     };
 
+    SceneManager.prototype.setMainCamera = function ( camera ) {
+        var entity;
+        if(this.mainCamera === null && camera === undefined ) {
+            entity = this.cameraManager.createCameraEntity("freelookcamera");
+        }
+
+        if ( camera instanceof THREE.PerspectiveCamera ) {
+            this.mainCamera = camera;
+        }
+    };
+
     SceneManager.prototype.getSceneObject = function ( callBack, scene ) {
         if ( typeof callBack !== "function" ) {
             return false;
@@ -239,7 +241,8 @@
 
         var body = document.body, renderer, scene, skyBoxScene, camera, skyBoxCamera, controls,
             container = this.container, websocket = this.websocket,
-            assetManager = this.assetManager, self = this;
+            assetManager = this.assetManager, ecManager = this.ecManager, cameraManager = this.cameraManager,
+            self = this;
 
 
         // *** SCENE AND SKYBOX ***
@@ -280,6 +283,7 @@
         // *** CONTROLS ***
 
         controls = this.controls = new THREE.PointerLockControls( this.mainCamera );
+        /*
         scene.add( this.controls.getObject() );
 
         controls.rayCaster = new THREE.Raycaster();
@@ -335,13 +339,12 @@
             }
 
         }, false );
-
-
+        */
 
         // *** SIGNAL LISTENERS ***
         //Windows resize listener
         this.windowResize();
-        this.ecManager.entityCreated.add(this.onEntityCreated, this);
+        ecManager.entityCreated.add( cameraManager.onEntityCreated, cameraManager );
 
         if ( websocket ) {
             websocket.bindEvent( "RemoteStorage", function ( data ) {

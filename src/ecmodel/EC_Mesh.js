@@ -21,8 +21,8 @@
 
         // Default attributes
         this.createAttribute("transform", [0,0,0,0,0,0,1,1,1], 'transform');
-        this.createAttribute("meshref", "", 'assetref');
-        this.createAttribute("castshadows", false, 'bool');
+        this.createAttribute("meshref", "", 'assetref', "meshRef");
+        this.createAttribute("castshadows", false, 'bool', "castShadows");
 
         // Signals
         this.meshChanged = new namespace.Signal();
@@ -44,17 +44,6 @@
         {
 
             onAttributeUpdated: function ( attr ) {
-                //console.log("Attribute", attr['name'], "of component", this.id, "updated");
-                switch (attr['name']) {
-                case 'transform':
-                    break;
-                case 'meshref':
-                    break;
-                case 'castshadows':
-                    break;
-                default:
-                    break;
-                }
 
             },
 
@@ -93,16 +82,14 @@
 
 
             loadMesh: function () {
+                var meshRef = this.meshRef, assetManager = this.sceneManager.assetManager,
+                    self = this, request, mesh;
 
-                if ( this.meshref === "" ) {
+                if ( meshRef === "" ) {
                     return;
                 }
 
-                var assetManager = this.sceneManager.assetManager,
-                    self = this, request, mesh;
-
-
-                request = assetManager.requestAsset( this.meshref, 'mesh' );
+                request = assetManager.requestAsset( meshRef, 'mesh' );
                 if ( request ) {
                     request.add( function ( asset ) {
                         if ( asset ) {
@@ -111,7 +98,7 @@
                         }
                     } );
                 } else {
-                    mesh = assetManager.getAsset( this.meshref );
+                    mesh = assetManager.getAsset( meshRef );
                     if ( mesh ) {
                         this.mesh = mesh;
                         this.onMeshLoaded();
@@ -129,8 +116,8 @@
                 for ( i = groupLen; i--; ) {
 
                     newMesh = new THREE.Mesh( mesh[i][0], mesh[i][1] );
-                    newMesh['castShadow'] = this.castshadows;
-                    newMesh['receiveShadow'] = this.castshadows;
+                    newMesh['castShadow'] = this.castShadows;
+                    newMesh['receiveShadow'] = this.castShadows;
                     newMesh.material.side = THREE.DoubleSide;
                     group.add( newMesh );
 
@@ -191,11 +178,13 @@
             },
 
             detachFromScene: function () {
-                if ( !this.attached || this.sceneObject === null ) {
+                var sceneNode, placeable = this.placeable;
+                if ( !this.attached || placeable === null ) {
                     return;
                 }
+                sceneNode = placeable.getSceneNode();
 
-                this.sceneManager.removeFromScene( this.sceneObject );
+                this.sceneManager.removeFromScene( sceneNode );
                 this.attached = false;
 
             }

@@ -11,8 +11,9 @@
 
         namespace.Component.call( this, sceneMgr ); //Inherit component properties
 
-        this.name = null;
-        this.description = null;
+        // Default attributes
+        this.createAttribute("name", "", 'string');
+        this.createAttribute("description", "", 'string');
 
     };
 
@@ -21,15 +22,7 @@
     ECName.prototype = util.extend( Object.create( namespace.Component.prototype ),
         {
 
-            onAttributeUpdated: function ( attr, state ) {
-                switch (attr['name']) {
-                case 'name':
-                    this.name = attr['val'].toLowerCase();
-                    break;
-                case 'description':
-                    this.description = attr['val'];
-                    break;
-                }
+            onAttributeUpdated: function ( attr ) {
 
             },
 

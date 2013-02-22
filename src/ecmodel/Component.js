@@ -78,11 +78,11 @@
                 if ( attrTypes.hasOwnProperty( type ) ) {
                     type = attrTypes[type];
                 } else {
-                    console.error( "Got unknown type for attribute", name, ". Setting type to None." );
+                    console.warn( "Got unknown type for attribute", name, ". Setting type to None." );
                     type = attrTypes['none'];
                 }
             } else if ( typeof type !== 'number' ) {
-                console.error( "Got unknown type for attribute", name, ". Setting type to None." );
+                console.warn( "Got unknown type for attribute", name, ". Setting type to None." );
                 type = attrTypes['none'];
             }
 
@@ -104,7 +104,7 @@
             // Defining setters and getters for attribute
             proto = Object.getPrototypeOf( this );
             if ( !proto.hasOwnProperty( setterName ) ) {
-                console.log( "Creating attribute",name, "for", this.id );
+                //console.log( "Creating attribute",name);
                 Object.defineProperty( proto, setterName, {
                     set: (function ( val ) {
                         //console.log( "Setting attribute", name, "to", val );
@@ -147,7 +147,7 @@
         },
 
         updateAttribute: function ( id, data ) {
-            var map = this.attributeMap, attributes, val, attrName;
+            var map = this.attributeMap, attributes, val, attrName, setter;
 
             if ( !id || !data ) {
                 return;
@@ -156,7 +156,7 @@
             val = data['val'];
 
             if ( map.hasOwnProperty( id ) ) {
-                attrName = map[id];
+                setter = map[id];
             } else {
                 if ( data['name'] === undefined ) {
                     return;
@@ -165,13 +165,13 @@
                 attributes = this.attributes;
 
                 if ( attributes.hasOwnProperty( attrName ) ) {
-                    map[id] = attributes[attrName].setter;
+                   setter = map[id] = attributes[attrName].setter;
                 } else {
                     return;
                 }
             }
 
-            this[attrName] = val;
+            this[setter] = val;
 
         },
 

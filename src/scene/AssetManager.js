@@ -4,9 +4,8 @@
 (function ( namespace, undefined ) {
     var utils = namespace.util;
 
-    var AssetManager = namespace.AssetManager = function ( gui, remoteStorage ) {
-        //Ref to GUI
-        this.GUI = gui;
+    var AssetManager = namespace.AssetManager = function ( remoteStorage ) {
+
         this.meshType = 'dae';
         this.remoteStorage = remoteStorage;
 

@@ -23,7 +23,7 @@
 
 
         var connection = this.connection = sceneMgr.websocket,
-            self = this, e, id, component;
+            self = this;
 
         if ( connection ) {
             connection.bindEvent( "EntityAdded", function ( data ) {
@@ -66,15 +66,18 @@
             connection.bindEvent( "AttributesChanged", function ( data ) {
                 //console.log( "AttributesChanged:" );
                 //console.log( data );
-                //namespace.util.log("Got 'AttributesChanged'-event, entity id: " + data.entityId);
-                var ent, attrs = data['attrs'], cId, comp;
+
+                var ent, attrs = data['attrs'], attr, comp;
+
                 ent = self.getEntity( data['entityId'] );
+
                 if ( ent ) {
                     for ( var i in attrs ) {
-                        cId = attrs[i]['compId'];
-                        comp = ent.getComponentById( cId );
+                        attr = attrs[i];
+                        comp = ent.getComponentById( attr['compId'] );
+
                         if ( comp ) {
-                            comp.updateAttribute( i, attrs[i] );
+                            comp.updateAttribute( i, attr['val'], attr['name'] );
                         }
                     }
                 }
@@ -109,7 +112,7 @@
         createLocalEntity: function ( name, components ) {
             var entities = this.localEntities, e, id = this.numLocalEntities, i, comp, numComps;
 
-            e = new namespace.Entity( this.numLocalEntities, name );
+            e = new namespace.Entity( this.numLocalEntities, name, true );
             this.numLocalEntities += 1;
 
             if ( components && util.toType( components ) === 'array' ) {
@@ -136,7 +139,6 @@
                     for ( id in json['components'] ) {
                         component = this.parseComponent( id, json['components'][id] );
                         if ( component ) {
-                            component.setParentEnt( e );
                             //console.log( component );
                             e.addComponent( component, id );
                         }
@@ -149,8 +151,7 @@
         },
 
         parseComponent: function ( id, data ) {
-            var component, typeId, name, attributes,
-                sceneManager = this.sceneManager, components = namespace.ECOMPONENTS;
+            var component, typeId, name, attributes;
 
             if ( !id || !data['typeId'] ) {
                 return false;
@@ -169,8 +170,9 @@
             if ( component ) {
                 component.id = id;
                 component.name = name;
+
                 for ( var cid in attributes ) {
-                    component.updateAttribute( cid, attributes[cid] );
+                    component.updateAttribute( cid, attributes[cid]['val'], attributes[cid]['name'] );
                 }
             }
             //console.log(component)
@@ -228,14 +230,21 @@
             //TODO: Remove from scene and from hierarchy
         },
 
-        getEntity: function ( id ) {
+        getEntity: function ( id, local ) {
+            var entities, index, ent;
+
             if ( id === undefined ) {
                 return false;
             }
 
-            var entities = this.entities, index, ent;
+            if(local){
+                entities = this.localEntities;
+            }else{
+                entities = this.entities;
+            }
 
-            if ( typeof id === "number" ) {
+
+            if ( !isNaN(id) ) {
                 if ( entities.hasOwnProperty( id ) ) {
                     return entities[id];
                 }

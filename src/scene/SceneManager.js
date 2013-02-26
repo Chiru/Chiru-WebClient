@@ -32,10 +32,11 @@
         opts = extend( {}, defaults, options );
 
         // Three.js settings
-        THREE.Object3D.defaultEulerOrder = opts.eulerOrder;
+        THREE.Object3D.defaultEulerOrder = this.eulerOrder = opts.eulerOrder;
 
 
         this.time = Date.now();
+        this.clock = new THREE.Clock();
         this.container = opts.container;
         this.controls = null;
         this.renderer = null;
@@ -43,7 +44,6 @@
         this.skyBoxScene = null;
         this.mainCamera = null;
         this.skyBoxCamera = null;
-        this.loadedObjects = [];
         this.remoteStorage = opts.remoteStorage;
 
         this.websocket = opts.websocket;
@@ -54,35 +54,39 @@
 
         this.cameraManager = new namespace.CameraManager( this );
 
+        this.controlManager = new namespace.Controls( this );
+
 
         this.init();
     };
 
     SceneManager.prototype.renderLoop = function () {
-        var self = this;
+        var self = this, clock = this.clock, controls = this.controls, renderer = this.renderer;
 
         (function loop() {
             window.requestAnimationFrame( loop );
 
-            self.controls.isOnObject( false );
+            /*
+             self.controls.isOnObject( false );
 
-            self.controls.rayCaster.ray.origin.copy( self.controls.getObject().position );
-            self.controls.rayCaster.ray.origin.y -= 10;
+             self.controls.rayCaster.ray.origin.copy( self.controls.getObject().position );
+             self.controls.rayCaster.ray.origin.y -= 10;
 
-            var intersections = self.controls.rayCaster.intersectObjects( self.loadedObjects ),
-                distance;
+             var intersections = self.controls.rayCaster.intersectObjects( self.loadedObjects ),
+             distance;
 
-            if ( intersections.length > 0 ) {
+             if ( intersections.length > 0 ) {
 
-                distance = intersections[ 0 ].distance;
+             distance = intersections[ 0 ].distance;
 
-                if ( distance > 0 && distance < 10 ) {
+             if ( distance > 0 && distance < 10 ) {
 
-                    self.controls.isOnObject( true );
+             self.controls.isOnObject( true );
 
-                }
+             }
 
-            }
+             }
+             */
 
             /*
              self.camera.position.y = 10;
@@ -90,7 +94,7 @@
              self.camera.position.z = Math.floor(Math.sin( self.time *0.0005) * 200);
              self.camera.lookAt( new THREE.Vector3(0,0,0) );
              */
-            self.controls.update( Date.now() - self.time );
+            controls.update( clock.getDelta() );
 
 
             self.skyBoxCamera.rotation.setEulerFromRotationMatrix(
@@ -99,10 +103,10 @@
                 THREE.Object3D.defaultEulerOrder
             );
 
-            self.renderer.render( self.skyBoxScene, self.skyBoxCamera );
-            self.renderer.render( self.scene, self.mainCamera );
+            renderer.render( self.skyBoxScene, self.skyBoxCamera );
+            renderer.render( self.scene, self.mainCamera );
 
-            self.time = Date.now();
+            //self.time = Date.now();
         }());
 
 
@@ -128,14 +132,7 @@
     };
 
     SceneManager.prototype.addToScene = function ( object ) {
-        var self = this;
         this.scene.add( object );
-        object.traverse( function ( child ) {
-            if ( child instanceof THREE.Mesh ) {
-                self.loadedObjects.push( child );
-            }
-
-        } );
         //console.log( object )
 
     };
@@ -144,12 +141,6 @@
 
         this.scene.remove( object );
 
-    };
-
-    SceneManager.prototype.changeMainCamera = function ( camera ) {
-        if ( camera instanceof THREE.Camera ) {
-            this.mainCamera = camera;
-        }
     };
 
     SceneManager.prototype.addSkyBox = function ( skyBox ) {
@@ -197,18 +188,33 @@
                 scene.add( light );
             }
         }
-
     };
 
-    SceneManager.prototype.setMainCamera = function ( camera ) {
-        var entity;
-        if(this.mainCamera === null && camera === undefined ) {
-            entity = this.cameraManager.createCameraEntity("freelookcamera");
+    SceneManager.prototype.setMainCamera = function ( cameraEntity ) {
+        var entity, camComp, camera, camControls;
+
+        if ( cameraEntity === undefined ) {
+            entity = this.cameraManager.createCameraEntity( "freelookcamera" );
+        } else if ( cameraEntity instanceof namespace.Entity ) {
+            entity = cameraEntity;
         }
 
-        if ( camera instanceof THREE.PerspectiveCamera ) {
-            this.mainCamera = camera;
+        if ( entity ) {
+            camComp = entity.getComponent( namespace.ECCamera );
+            if ( camComp ) {
+                camera = camComp.getCameraObject();
+                camControls = entity.controls;
+
+                if ( camControls ) {
+                    camControls.setActive();
+                }
+
+                if ( camera instanceof THREE.PerspectiveCamera ) {
+                    this.mainCamera = camera;
+                }
+            }
         }
+
     };
 
     SceneManager.prototype.getSceneObject = function ( callBack, scene ) {
@@ -251,11 +257,9 @@
 
 
         // *** CAMERAS ***
-
-        camera = this.mainCamera = new THREE.PerspectiveCamera( 35, ( innerWidth( container ) / innerHeight( container )), 1, 10000 );
-        camera.lookAt( scene.position );
         skyBoxCamera = this.skyBoxCamera = new THREE.PerspectiveCamera( 35, (innerWidth( container ) / innerHeight( container )), 1, 10000 );
         skyBoxCamera.lookAt( scene.position );
+        this.setMainCamera();
 
 
         // *** RENDERER ***
@@ -265,6 +269,7 @@
             clearAlpha: 1,
             preserveDrawingBuffer: false
         } );
+
         //renderer.setFaceCulling( THREE.CullFaceNone );
         renderer.autoClear = false;
         renderer.gammaInput = true;
@@ -281,66 +286,66 @@
 
 
         // *** CONTROLS ***
-
-        controls = this.controls = new THREE.PointerLockControls( this.mainCamera );
         /*
-        scene.add( this.controls.getObject() );
+         controls = this.controls = new THREE.PointerLockControls( this.mainCamera );
 
-        controls.rayCaster = new THREE.Raycaster();
-        controls.rayCaster.ray.direction.set( 0, -1, 0 );
+         scene.add( this.controls.getObject() );
 
-        controls.enabled = false;
+         controls.rayCaster = new THREE.Raycaster();
+         controls.rayCaster.ray.direction.set( 0, -1, 0 );
 
-        function pointerLockChange() {
-            if ( document.mozPointerLockElement === body ||
-                document.webkitPointerLockElement === body ||
-                document.pointerLockElement === body ) {
-                self.controls.enabled = true;
-                return;
-            }
-            self.controls.enabled = false;
-        }
+         controls.enabled = false;
 
-        function fullScreenChange() {
-            if ( document.webkitFullscreenElement === body ||
-                document.mozFullscreenElement === body ||
-                document.mozFullScreenElement === body ) { // Older API upper case 'S'.
-                // Element is fullscreen, now we can request pointer lock
-                body.requestPointerLock = body.requestPointerLock ||
-                    body.mozRequestPointerLock ||
-                    body.webkitRequestPointerLock;
-                body.requestPointerLock();
-            }
-        }
+         function pointerLockChange() {
+         if ( document.mozPointerLockElement === body ||
+         document.webkitPointerLockElement === body ||
+         document.pointerLockElement === body ) {
+         self.controls.enabled = true;
+         return;
+         }
+         self.controls.enabled = false;
+         }
 
-        document.addEventListener( 'webkitpointerlockchange', pointerLockChange, false );
-        document.addEventListener( 'mozpointerlockchange', pointerLockChange, false );
-        document.addEventListener( 'pointerlockchange', pointerLockChange, false );
-        document.addEventListener( 'fullscreenchange', fullScreenChange, false );
-        document.addEventListener( 'mozfullscreenchange', fullScreenChange, false );
-        document.addEventListener( 'webkitfullscreenchange', fullScreenChange, false );
+         function fullScreenChange() {
+         if ( document.webkitFullscreenElement === body ||
+         document.mozFullscreenElement === body ||
+         document.mozFullScreenElement === body ) { // Older API upper case 'S'.
+         // Element is fullscreen, now we can request pointer lock
+         body.requestPointerLock = body.requestPointerLock ||
+         body.mozRequestPointerLock ||
+         body.webkitRequestPointerLock;
+         body.requestPointerLock();
+         }
+         }
 
-        body.addEventListener( 'click', function ( event ) {
-            if ( body.webkitRequestPointerLock ) {
-                if ( document.mozPointerLockElement !== body &&
-                    document.webkitPointerLockElement !== body &&
-                    document.pointerLockElement !== body ) {
-                    body.requestPointerLock = body.requestPointerLock ||
-                        body.mozRequestPointerLock ||
-                        body.webkitRequestPointerLock;
-                    body.requestPointerLock();
-                }
-            } else {
-                body.requestFullscreen = body.requestFullscreen ||
-                    body.mozRequestFullscreen ||
-                    body.mozRequestFullScreen || // Older API upper case 'S'.
-                    body.webkitRequestFullscreen;
-                body.requestFullscreen();
-            }
+         document.addEventListener( 'webkitpointerlockchange', pointerLockChange, false );
+         document.addEventListener( 'mozpointerlockchange', pointerLockChange, false );
+         document.addEventListener( 'pointerlockchange', pointerLockChange, false );
+         document.addEventListener( 'fullscreenchange', fullScreenChange, false );
+         document.addEventListener( 'mozfullscreenchange', fullScreenChange, false );
+         document.addEventListener( 'webkitfullscreenchange', fullScreenChange, false );
 
-        }, false );
-        */
+         body.addEventListener( 'click', function ( event ) {
+         if ( body.webkitRequestPointerLock ) {
+         if ( document.mozPointerLockElement !== body &&
+         document.webkitPointerLockElement !== body &&
+         document.pointerLockElement !== body ) {
+         body.requestPointerLock = body.requestPointerLock ||
+         body.mozRequestPointerLock ||
+         body.webkitRequestPointerLock;
+         body.requestPointerLock();
+         }
+         } else {
+         body.requestFullscreen = body.requestFullscreen ||
+         body.mozRequestFullscreen ||
+         body.mozRequestFullScreen || // Older API upper case 'S'.
+         body.webkitRequestFullscreen;
+         body.requestFullscreen();
+         }
 
+         }, false );
+
+         */
         // *** SIGNAL LISTENERS ***
         //Windows resize listener
         this.windowResize();

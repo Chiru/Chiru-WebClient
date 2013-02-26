@@ -170,7 +170,6 @@
                 if ( sceneNode ) {
                     offsetNode.visible = placeable.visible;
                     sceneNode.add( offsetNode );
-                    this.sceneManager.addToScene( sceneNode );
                     this.attached = true;
                 }
 

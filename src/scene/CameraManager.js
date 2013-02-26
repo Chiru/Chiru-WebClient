@@ -24,21 +24,34 @@
 
             if ( name ) {
                 if ( name.toLowerCase() === "freelookcameraspawnpos" ) {
-                    e = createCameraEntity("freelookcamera");
+                    console.warn("Got freelook camera spawn position")
+                    e = createCameraEntity( "freelookcamera" );
+                    e.placeable.transform = entity.placeable.transform;
+                    e.controls.getController().reset();
                 }
             }
         }
 
         function createCameraEntity( type ) {
-            var ent;
+            var ent, controller, name = type.toLowerCase();
 
-            if ( type.toLowerCase() === "freelookcamera" ) {
-                ent = ecManager.createLocalEntity( "freelookcamera", ["EC_Placeable", "EC_Name", "EC_Camera"] );
-                console.warn( "CameraManager: Creating FreelookCamera." );
-                console.warn( ent );
-                ent.name = "freelookcamera";
+            ent = ecManager.getEntity( name, true );
 
+            if ( ent ) {
                 return ent;
+            } else {
+
+                if ( name === "freelookcamera" ) {
+                    ent = ecManager.createLocalEntity( "freelookcamera", ["EC_Placeable", "EC_Name", "EC_Camera", "EC_Controls"] );
+                    console.warn( "CameraManager: Creating FreelookCamera." );
+                    console.warn( ent );
+                    ent.name = "freelookcamera";
+                    ent.controls.setControls("freelook");
+                    controller = ent.controls.getController();
+                    controller.movementSpeed = 10;
+
+                    return ent;
+                }
             }
 
             return false;

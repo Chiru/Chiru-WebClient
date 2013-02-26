@@ -25,7 +25,6 @@
         this.placeable = null;
         this.attached = false;
 
-
     };
 
     namespace.storeComponent( 15, "EC_Camera", ECCamera );
@@ -42,7 +41,7 @@
             },
 
             initialize: function () {
-                var camera = this.camera;
+                var self = this;
 
                 if ( !this.parent instanceof namespace.Entity ) {
                     return;
@@ -55,6 +54,14 @@
                     this.setNearClipDist( this.nearPlane || 0.1 );
                     this.setFov( this.fov || 45 );
                     this.setAspectRatio( this.getAspectRatio() );
+
+                    this.parent.componentAdded.add( function ( c ) {
+                        if ( c instanceof namespace.ECPlaceable ) {
+                            self.placeable = c;
+                            self.attachCamera();
+
+                        }
+                    } );
                 }
 
             },
@@ -67,7 +74,6 @@
                 if ( this.attached || placeable === null ) {
                     return;
                 }
-
                 sceneNode = placeable.getSceneNode();
                 if ( sceneNode ) {
                     sceneNode.add( camera );

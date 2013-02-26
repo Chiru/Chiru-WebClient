@@ -60,7 +60,6 @@
          * @function
          * @memberOf Component.prototype
          * @param {Object} attr Attribute object.
-         * @param {Object} state Update state 0 - attribute added, 1 - attribute updated, 2 - attribute removed.
          */
 
         onAttributeUpdated: function ( attr ) {
@@ -131,37 +130,20 @@
 
         },
 
-        addAttribute: function ( id, data ) {
-            /*if ( !this.attributes.hasOwnProperty( id ) ) {
-             var val = data['val'], name = data['name'];
+        updateAttribute: function ( id, val, name ) {
+            var map = this.attributeMap, attributes, attrName, setter;
 
-             if ( val && name && id ) {
-             var attr = new namespace.Attribute( name, val, data['typeId'] );
-
-             if ( attr ) {
-             this.attributes[id] = attr;
-             this.onAttributeUpdated( this.attributes[id], 0 );
-             }
-             }
-             }*/
-        },
-
-        updateAttribute: function ( id, data ) {
-            var map = this.attributeMap, attributes, val, attrName, setter;
-
-            if ( !id || !data ) {
+            if ( !id || !val ) {
                 return;
             }
-
-            val = data['val'];
 
             if ( map.hasOwnProperty( id ) ) {
                 setter = map[id];
             } else {
-                if ( data['name'] === undefined ) {
+                if ( name === undefined ) {
                     return;
                 }
-                attrName = namespace.Attribute.parseName( data['name'] );
+                attrName = namespace.Attribute.parseName( name );
                 attributes = this.attributes;
 
                 if ( attributes.hasOwnProperty( attrName ) ) {

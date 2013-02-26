@@ -15,7 +15,7 @@
      * @param {Number} id Unique entity id.
      */
 
-    Entity = namespace.Entity = function ( id, name ) {
+    Entity = namespace.Entity = function ( id, name, local ) {
 
         /**
          * A Signal that is dispatched when a new component is added to this entity.
@@ -78,6 +78,8 @@
          */
         this.name = name || null;
 
+        this.local = local || false;
+
     };
 
     /**
@@ -136,6 +138,7 @@
             id = id || component.id || this.numComponents;
 
             if ( !this.components.hasOwnProperty( id + '' ) ) {
+                component.setParentEnt(this);
                 this.components[id] = component;
                 this.componentAdded.dispatch( component );
                 this.numComponents += 1;

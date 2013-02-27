@@ -27,7 +27,7 @@
 
         if ( connection ) {
             connection.bindEvent( "EntityAdded", function ( data ) {
-                namespace.util.log( "Got new Entity " + "( id: " + data['entityId'] + ", name: " + data['name'] +
+                namespace.util.log( "Got new Entity " + "( id: " + data['entityID'] + ", name: " + data['name'] +
                     ", components: " + data['numReplComps'] + " )" );
 
                 self.parseEntity( data );
@@ -131,16 +131,17 @@
         },
 
         parseEntity: function ( json ) {
-            var e, component, id;
-            if ( json['entityId'] ) {
-                e = this.createEntity( json['entityId'] );
+            var e, component, i, components = json['components'], id = json['entityID'];
 
-                if ( json.hasOwnProperty( 'components' ) ) {
-                    for ( id in json['components'] ) {
-                        component = this.parseComponent( id, json['components'][id] );
+            if ( id ) {
+                e = this.createEntity( id, json['name'] );
+
+                if ( components) {
+                    for ( i in components ) {
+                        component = this.parseComponent( i, components[i] );
                         if ( component ) {
                             //console.log( component );
-                            e.addComponent( component, id );
+                            e.addComponent( component, i );
                         }
                     }
                 }

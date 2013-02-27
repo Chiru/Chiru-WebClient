@@ -38,7 +38,7 @@
         this.name = Attribute.parseName( name );
         this.val = Attribute.parse( value, this.type );
 
-        this.setter = setterName || this.name;
+        this.setter = setterName || this.name;
 
     };
 
@@ -52,42 +52,31 @@
             case types.real:
             case types.int:
             case types.uint:
-                val = Number( value ); //Returns NaN if no legal number representation can be found
+                if ( typeof value === 'number' ) {
+                    val = value;
+                }
                 break;
 
             case types.float3:
             case types.float4:
             case types.quat:
             case types.color:
-                if ( typeof value === 'string' ) {
-                    val = value.split( / / ).map( parseFloat );
-                } else if ( value instanceof Array ) {
+                if ( value instanceof Array ) {
                     val = value;
-                } else {
-                    val = [];
                 }
                 break;
 
                 // Boolean
             case types.bool:
-                if ( typeof value === 'string' ) {
-                    val = value === 'true';
-                } else if ( typeof value === 'boolean' ) {
+                if ( typeof value === 'boolean' ) {
                     val = value;
-                } else {
-                    val = false;
                 }
                 break;
 
                 // Transform
             case types.transform:
-                if ( typeof value === 'string' ) {
-
-                    val = value.split( /,/ ).map( parseFloat );
-                } else if ( value instanceof Array ) {
+                if ( value instanceof Array ) {
                     val = value;
-                } else {
-                    val = [];
                 }
                 break;
 
@@ -99,12 +88,8 @@
                 break;
 
             case types.assetreflist:
-                if ( typeof value === 'string' ) {
-                    val = value.split( /;/ );
-                } else if ( value instanceof Array ) {
+                if ( value instanceof Array ) {
                     val = value;
-                } else {
-                    val = [];
                 }
                 break;
             }
@@ -119,26 +104,12 @@
 
 
     Attribute.prototype = {
-        update: function ( value ) {
-            var val = Attribute.parse( value, this.type );
-
-            if ( val !== undefined ) {
-                // Just hacky Transform update test
-
-                if ( this.type === types.transform ) {
-                    for ( var i = val.length; i--; ) {
-                        this.val[i] = val[i];
-                    }
-                }
-            }
-        },
-
         updateValue: function ( value ) {
             if ( value !== undefined ) {
 
-                value = Attribute.parse(value, this.type);
+                value = Attribute.parse( value, this.type );
 
-                if(value === null) {
+                if ( value === null ) {
                     return;
                 }
 
@@ -147,14 +118,6 @@
                 } else {
                     this.val = value;
                 }
-            }
-        },
-
-        copy: function ( attr ) {
-            if ( attr instanceof namespace.Attribute ) {
-                this.type = attr.type;
-                this.name = attr.name;
-                this.copyValue( attr );
             }
         }
     };

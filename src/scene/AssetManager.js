@@ -90,6 +90,7 @@
             request.open( "GET", opts.url, true );
             request.responseType = opts.responseType;
             request.assetName = opts.assetName;
+            request.url = opts.url;
 
             if ( typeof opts.mimeType === 'string' ) {
                 request.overrideMimeType( opts.mimeType );
@@ -182,10 +183,11 @@
      *
      * @param assetName
      * @param type
+     * @param storage
      * @param relPath
      * @return {*}
      */
-    AssetManager.prototype.requestAsset = function ( assetName, type, relPath ) {
+    AssetManager.prototype.requestAsset = function ( assetName, type, storage, relPath ) {
         var request, asset, responseType = "", mimeType = null;
 
         if ( typeof type === 'string' ) {
@@ -232,9 +234,13 @@
             relPath = '';
         }
 
+        if(!storage || typeof storage !== "string"){
+            storage = this.remoteStorage;
+        }
+
 
         request = this.createRequest( {
-            url: this.remoteStorage + relPath + assetName,
+            url: storage + relPath + assetName,
             responseType: responseType,
             mimeType: mimeType,
             assetName: assetName,
@@ -282,7 +288,7 @@
         console.log( "Processing", name, "..." );
         //loader.options.convertUpAxis = true;
 
-        result = loader.parse( xml, undefined, this.remoteStorage );
+        result = loader.parse( xml, undefined, request.url );
         console.log( "Asset parsed. Post-processing..." );
         scene = result.scene;
 

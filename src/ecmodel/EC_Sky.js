@@ -31,10 +31,17 @@
                                           "rex_sky_bot.dds" ], 'assetreflist', "textureRefs" );
         this.createAttribute( "distance", 3, 'real' );
         this.createAttribute( "orientation", [0.0, 0.0, 0.0, 1.0], 'quat' );
-        this.createAttribute( "drawfirst", true, 'bool', "drawFirst");
+        this.createAttribute( "drawfirst", true, 'bool', "drawFirst" );
 
 
         // Other properties
+        this.defaultTextures = ["rex_sky_front.dds",
+                                "rex_sky_back.dds",
+                                "rex_sky_left.dds",
+                                "rex_sky_right.dds",
+                                "rex_sky_top.dds",
+                                "rex_sky_bot.dds"];
+        this.defaultPath = "default_assets/textures/";
         this.textureAssets = [];
         this.cubeTexture = null;
         this.skyBox = null;
@@ -48,6 +55,18 @@
         {
 
             onAttributeUpdated: function ( attr ) {
+                if ( attr['name'] === "texture" ) {
+                    var textures = this.defaultTextures;
+
+                    if ( !this.textureRefs.every( function ( e ) {
+                            return textures.indexOf( e ) !== -1;
+                        }
+                    ) ) {
+                        console.warn("EC_Sky: Using different skybox textures than default. " +
+                            "Trying to request them from remote storage.");
+                        this.defaultPath = "";
+                    }
+                }
 
             },
 
@@ -242,11 +261,11 @@
                     };
 
                     for ( i = refsLen; i--; ) {
-                        request = assetManager.requestAsset( refs[i], 'texture', '../textures/' );
+                        request = assetManager.requestAsset( refs[i], 'texture', this.defaultPath );
                         if ( request ) {
                             request.add( callBack );
                         } else {
-                            texture = assetManager.getAsset( refs[i], 'texture', '../textures/' );
+                            texture = assetManager.getAsset( refs[i], 'texture', this.defaultPath );
                             if ( texture ) {
                                 assets.push( texture );
                                 self.onTextureAssetLoaded( texture );

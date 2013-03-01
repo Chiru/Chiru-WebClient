@@ -63,10 +63,10 @@
          * @type Number
          */
 
-        this.numComponents = 0;
 
         this.id = id;
 
+        this.largestId = 0;
 
         /**
          * Name of the entity.
@@ -135,13 +135,13 @@
          */
 
         addComponent: function ( component, id ) {
-            id = id || component.id || this.numComponents;
+            id = id || component.id || this.largestId;
 
             if ( !this.components.hasOwnProperty( id + '' ) ) {
                 component.setParentEnt(this);
                 this.components[id] = component;
                 this.componentAdded.dispatch( component );
-                this.numComponents += 1;
+
             }
 
 

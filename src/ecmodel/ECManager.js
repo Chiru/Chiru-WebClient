@@ -33,6 +33,9 @@
                 self.parseEntity( data );
 
             } );
+            connection.bindEvent( "EntityRemoved", function ( data ) {
+                namespace.util.log( "Server removed Entity " + JSON.toString(data) );
+            } );
 
             connection.bindEvent( "ComponentsRemoved", function ( data ) {
                 console.log( "ComponentsRemoved:" );
@@ -67,17 +70,20 @@
                 //console.log( "AttributesChanged:" );
                 //console.log( data );
 
-                var ent, attrs = data['attrs'], attr, comp;
+                var ent, attrData = data['attrs'], attrs, attrId, compId, comp;
 
                 ent = self.getEntity( data['entityId'] );
 
                 if ( ent ) {
-                    for ( var i in attrs ) {
-                        attr = attrs[i];
-                        comp = ent.getComponentById( attr['compId'] );
+                    for ( compId in attrData ) {
+                        comp = ent.getComponentById( compId );
 
                         if ( comp ) {
-                            comp.updateAttribute( i, attr['val'], attr['name'] );
+                            attrs = attrData[compId];
+
+                            for ( attrId in attrs ) {
+                                comp.updateAttribute( attrId, attrs[attrId] );
+                            }
                         }
                     }
                 }
@@ -119,8 +125,9 @@
                 numComps = components.length;
                 for ( i = numComps; i--; ) {
                     comp = this.createComponent( components[i] );
+
                     if ( comp ) {
-                        e.addComponent( comp, id );
+                        e.addComponent( comp, i );
                     }
                 }
             }
@@ -136,7 +143,7 @@
             if ( id ) {
                 e = this.createEntity( id, json['name'] );
 
-                if ( components) {
+                if ( components ) {
                     for ( i in components ) {
                         component = this.parseComponent( i, components[i] );
                         if ( component ) {
@@ -238,14 +245,14 @@
                 return false;
             }
 
-            if(local){
+            if ( local ) {
                 entities = this.localEntities;
-            }else{
+            } else {
                 entities = this.entities;
             }
 
 
-            if ( !isNaN(id) ) {
+            if ( !isNaN( id ) ) {
                 if ( entities.hasOwnProperty( id ) ) {
                     return entities[id];
                 }

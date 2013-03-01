@@ -149,12 +149,12 @@
     };
 
     WSManager.prototype.processEvent = function ( json ) {
-        if ( json.event ) {
+        if ( json['event'] ) {
             //console.log("Got event: "+json['event'])
-            if ( json.data ) {
+            if ( json['data'] ) {
 
                 // Triggering the event
-                this.triggerEvent( json.event, json.data );
+                this.triggerEvent( json['event'], json['data']);
             }
         }
     };

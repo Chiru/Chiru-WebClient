@@ -20,9 +20,9 @@
         namespace.Component.call( this, sceneMgr ); //Inherit component properties
 
         // Default attributes
-        this.createAttribute("transform", [0,0,0,0,0,0,1,1,1], 'transform');
-        this.createAttribute("meshref", "", 'assetref', "meshRef");
-        this.createAttribute("castshadows", false, 'bool', "castShadows");
+        this.createAttribute( "transform", [0, 0, 0, 0, 0, 0, 1, 1, 1], 'transform' );
+        this.createAttribute( "meshref", "", 'assetref', "meshRef" );
+        this.createAttribute( "castshadows", false, 'bool', "castShadows" );
 
         // Signals
         this.meshChanged = new namespace.Signal();
@@ -32,6 +32,7 @@
         this.placeable = null;
         this.offsetNode = new THREE.Object3D();
         this.mesh = null;
+        this.storage = null;
         this.attached = false;
 
     };
@@ -49,12 +50,17 @@
 
             onParentAdded: function ( parent ) {
                 var self = this;
-                this.parent.componentAdded.add( function ( c ) {
-                    if ( c instanceof namespace.ECPlaceable ) {
-                        self.loadMesh();
-                        console.log( "ECMesh: ECplaceable addded to parent entity", self.parent.id );
-                    }
-                } );
+                if ( this.autoSetPlaceable() ) {
+                    this.loadMesh();
+                } else {
+                    this.parent.componentAdded.add( function ( c ) {
+                        if ( c instanceof namespace.ECPlaceable ) {
+                            self.loadMesh();
+                            console.log( "ECMesh: ECplaceable addded to parent entity", self.parent.id );
+                        }
+                    } );
+                }
+
             },
 
 
@@ -89,7 +95,7 @@
                     return;
                 }
 
-                request = assetManager.requestAsset( meshRef, 'mesh' );
+                request = assetManager.requestAsset( meshRef, 'mesh', this.storage );
                 if ( request ) {
                     request.add( function ( asset ) {
                         if ( asset ) {

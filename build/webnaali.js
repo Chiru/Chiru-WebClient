@@ -36147,6 +36147,94 @@ THREE.ShaderSprite = {
 
 }( window['webtundra'] = window['webtundra'] || {} ));
 
+/** Src: ../src/general/Detector.js **/
+// For conditions of distribution and use, see copyright notice in LICENSE
+
+
+/**
+ * @author alteredq / http://alteredqualia.com/
+ * @author mr.doob / http://mrdoob.com/
+ * @author Toni Dahl / https://github.com/K1ll3rF0x
+ */
+
+(function ( namespace, undefined ) {
+
+    var Detector = namespace['Detector'] = {
+
+        canvas: !!window.CanvasRenderingContext2D,
+        webgl: (function () {
+            try {
+                return !!window['WebGLRenderingContext'] && !!document.createElement( 'canvas' ).getContext( 'experimental-webgl' );
+            } catch (e) {
+                return false;
+            }
+        })(),
+        workers: !!window.Worker,
+        fileapi: window.File && window.FileReader && window.FileList && window.Blob,
+
+
+        getWebGLError: function ( type, gpuError, browserError ) {
+            if ( !this.webgl ) {
+
+                var error = window.WebGLRenderingContext ? gpuError : browserError;
+
+                if ( type === 'element' ) {
+                    var element = document.createElement( 'div' );
+                    element.id = 'webgl-error-message';
+                    element.style.fontFamily = 'monospace';
+                    element.style.fontSize = '13px';
+                    element.style.fontWeight = 'normal';
+                    element.style.textAlign = 'center';
+                    element.style.background = '#fff';
+                    element.style.color = '#000';
+                    element.style.padding = '1.5em';
+                    element.style.width = '400px';
+                    element.style.margin = '5em auto 0';
+
+                    element.innerHTML = error;
+
+                    return element;
+
+                } else {
+                    return error;
+                }
+            }
+
+            return false;
+
+        },
+
+        throwWebGLError: function ( parameters ) {
+
+            parameters = parameters || {};
+
+            var defaults =
+                {
+                    parent: document.body,
+                    type: 'element',
+                    gpuErrorMsg: [
+                        'Your graphics card does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL</a>.<br />',
+                        'Find out how to get it <a href="http://get.webgl.org/" style="color:#000">here</a>.'
+                    ].join( '\n' ),
+                    browserErrorMsg: [
+                        'Your browser does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL</a>.<br/>',
+                        'Find out how to get it <a href="http://get.webgl.org/" style="color:#000">here</a>.'
+                    ].join( '\n' )
+                },
+                settings = $.extend( {}, defaults, parameters ), element;
+
+            if ( settings.type === 'element' ) {
+                element = Detector.getWebGLError( settings.type, settings.gpuErrorMsg, settings.browserErrorMsg );
+                settings.parent.appendChild( element );
+
+            } else if ( settings.type === 'alert' ) {
+                alert( Detector.getWebGLError( settings.type, settings.gpuErrorMsg, settings.browserErrorMsg ) );
+            }
+        }
+    };
+
+}( window['webtundra'] = window['webtundra'] || {} ));
+
 /** Src: ../src/general/Workers.js **/
 // For conditions of distribution and use, see copyright notice in LICENSE
 
@@ -41828,6 +41916,414 @@ function parseStorageUrl( url ) {
 
 }( window['webtundra'] = window['webtundra'] || {} ));
 
+/** Src: ../src/controls/Controls.js **/
+// For conditions of distribution and use, see copyright notice in LICENSE
+
+
+(function ( namespace, undefined ) {
+
+    var Controls, util;
+
+    util = namespace.util;
+
+
+    Controls = namespace.Controls = function ( sceneMgr ) {
+
+        var controls = {
+            "freelook": namespace.FreeLookControls,
+            "avatar":namespace.AvatarControls
+        };
+
+        function setControls( controller ) {
+            if ( controller ) {
+                sceneMgr.controls = controller;
+            }
+        }
+
+        function createController( placeable, type ) {
+            var controller = false;
+
+            if(controls.hasOwnProperty(type)){
+                controller = new controls[type](placeable, sceneMgr);
+            }
+
+            return controller;
+        }
+
+        return {
+            setControls: setControls,
+            createController: createController
+        };
+
+    };
+
+
+}( window['webtundra'] = window['webtundra'] || {} ));
+
+
+/** Src: ../src/controls/FreeLookControls.js **/
+/**
+ * @author mrdoob / http://mrdoob.com/
+ * @author alteredq / http://alteredqualia.com/
+ * @author paulirish / http://paulirish.com/
+ */
+
+(function ( namespace, undefined ) {
+    var util, FreeLookControls;
+
+    util = namespace.util;
+
+    FreeLookControls = namespace.FreeLookControls = function ( placeable, sceneMgr ) {
+
+        this.domElement = sceneMgr.container;
+
+        this.placeable = placeable;
+        this.object = new THREE.Object3D(); // Dummy object for transformations
+        this.target = new THREE.Vector3( 0, 0, 0 );
+
+        this.movementSpeed = 1.0;
+        this.lookSpeed = 0.5;
+        this.autoForward = false;
+
+        this.lookVertical = true;
+
+        this.heightSpeed = true;
+        this.heightCoef = 1.0;
+        this.heightMin = 0.0;
+        this.heightMax = 1.0;
+
+        this.verticalMin = 0;
+        this.verticalMax = Math.PI;
+
+        this.autoSpeedFactor = 0.0;
+
+        if ( this.domElement !== document ) {
+
+            this.domElement.setAttribute( 'tabindex', -1 );
+
+        }
+
+
+
+        var mouseXDelta = 0,
+            mouseYDelta = 0,
+            mouseXStart = 0,
+            mouseYStart = 0,
+            lat = 0,
+            oldLat = 0,
+            lon = 0,
+            oldLon = 0,
+            phi = 0,
+            theta = 0,
+            viewHalfX = 0,
+            viewHalfY = 0,
+            mouseDragOn = false,
+            moveForward = false,
+            moveBackward = false,
+            moveLeft = false,
+            moveRight = false,
+            moveUp = false,
+            moveDown = false,
+            freeze = false,
+            actualMoveSpeed = 0,
+
+            // Shortcuts
+            radToDeg = THREE.Math.radToDeg,
+            degToRad = THREE.Math.degToRad,
+            targetPosition = this.target,
+            position = this.object.position,
+            rotation = this.object.rotation;
+
+
+        this.getMousePosition = function ( event ) {
+            var mouseX, mouseY;
+
+            if ( this.domElement === document ) {
+
+                mouseX = event.pageX - viewHalfX;
+                mouseY = event.pageY - viewHalfY;
+
+            } else {
+
+                mouseX = event.pageX - this.domElement.offsetLeft - viewHalfX;
+                mouseY = event.pageY - this.domElement.offsetTop - viewHalfY;
+
+            }
+            event.mouseX = mouseX;
+            event.mouseY = mouseY;
+        };
+
+        this.computeTargetPosition = function () {
+            lon = oldLon + mouseXDelta * this.lookSpeed;
+            if ( this.lookVertical ) {
+                lat = oldLat + mouseYDelta * this.lookSpeed;
+            }
+
+            lat = Math.max( -85, Math.min( 85, lat ) );
+            phi = degToRad( 90 - lat );
+
+            theta = degToRad( lon );
+
+            targetPosition.x = position.x + 100 * Math.sin( phi ) * Math.cos( theta );
+            targetPosition.y = position.y + 100 * Math.cos( phi );
+            targetPosition.z = position.z + 100 * Math.sin( phi ) * Math.sin( theta );
+        };
+
+        this.handleResize = function () {
+
+            if ( this.domElement === document ) {
+
+                viewHalfX = window.innerWidth / 2;
+                viewHalfY = window.innerHeight / 2;
+
+            } else {
+
+                viewHalfX = this.domElement.offsetWidth / 2;
+                viewHalfY = this.domElement.offsetHeight / 2;
+
+            }
+
+        };
+
+        this.onMouseDown = function ( event ) {
+
+            if ( this.domElement !== document ) {
+
+                this.domElement.focus();
+
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            this.getMousePosition( event );
+
+
+            mouseXStart = event.mouseX;
+            mouseYStart = event.mouseY;
+            this.computeTargetPosition();
+
+            mouseDragOn = true;
+
+
+        };
+
+
+        this.onMouseUp = function ( event ) {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            mouseDragOn = false;
+            oldLat = lat;
+            oldLon = lon;
+            mouseXDelta = mouseYDelta = 0;
+        };
+
+        this.onMouseMove = function ( event ) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            if ( mouseDragOn ) {
+                this.getMousePosition( event );
+
+                mouseXDelta = event.mouseX - mouseXStart;
+                mouseYDelta = event.mouseY - mouseYStart;
+
+                this.computeTargetPosition();
+
+            }
+        };
+
+        this.onKeyDown = function ( event ) {
+            //event.preventDefault();
+
+            switch (event.keyCode) {
+
+            case 38: /*up*/
+            case 87: /*W*/
+                moveForward = true;
+                break;
+
+            case 37: /*left*/
+            case 65: /*A*/
+                moveLeft = true;
+                break;
+
+            case 40: /*down*/
+            case 83: /*S*/
+                moveBackward = true;
+                break;
+
+            case 39: /*right*/
+            case 68: /*D*/
+                moveRight = true;
+                break;
+
+            case 32: /*Space*/
+            case 82: /*R*/
+                moveUp = true;
+                break;
+
+            case 70: /*F*/
+                moveDown = true;
+                break;
+
+            case 81: /*Q*/
+                freeze = !this.freeze;
+                break;
+
+            }
+
+        };
+
+        this.onKeyUp = function ( event ) {
+
+            switch (event.keyCode) {
+
+            case 38: /*up*/
+            case 87: /*W*/
+                moveForward = false;
+                break;
+
+            case 37: /*left*/
+            case 65: /*A*/
+                moveLeft = false;
+                break;
+
+            case 40: /*down*/
+            case 83: /*S*/
+                moveBackward = false;
+                break;
+
+            case 39: /*right*/
+            case 68: /*D*/
+                moveRight = false;
+                break;
+
+            case 32: /*Space*/
+            case 82: /*R*/
+                moveUp = false;
+                break;
+            case 17: /*ctrl*/
+            case 70: /*F*/
+                moveDown = false;
+                break;
+
+            }
+        };
+
+        this.update = function ( delta ) {
+
+            if ( freeze ) {
+
+                return;
+            }
+
+            if ( mouseDragOn ) {
+                this.object.lookAt( targetPosition );
+                this.placeable.setRotation( radToDeg( rotation.x ), radToDeg( rotation.y ),
+                    radToDeg( rotation.z ) );
+            }
+
+            actualMoveSpeed = delta * this.movementSpeed;
+
+            if ( moveForward ) {
+                this.object.translateZ( -actualMoveSpeed );
+                this.placeable.setPosition(position.x, position.y, position.z);
+            }
+            if ( moveBackward ) {
+                this.object.translateZ( actualMoveSpeed );
+                this.placeable.setPosition(position.x, position.y, position.z);
+            }
+
+            if ( moveLeft ) {
+                this.object.translateX( -actualMoveSpeed );
+                this.placeable.setPosition(position.x, position.y, position.z);
+            }
+            if ( moveRight ) {
+                this.object.translateX( actualMoveSpeed );
+                this.placeable.setPosition(position.x, position.y, position.z);
+            }
+
+            if ( moveUp ) {
+                this.object.translateY( actualMoveSpeed );
+                this.placeable.setPosition(position.x, position.y, position.z);
+            }
+            if ( moveDown ) {
+                this.object.translateY( -actualMoveSpeed );
+                this.placeable.setPosition(position.x, position.y, position.z);
+            }
+
+
+        };
+
+        this.setPlaceable = function ( placeable ) {
+            if ( placeable instanceof namespace.ECPlaceable ) {
+                this.placeable = placeable;
+                this.object = placeable.getSceneNode();
+            }
+        };
+
+        this.reset = function () {
+            var sceneNode = this.placeable.getSceneNode();
+            this.object.position.copy( sceneNode.position );
+            this.object.rotation.copy( sceneNode.rotation );
+            this.object.scale.copy( sceneNode.scale );
+
+            //TODO: Reverse calculate lookat target position so that camera wont jump when moving it the first time
+        };
+
+
+        this.domElement.addEventListener( 'contextmenu', function ( event ) {
+            event.preventDefault();
+        }, false );
+
+        this.domElement.addEventListener( 'mousemove', bind( this, this.onMouseMove ), false );
+        this.domElement.addEventListener( 'mousedown', bind( this, this.onMouseDown ), false );
+        this.domElement.addEventListener( 'mouseup', bind( this, this.onMouseUp ), false );
+        this.domElement.addEventListener( 'keydown', bind( this, this.onKeyDown ), false );
+        this.domElement.addEventListener( 'keyup', bind( this, this.onKeyUp ), false );
+
+        function bind( scope, fn ) {
+
+            return function () {
+
+                fn.apply( scope, arguments );
+
+            };
+
+        }
+
+        this.handleResize();
+
+    };
+
+
+}( window['webtundra'] = window['webtundra'] || {} ));
+
+
+/** Src: ../src/controls/AvatarControls.js **/
+/**
+ * @author mrdoob / http://mrdoob.com/
+ * @author alteredq / http://alteredqualia.com/
+ * @author paulirish / http://paulirish.com/
+ */
+
+(function ( namespace, undefined ) {
+    var util, AvatarControls;
+
+    util = namespace.util;
+
+    AvatarControls = namespace.AvatarControls = function ( object, sceneMgr ) {
+
+
+    };
+
+
+}( window['webtundra'] = window['webtundra'] || {} ));
+
+
 /** Src: ../src/controls/PointerLockControls.js **/
 /**
  * @author mrdoob / http://mrdoob.com/
@@ -42031,94 +42527,6 @@ THREE.PointerLockControls = function ( camera ) {
 };
 
 
-/** Src: ../src/general/Detector.js **/
-// For conditions of distribution and use, see copyright notice in LICENSE
-
-
-/**
- * @author alteredq / http://alteredqualia.com/
- * @author mr.doob / http://mrdoob.com/
- * @author Toni Dahl / https://github.com/K1ll3rF0x
- */
-
-(function ( namespace, undefined ) {
-
-    var Detector = namespace['Detector'] = {
-
-        canvas: !!window.CanvasRenderingContext2D,
-        webgl: (function () {
-            try {
-                return !!window['WebGLRenderingContext'] && !!document.createElement( 'canvas' ).getContext( 'experimental-webgl' );
-            } catch (e) {
-                return false;
-            }
-        })(),
-        workers: !!window.Worker,
-        fileapi: window.File && window.FileReader && window.FileList && window.Blob,
-
-
-        getWebGLError: function ( type, gpuError, browserError ) {
-            if ( !this.webgl ) {
-
-                var error = window.WebGLRenderingContext ? gpuError : browserError;
-
-                if ( type === 'element' ) {
-                    var element = document.createElement( 'div' );
-                    element.id = 'webgl-error-message';
-                    element.style.fontFamily = 'monospace';
-                    element.style.fontSize = '13px';
-                    element.style.fontWeight = 'normal';
-                    element.style.textAlign = 'center';
-                    element.style.background = '#fff';
-                    element.style.color = '#000';
-                    element.style.padding = '1.5em';
-                    element.style.width = '400px';
-                    element.style.margin = '5em auto 0';
-
-                    element.innerHTML = error;
-
-                    return element;
-
-                } else {
-                    return error;
-                }
-            }
-
-            return false;
-
-        },
-
-        throwWebGLError: function ( parameters ) {
-
-            parameters = parameters || {};
-
-            var defaults =
-                {
-                    parent: document.body,
-                    type: 'element',
-                    gpuErrorMsg: [
-                        'Your graphics card does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL</a>.<br />',
-                        'Find out how to get it <a href="http://get.webgl.org/" style="color:#000">here</a>.'
-                    ].join( '\n' ),
-                    browserErrorMsg: [
-                        'Your browser does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL</a>.<br/>',
-                        'Find out how to get it <a href="http://get.webgl.org/" style="color:#000">here</a>.'
-                    ].join( '\n' )
-                },
-                settings = $.extend( {}, defaults, parameters ), element;
-
-            if ( settings.type === 'element' ) {
-                element = Detector.getWebGLError( settings.type, settings.gpuErrorMsg, settings.browserErrorMsg );
-                settings.parent.appendChild( element );
-
-            } else if ( settings.type === 'alert' ) {
-                alert( Detector.getWebGLError( settings.type, settings.gpuErrorMsg, settings.browserErrorMsg ) );
-            }
-        }
-    };
-
-}( window['webtundra'] = window['webtundra'] || {} ));
-
 /** Src: ../src/networking/WSManager.js **/
 // For conditions of distribution and use, see copyright notice in LICENSE
 
@@ -42209,7 +42617,7 @@ THREE.PointerLockControls = function ( camera ) {
         }.bind( this );
 
         this.ws.onmessage = function ( evt ) {
-            console.log("Got msg: " + evt.data);
+            console.log(evt.data);
             this.parseMessage( evt.data );
         }.bind( this );
 
@@ -42271,12 +42679,12 @@ THREE.PointerLockControls = function ( camera ) {
     };
 
     WSManager.prototype.processEvent = function ( json ) {
-        if ( json.event ) {
+        if ( json['event'] ) {
             //console.log("Got event: "+json['event'])
-            if ( json.data ) {
+            if ( json['data'] ) {
 
                 // Triggering the event
-                this.triggerEvent( json.event, json.data );
+                this.triggerEvent( json['event'], json['data']);
             }
         }
     };
@@ -42320,7 +42728,7 @@ THREE.PointerLockControls = function ( camera ) {
      * @param {Number} id Unique entity id.
      */
 
-    Entity = namespace.Entity = function ( id, name ) {
+    Entity = namespace.Entity = function ( id, name, local ) {
 
         /**
          * A Signal that is dispatched when a new component is added to this entity.
@@ -42368,10 +42776,10 @@ THREE.PointerLockControls = function ( camera ) {
          * @type Number
          */
 
-        this.numComponents = 0;
 
         this.id = id;
 
+        this.largestId = 0;
 
         /**
          * Name of the entity.
@@ -42382,6 +42790,8 @@ THREE.PointerLockControls = function ( camera ) {
          * @type String
          */
         this.name = name || null;
+
+        this.local = local || false;
 
     };
 
@@ -42438,12 +42848,13 @@ THREE.PointerLockControls = function ( camera ) {
          */
 
         addComponent: function ( component, id ) {
-            id = id || component.id || this.numComponents;
+            id = id || component.id || this.largestId;
 
             if ( !this.components.hasOwnProperty( id + '' ) ) {
+                component.setParentEnt(this);
                 this.components[id] = component;
                 this.componentAdded.dispatch( component );
-                this.numComponents += 1;
+
             }
 
 
@@ -42480,60 +42891,90 @@ THREE.PointerLockControls = function ( camera ) {
     util = namespace.util;
 
     types = namespace.ENUMS.ATTRIBUTES = namespace.util.createEnum(
-        'none', 'string', 'int', 'real', 'color', 'float2', 'float3', 'float4', 'bool', 'uint', 'quat',
-        'assetref', 'assetreflist', 'entityref', 'qvariant', 'qvariantlist', 'transform', 'qpoint',
-        'numattributetypes'
+        'none',             // 0
+        'string',           // 1
+        'int',              // 2
+        'real',             // 3
+        'color',            // 4
+        'float2',           // 5
+        'float3',           // 6
+        'float4',           // 7
+        'bool',             // 8
+        'uint',             // 9
+        'quat',             // 10
+        'assetref',         // 11
+        'assetreflist',     // 12
+        'entityref',        // 13
+        'qvariant',         // 14
+        'qvariantlist',     // 15
+        'transform',        // 16
+        'qpoint',           // 17
+        'numattributetypes' // 18
     );
 
 
-    Attribute = namespace.Attribute = function ( name, value, type ) {
+    Attribute = namespace.Attribute = function ( name, value, type, setterName ) {
 
         type = type || -1;
 
         this.type = parseInt( type, 10 );
 
-        this.name = name.replace( /\s/g, '' ).toLowerCase();
+        this.name = Attribute.parseName( name );
         this.val = Attribute.parse( value, this.type );
+
+        this.setter = setterName || this.name;
 
     };
 
     Attribute.parse = function ( value, type ) {
-        var val = value;
+        var val = null;
 
-        if ( value /*&& typeof value === "string"*/ ) {
+        if ( value !== undefined/*&& typeof value === "string"*/ ) {
 
             switch (type) {
                 // Int
             case types.real:
             case types.int:
             case types.uint:
-                val = Number( value ); //Returns NaN if no legal number representation can be found
+                if ( typeof value === 'number' ) {
+                    val = value;
+                }
                 break;
 
             case types.float3:
             case types.float4:
             case types.quat:
             case types.color:
-                val = value.split( / / ).map( parseFloat );
+                if ( value instanceof Array ) {
+                    val = value;
+                }
                 break;
 
                 // Boolean
             case types.bool:
-                val = value === 'true';
+                if ( typeof value === 'boolean' ) {
+                    val = value;
+                }
                 break;
 
                 // Transform
             case types.transform:
-                val = value.split( /,/ ).map( parseFloat );
+                if ( value instanceof Array ) {
+                    val = value;
+                }
                 break;
 
             case types.string:
             case types.assetref:
-                val = value;
+                if ( typeof value === 'string' ) {
+                    val = value;
+                }
                 break;
 
             case types.assetreflist:
-                val = value.split( /;/ );
+                if ( value instanceof Array ) {
+                    val = value;
+                }
                 break;
             }
         }
@@ -42541,40 +42982,26 @@ THREE.PointerLockControls = function ( camera ) {
         return val;
     };
 
+    Attribute.parseName = function ( name ) {
+        return name.replace( /\s/g, '' ).toLowerCase();
+    };
+
 
     Attribute.prototype = {
-        update: function ( value ) {
-            var val = Attribute.parse( value, this.type );
+        updateValue: function ( value ) {
+            if ( value !== undefined ) {
 
-            if ( val !== undefined ) {
-                // Just hacky Transform update test
+                value = Attribute.parse( value, this.type );
 
-                if ( this.type === types.transform ) {
-                    for ( var i = val.length; i--; ) {
-                        this.val[i] = val[i];
-                    }
+                if ( value === null ) {
+                    return;
                 }
-            }
-        },
-
-        copyValue: function ( attr ) {
-            var value = attr.val;
-
-            if ( value !== undefined && this.type === attr.type ) {
 
                 if ( value instanceof Array && this.val instanceof Array ) {
                     util.extend( this.val, value );
                 } else {
                     this.val = value;
                 }
-            }
-        },
-
-        copy: function ( attr ) {
-            if ( attr instanceof namespace.Attribute ) {
-                this.type = attr.type;
-                this.name = attr.name;
-                this.copyValue( attr );
             }
         }
     };
@@ -42589,6 +43016,12 @@ THREE.PointerLockControls = function ( camera ) {
 
 (function ( namespace, undefined ) {
 
+    var Component, util, attrTypes;
+
+    util = namespace.util;
+
+    attrTypes = namespace.ENUMS.ATTRIBUTES;
+
     /**
      * Component parent constructor
      *
@@ -42597,7 +43030,7 @@ THREE.PointerLockControls = function ( camera ) {
      * @param {object} sceneMgr Pointer to scene manager.
      */
 
-    var Component = namespace.Component = function ( sceneMgr ) {
+    Component = namespace.Component = function ( sceneMgr ) {
 
         if ( !sceneMgr ) {
             throw new Error( "Component: Could not get SceneManager object." );
@@ -42608,6 +43041,7 @@ THREE.PointerLockControls = function ( camera ) {
         this.id = null;
         this.parent = null;
         this.attributes = {};
+        this.attributeMap = {};
         this.name = '';
         this.typeId = null;
         this.typeName = null;
@@ -42639,35 +43073,101 @@ THREE.PointerLockControls = function ( camera ) {
          * @function
          * @memberOf Component.prototype
          * @param {Object} attr Attribute object.
-         * @param {Object} state Update state 0 - attribute added, 1 - attribute updated, 2 - attribute removed.
          */
 
-        onAttributeUpdated: function ( attr, state ) {
+        onAttributeUpdated: function ( attr ) {
         },
 
-        addAttribute: function ( id, data ) {
-            if ( !this.attributes.hasOwnProperty( id ) ) {
-                var val = data['val'], name = data['name'];
+        createAttribute: function ( name, value, type, setterName ) {
+            var attr, proto, attributes = this.attributes;
 
-                if ( val && name && id ) {
-                    var attr = new namespace.Attribute( name, val, data['typeId'] );
+            if ( !name || value === undefined || !type ) {
+                return null;
+            }
 
-                    if ( attr ) {
-                        this.attributes[id] = attr;
-                        this.onAttributeUpdated( this.attributes[id], 0 );
-                    }
+            // Setting the attribute type
+            if ( typeof type === 'string' ) {
+                if ( attrTypes.hasOwnProperty( type ) ) {
+                    type = attrTypes[type];
+                } else {
+                    console.warn( "Got unknown type for attribute", name, ". Setting type to None." );
+                    type = attrTypes['none'];
+                }
+            } else if ( typeof type !== 'number' ) {
+                console.warn( "Got unknown type for attribute", name, ". Setting type to None." );
+                type = attrTypes['none'];
+            }
+
+            // Parsing attribute name to make comparing easier
+            name = namespace.Attribute.parseName( name );
+
+            if(typeof setterName !== "string"){
+                setterName = name;
+            }
+
+            // Storing attribute by name
+            if ( !attributes.hasOwnProperty( name ) ) {
+                attr = new namespace.Attribute( name, value, type, setterName );
+                attributes[name] = attr;
+            } else {
+                return attributes[name];
+            }
+
+            // Defining setters and getters for attribute
+            proto = Object.getPrototypeOf( this );
+            if ( !proto.hasOwnProperty( setterName ) ) {
+                //console.log( "Creating attribute",name);
+                Object.defineProperty( proto, setterName, {
+                    set: (function ( val ) {
+                        //console.log( "Setting attribute", name, "to", val );
+                        var attribute, attributes = this.attributes;
+                        if ( attributes.hasOwnProperty( name ) ) {
+                            attribute = attributes[name];
+                            attribute.updateValue( val );
+                            this.onAttributeUpdated( attribute );
+                        }
+
+                    }),
+                    get: (function () {
+                        var attributes = this.attributes;
+                        if ( attributes.hasOwnProperty( name ) ) {
+                            //console.log( "Attribute", name, "has value:" );
+                            return attributes[name]['val'];
+                        }
+                        return false;
+                    })
+                } );
+            }
+
+            return attr;
+
+        },
+
+        updateAttribute: function ( id, val, name ) {
+            var map = this.attributeMap, attributes, attrName, setter;
+
+            if ( !id || !val ) {
+                return;
+            }
+
+            if ( map.hasOwnProperty( id ) ) {
+                setter = map[id];
+            } else {
+                if ( name === undefined ) {
+                    return;
+                }
+                attrName = namespace.Attribute.parseName( name );
+                attributes = this.attributes;
+
+                if ( attributes.hasOwnProperty( attrName ) ) {
+                   setter = map[id] = attributes[attrName].setter;
+                } else {
+                    return;
                 }
             }
-        },
 
-        updateAttribute: function ( id, attr ) {
-            var val = attr['val'], typeId = attr['typeId'], parsed;
+            this[setter] = val;
 
-            if ( this.attributes.hasOwnProperty( id ) && val ) {
-                this.attributes[id].update( val );
-
-                this.onAttributeUpdated( this.attributes[id], 1 );
-            }
         },
 
         getAttribute: function ( name ) {
@@ -42707,6 +43207,13 @@ THREE.PointerLockControls = function ( camera ) {
 
         namespace.Component.call( this, sceneMgr ); //Inherit component properties
 
+        this.createAttribute("appearanceref", "default_avatar.avatar", 'assetref', "appearanceRef");
+
+        this.mesh = sceneMgr.ecManager.createComponent("EC_Mesh");
+        this.defaultPath = "/default_assets/models/";
+
+
+
 
     };
 
@@ -42714,6 +43221,42 @@ THREE.PointerLockControls = function ( camera ) {
 
     ECAvatar.prototype = util.extend( Object.create( namespace.Component.prototype ),
         {
+
+            onParentAdded: function (ent){
+                this.setupAppearance();
+
+
+            },
+            onAttributeUpdated: function (attr) {
+                if(attr['name'] === "appearanceref"){
+
+                    // We are not using a default avatar distributed with the web client, so we assume the custom avatar
+                    // is located in the scene folder
+                    if(this.appearanceRef !== "default_avatar.avatar"){
+                        this.defaulPath = "";
+                    }
+                }
+
+            },
+
+            setupAppearance: function(){
+                var mesh = this.mesh;
+
+                mesh.storage = this.defaultPath;
+                mesh.meshRef = this.appearanceRef;
+                this.parent.addComponent(mesh, -100);
+
+
+            },
+            onMeshLoaded: function(){
+                this.setupAvatar();
+            },
+
+            setupAvatar: function() {
+
+            }
+
+
 
         }
     );
@@ -42747,11 +43290,14 @@ THREE.PointerLockControls = function ( camera ) {
         //Inherit component properties
         namespace.Component.call( this, sceneMgr );
 
-        this.sunColor = [163, 163, 163];
-        this.ambientColor = [93, 93, 93, 1];
-        this.sunDirection = [-1, -1, -1];
-        this.sunCastShadows = false;
-        this.sunBrightness = 1.0;
+        // Default attributes
+        this.createAttribute( "sunlightcolor", [0.639, 0.639, 0.639, 1.0], 'color', "sunColor" );
+        this.createAttribute( "ambientlightcolor", [0.364, 0.364, 0.364, 1.0], 'color', "ambientColor" );
+        this.createAttribute( "sunlightdirectionvector", [-1.0, -1.0, -1.0], 'float3', "sunDirection" );
+        this.createAttribute( "sunlightcastshadows", true, 'bool', "sunCastShadows" );
+        this.createAttribute( "brightness", 1, 'real' );
+
+        // Properties
         this.sunLight = null;
 
     };
@@ -42763,34 +43309,16 @@ THREE.PointerLockControls = function ( camera ) {
     ECEnvironmentLight.prototype = util.extend( Object.create( namespace.Component.prototype ),
         {
 
-            onAttributeUpdated: function ( attr, state ) {
+            onAttributeUpdated: function ( attr ) {
                 var name = attr.name;
-                if ( state === 0 ) {
-                    if ( name === 'sunlightcolor' ) {
 
-                        this.sunColor = attr;
-                    } else if ( name === 'ambientlightcolor' ) {
-                        this.ambientColor = attr;
-
-                    } else if ( name === 'sunlightdirectionvector' ) {
-                        this.sunDirection = attr;
-
-                    } else if ( name === 'sunlightcastshadows' ) {
-                        this.sunCastShadows = attr;
-
-                    } else if ( name === 'brightness' ) {
-                        this.sunBrightness = attr;
-
-                    }
-                }
-                if ( state === 1 ) {
                     if ( name === 'sunlightcolor' || name === 'sunlightdirectionvector' || name === 'sunlightcastshadows' ||
                         name === 'brightness' ) {
                         this.updateSunLight();
                     } else if ( name === 'ambientlightcolor' ) {
                         this.updateAmbientLight();
                     }
-                }
+
 
             },
 
@@ -42812,13 +43340,13 @@ THREE.PointerLockControls = function ( camera ) {
 
 
             updateSunLight: function () {
-                var sunLight = this.sunLight, sunColor = this.sunColor['val'],
-                    dir = this.sunDirection['val'];
+                var sunLight = this.sunLight, sunColor = this.sunColor,
+                    dir = this.sunDirection;
 
                 if ( sunLight ) {
                     sunLight.color.setRGB( sunColor[0], sunColor[1], sunColor[2] );
                     //sunLight.color.multiplyScalar(this.sunBrightness['val']);
-                    if ( this.sunCastShadows['val'] ) {
+                    if ( this.sunCastShadows ) {
                         sunLight.castShadow = true;
                         //sunLight.shadowCameraVisible = true;
                         sunLight.shadowDarkness = 0.6;
@@ -42846,13 +43374,13 @@ THREE.PointerLockControls = function ( camera ) {
 
                 if ( sceneManager && sunLight ) {
                     sceneManager.remove( sunLight );
-                    sunLight = null;
+                    this.sunLight = null;
                 }
             },
 
 
             updateAmbientLight: function () {
-                var sceneManager = this.sceneManager, color = this.ambientColor['val'];
+                var sceneManager = this.sceneManager, color = this.ambientColor;
                 if ( sceneManager && color ) {
                     sceneManager.setAmbientLight( color );
                 }
@@ -42914,12 +43442,27 @@ THREE.PointerLockControls = function ( camera ) {
         //Inherit component properties
         namespace.Component.call( this, sceneMgr );
 
-        this.materialRef = null;
-        this.textureRefs = null;
-        this.distance = null;
-        this.orientation = null;
-        this.drawFirst = null;
+        // Default attributes
+        //this.createAttribute("material", "RexSkyBox", 'assetref');
+        this.createAttribute( "texture", ["rex_sky_front.dds",
+                                          "rex_sky_back.dds",
+                                          "rex_sky_left.dds",
+                                          "rex_sky_right.dds",
+                                          "rex_sky_top.dds",
+                                          "rex_sky_bot.dds" ], 'assetreflist', "textureRefs" );
+        this.createAttribute( "distance", 3, 'real' );
+        this.createAttribute( "orientation", [0.0, 0.0, 0.0, 1.0], 'quat' );
+        this.createAttribute( "drawfirst", true, 'bool', "drawFirst" );
 
+
+        // Other properties
+        this.defaultTextures = ["rex_sky_front.dds",
+                                "rex_sky_back.dds",
+                                "rex_sky_left.dds",
+                                "rex_sky_right.dds",
+                                "rex_sky_top.dds",
+                                "rex_sky_bot.dds"];
+        this.defaultPath = "default_assets/textures/";
         this.textureAssets = [];
         this.cubeTexture = null;
         this.skyBox = null;
@@ -42932,28 +43475,20 @@ THREE.PointerLockControls = function ( camera ) {
     ECSky.prototype = util.extend( Object.create( namespace.Component.prototype ),
         {
 
-            onAttributeUpdated: function ( attr, state ) {
-                var name = attr.name;
-                if ( state === 0 ) {
-                    if ( name === 'material' ) {
-                        this.materialRef = attr;
-                    } else if ( name === 'texture' ) {
-                        this.textureRefs = attr;
+            onAttributeUpdated: function ( attr ) {
+                if ( attr['name'] === "texture" ) {
+                    var textures = this.defaultTextures;
 
-                    } else if ( name === 'distance' ) {
-                        this.distance = attr;
-
-                    } else if ( name === 'orientation' ) {
-                        this.orientation = attr;
-
-                    } else if ( name === 'drawfirst' ) {
-                        this.drawFirst = attr;
-
+                    if ( !this.textureRefs.every( function ( e ) {
+                            return textures.indexOf( e ) !== -1;
+                        }
+                    ) ) {
+                        console.warn("EC_Sky: Using different skybox textures than default. " +
+                            "Trying to request them from remote storage.");
+                        this.defaultPath = "";
                     }
                 }
-                if ( state === 1 ) {
 
-                }
             },
 
             onParentAdded: function ( parent ) {
@@ -42975,7 +43510,7 @@ THREE.PointerLockControls = function ( camera ) {
 
 
             createSky: function ( cubeTexture ) {
-                var shader, material, skyBox, geometry, distance = this.distance['val'];
+                var shader, material, skyBox, geometry, distance = this.distance;
                 //inverse = this.sceneManager.camera.inverse;
 
                 shader = THREE.ShaderLib[ "cube" ];
@@ -43125,7 +43660,7 @@ THREE.PointerLockControls = function ( camera ) {
 
             getTextures: function () {
                 var request, texture, i,
-                    refs = this.textureRefs['val'],
+                    refs = this.textureRefs,
                     refsLen = refs.length,
                     assetManager = this.sceneManager.assetManager,
                     assets = this.textureAssets,
@@ -43147,11 +43682,11 @@ THREE.PointerLockControls = function ( camera ) {
                     };
 
                     for ( i = refsLen; i--; ) {
-                        request = assetManager.requestAsset( refs[i], 'texture', '../textures/' );
+                        request = assetManager.requestAsset( refs[i], 'texture', this.defaultPath );
                         if ( request ) {
                             request.add( callBack );
                         } else {
-                            texture = assetManager.getAsset( refs[i], 'texture', '../textures/' );
+                            texture = assetManager.getAsset( refs[i], 'texture', this.defaultPath );
                             if ( texture ) {
                                 assets.push( texture );
                                 self.onTextureAssetLoaded( texture );
@@ -43185,14 +43720,17 @@ THREE.PointerLockControls = function ( camera ) {
 
         namespace.Component.call( this, sceneMgr ); //Inherit component properties
 
-        this.camera = null;
-        this.upVector = null;
-        this.nearPlane = null;
-        this.farPlane = null;
-        this.verticalFov = null;
-        this.aspectRatio = null;
-        this.placeable = null;
+        // Default attributes
+        this.createAttribute( "upvector", [0, 1, 0], 'float3', "upVector" );
+        this.createAttribute( "nearplane", 0.1, 'real', "nearPlane" );
+        this.createAttribute( "farplane", 2000.0, 'real', "farPlane" );
+        this.createAttribute( "verticalfov", 45.0, 'real', "fov" );
+        this.createAttribute( "aspectratio", "", 'string', "aspectRatio" );
 
+        // Other properties
+        this.camera = null;
+        this.placeable = null;
+        this.attached = false;
 
     };
 
@@ -43204,24 +43742,33 @@ THREE.PointerLockControls = function ( camera ) {
 
             onParentAdded: function ( parent ) {
                 this.initialize();
+
             },
-            onAttributeUpdated: function ( attr, state ) {
+            onAttributeUpdated: function ( attr ) {
             },
 
             initialize: function () {
-                var camera = this.camera;
+                var self = this;
 
                 if ( !this.parent instanceof namespace.Entity ) {
                     return;
                 }
 
-                if ( !camera ) {
-                    camera = this.camera = new THREE.PerspectiveCamera();
+                if ( !this.camera ) {
+                    this.camera = new THREE.PerspectiveCamera();
 
                     this.setFarClipDist( this.farPlane || 5000 );
                     this.setNearClipDist( this.nearPlane || 0.1 );
                     this.setFov( this.fov || 45 );
                     this.setAspectRatio( this.getAspectRatio() );
+
+                    this.parent.componentAdded.add( function ( c ) {
+                        if ( c instanceof namespace.ECPlaceable ) {
+                            self.placeable = c;
+                            self.attachCamera();
+
+                        }
+                    } );
                 }
 
             },
@@ -43229,22 +43776,55 @@ THREE.PointerLockControls = function ( camera ) {
 
             // Attach camera to placeable component
             attachCamera: function () {
+                var sceneNode, placeable = this.placeable, camera = this.camera;
+
+                if ( this.attached || placeable === null ) {
+                    return;
+                }
+                sceneNode = placeable.getSceneNode();
+                if ( sceneNode ) {
+                    sceneNode.add( camera );
+                    this.attached = true;
+                }
             },
 
             // Detach camera from placeable component
             detachCamera: function () {
+                var sceneNode, placeable = this.placeable, camera = this.camera;
+
+                if ( !this.attached || placeable === null ) {
+                    return;
+                }
+
+                sceneNode = placeable.getSceneNode();
+
+                if ( sceneNode && camera ) {
+                    sceneNode.remove( camera );
+                    this.attached = false;
+                }
+
+
             },
 
             setActive: function () {
+                var sceneManager = this.sceneManager, camera = this.camera;
+
+                if ( !camera || !this.parent || !this.attached ) {
+                    return;
+                }
+
+                sceneManager.setMainCamera( this.camera );
+
+
             },
 
             isActive: function () {
             },
 
             getAspectRatio: function () {
-                var container = this.sceneManager.container, aspect = this.aspectRatio,
-                    str, arFloat, width, height;
+                var aspect = this.aspectRatio, str, arFloat, width, height;
 
+                // Trying to get the aspect ratio from attribute
                 if ( aspect && typeof aspect === "string" ) {
                     if ( aspect.indexOf( ":" ) === -1 ) {
                         arFloat = parseFloat( aspect );
@@ -43263,8 +43843,9 @@ THREE.PointerLockControls = function ( camera ) {
                     }
                 }
 
-                if ( container ) {
-                    return innerWidth( container ) / innerHeight( container );
+                // Getting the aspect ratio from sceneManager if it cannot be defined otherwise
+                if ( this.sceneManager && this.sceneManager.container ) {
+                    return innerWidth( this.sceneManager.container ) / innerHeight( this.sceneManager.container );
                 }
 
                 return 1.0;
@@ -43354,15 +43935,20 @@ THREE.PointerLockControls = function ( camera ) {
 
         namespace.Component.call( this, sceneMgr ); //Inherit component properties
 
-        // ECMesh specific properties
+        // Default attributes
+        this.createAttribute( "transform", [0, 0, 0, 0, 0, 0, 1, 1, 1], 'transform' );
+        this.createAttribute( "meshref", "", 'assetref', "meshRef" );
+        this.createAttribute( "castshadows", false, 'bool', "castShadows" );
+
+        // Signals
         this.meshChanged = new namespace.Signal();
         this.materialChanged = new namespace.Signal();
-        this.meshRef = null;
+
+        // Other properties
         this.placeable = null;
-        this.castShadows = false;
         this.offsetNode = new THREE.Object3D();
         this.mesh = null;
-        this.transform = null;
+        this.storage = null;
         this.attached = false;
 
     };
@@ -43374,40 +43960,23 @@ THREE.PointerLockControls = function ( camera ) {
     ECMesh.prototype = util.extend( Object.create( namespace.Component.prototype ),
         {
 
-            onAttributeUpdated: function ( attr, state ) {
-                //console.log("Attribute", attr['name'], "of component", this.id, "added/updated.");
-                switch (attr['name']) {
-                case 'transform':
-                {
-                    if ( attr['val'] instanceof Array && attr['val'].length === 9 ) {
-                        if ( state === 0 ) {
-                            this.transform = attr;
-                        } else if ( state === 1 ) {
-
-                        }
-                    }
-                }
-                    break;
-                case 'meshref':
-                    this.meshRef = attr['val'];
-                    break;
-                case 'castshadows':
-                    this.castShadows = attr['val'];
-                    break;
-                default:
-                    break;
-                }
+            onAttributeUpdated: function ( attr ) {
 
             },
 
             onParentAdded: function ( parent ) {
                 var self = this;
-                this.parent.componentAdded.add( function ( c ) {
-                    if ( c instanceof namespace.ECPlaceable ) {
-                        self.loadMesh();
-                        console.log( "ECMesh: ECplaceable addded to parent entity", self.parent.id );
-                    }
-                } );
+                if ( this.autoSetPlaceable() ) {
+                    this.loadMesh();
+                } else {
+                    this.parent.componentAdded.add( function ( c ) {
+                        if ( c instanceof namespace.ECPlaceable ) {
+                            self.loadMesh();
+                            console.log( "ECMesh: ECplaceable addded to parent entity", self.parent.id );
+                        }
+                    } );
+                }
+
             },
 
 
@@ -43435,16 +44004,14 @@ THREE.PointerLockControls = function ( camera ) {
 
 
             loadMesh: function () {
+                var meshRef = this.meshRef, assetManager = this.sceneManager.assetManager,
+                    self = this, request, mesh;
 
-                if ( this.meshRef === null ) {
+                if ( meshRef === "" ) {
                     return;
                 }
 
-                var assetManager = this.sceneManager.assetManager,
-                    self = this, request, mesh;
-
-
-                request = assetManager.requestAsset( this.meshRef, 'mesh' );
+                request = assetManager.requestAsset( meshRef, 'mesh', this.storage );
                 if ( request ) {
                     request.add( function ( asset ) {
                         if ( asset ) {
@@ -43453,7 +44020,7 @@ THREE.PointerLockControls = function ( camera ) {
                         }
                     } );
                 } else {
-                    mesh = assetManager.getAsset( this.meshRef );
+                    mesh = assetManager.getAsset( meshRef );
                     if ( mesh ) {
                         this.mesh = mesh;
                         this.onMeshLoaded();
@@ -43502,7 +44069,7 @@ THREE.PointerLockControls = function ( camera ) {
 
                 node.add( mesh );
 
-                transVal = this.transform['val'];
+                transVal = this.transform;
                 node.position.set( transVal[0], transVal[1], transVal[2] );
                 node.rotation.set( transVal[3] * (Math.PI / 180), transVal[4] * (Math.PI / 180), transVal[5] * (Math.PI / 180) );
                 node.scale.set( transVal[6], transVal[7], transVal[8] );
@@ -43525,7 +44092,6 @@ THREE.PointerLockControls = function ( camera ) {
                 if ( sceneNode ) {
                     offsetNode.visible = placeable.visible;
                     sceneNode.add( offsetNode );
-                    this.sceneManager.addToScene( sceneNode );
                     this.attached = true;
                 }
 
@@ -43533,11 +44099,13 @@ THREE.PointerLockControls = function ( camera ) {
             },
 
             detachFromScene: function () {
-                if ( !this.attached || this.sceneObject === null ) {
+                var sceneNode, placeable = this.placeable;
+                if ( !this.attached || placeable === null ) {
                     return;
                 }
+                sceneNode = placeable.getSceneNode();
 
-                this.sceneManager.removeFromScene( this.sceneObject );
+                this.sceneManager.removeFromScene( sceneNode );
                 this.attached = false;
 
             }
@@ -43611,13 +44179,25 @@ THREE.PointerLockControls = function ( camera ) {
 
         namespace.Component.call( this, sceneMgr ); //Inherit component properties
 
-        // ECPlaceable specific properties
+        // Default attributes
+        this.createAttribute( "transform", [0, 0, 0, 0, 0, 0, 1, 1, 1], 'transform' );
+        this.createAttribute( "showboundingbox", false, 'bool' );
+        this.createAttribute( "visible", true, 'bool' );
+
+        // Other properties
         this.parentMesh = null;
         this.parentPlaceable = null;
-        this.visible = true;
-        this.transform = null;
         this.attached = false;
         this.sceneNode = new THREE.Object3D();
+
+        //TODO: Create better handling of transformations using matrices
+        /*
+         this.transformMat = new THREE.Matrix4();
+         this.rotationMat = new THREE.Matrix4();
+         this.rotation = new THREE.Vector3();
+         this.position = new THREE.Vector3();
+         this.scale = new THREE.Vector3();
+         */
 
 
     };
@@ -43637,88 +44217,29 @@ THREE.PointerLockControls = function ( camera ) {
                 this.attach();
             },
 
-            onAttributeUpdated: function ( attr, state ) {
-                var i, node = this.sceneNode;
-                if ( attr['name'] === 'transform' ) {
-                    if ( state === 0 ) {
-                        console.log( "Placeable: transform attr added", state );
-                        this.transform = attr;
+            onAttributeUpdated: function ( attr ) {
+
+                    if ( attr['name'] === 'transform' ) {
+                        this.updateSceneNode();
                     }
-                    var transVal = this.transform['val'];
-                    node.position.set( transVal[0], transVal[1], transVal[2] );
-                    node.rotation.set( transVal[3] * (Math.PI / 180), transVal[4] * (Math.PI / 180), transVal[5] * (Math.PI / 180) );
-                    node.scale.set( transVal[6], transVal[7], transVal[8] );
-                }
             },
 
             attach: function () {
-                var parent, parentMesh, self = this;
+                var parent;
 
                 parent = this.parent;
                 if ( parent ) {
-                    parentMesh = parent.getComponent( namespace.ECMesh );
+                    parent.placeable = this;
+                    console.log( "Adding placeable to scene" )
+                    this.updateSceneNode();
 
-                    if ( parentMesh ) {
-                        this.parentMesh = parentMesh;
-                        this.attached = true;
-                    } else {
-                        parent.componentAdded.add( function ( c ) {
-                            if ( c instanceof namespace.ECMesh ) {
-                                self.parentMesh = c;
-                                self.attached = true;
-                            }
-                        } );
-                    }
+                    this.sceneManager.addToScene( this.sceneNode );
+                    this.attached = true;
                 }
             },
 
-
-            setPosition: function ( x, y, z ) {
-                var trans = this.transform;
-                if ( !trans ) {
-                    return;
-                }
-
-                if ( trans instanceof Array && trans.length === 9 ) {
-                    trans.splice( 0, 3, x, y, z );
-                }
-
-            },
-            setRotation: function ( x, y, z ) {
-                var trans = this.transform;
-                if ( !trans ) {
-                    return;
-                }
-
-                if ( trans instanceof Array && trans.length === 9 ) {
-                    trans.splice( 3, 3, x, y, z );
-                }
-            },
-            setScale: function ( x, y, z ) {
-                var trans = this.transform;
-                if ( !trans ) {
-                    return;
-                }
-
-                if ( trans instanceof Array && trans.length === 9 ) {
-                    trans.splice( 6, 3, x, y, z );
-                }
-            },
-
-            setTransform: function ( transArr ) {
-                var trans = this.transform, i;
-                if ( !trans ) {
-                    return;
-                }
-                if ( trans instanceof Array && transArr instanceof Array && trans.length === transArr.length === 9 ) {
-                    for ( i = 9; i--; ) {
-                        trans[i] = transArr[i];
-                    }
-                }
-
-            },
-
-            toggleVisibility: function () {
+            setVisibility: function (bool) {
+                this.sceneNode.visible = bool;
 
             },
 
@@ -43727,7 +44248,42 @@ THREE.PointerLockControls = function ( camera ) {
                     return this.sceneNode;
                 }
                 return false;
+            },
+
+            setPosition: function ( x, y, z ) {
+                var trans = this.transform;
+                trans[0] = x;
+                trans[1] = y;
+                trans[2] = z;
+                this.transform = trans;
+            },
+
+            setRotation: function ( x, y, z ) {
+                var trans = this.transform;
+                trans[3] = x;
+                trans[4] = y;
+                trans[5] = z;
+                this.transform = trans;
+            },
+
+            setScale: function(x,y,z) {
+                var trans = this.transform;
+                trans[6] = x;
+                trans[7] = y;
+                trans[8] = z;
+                this.transform = trans;
+            },
+
+            updateSceneNode: function(){
+                var trans = this.transform, node = this.sceneNode;
+
+                node.position.set( trans[0], trans[1], trans[2] );
+                node.rotation.set( trans[3] * (Math.PI / 180), trans[4] * (Math.PI / 180), trans[5] * (Math.PI / 180) );
+                node.scale.set( trans[6], trans[7], trans[8] );
             }
+
+
+
         }
     );
 
@@ -43749,8 +44305,9 @@ THREE.PointerLockControls = function ( camera ) {
 
         namespace.Component.call( this, sceneMgr ); //Inherit component properties
 
-        this.name = null;
-        this.description = null;
+        // Default attributes
+        this.createAttribute("name", "", 'string');
+        this.createAttribute("description", "", 'string');
 
     };
 
@@ -43759,15 +44316,7 @@ THREE.PointerLockControls = function ( camera ) {
     ECName.prototype = util.extend( Object.create( namespace.Component.prototype ),
         {
 
-            onAttributeUpdated: function ( attr, state ) {
-                switch (attr['name']) {
-                case 'name':
-                    this.name = attr['val'].toLowerCase();
-                    break;
-                case 'description':
-                    this.description = attr['val'];
-                    break;
-                }
+            onAttributeUpdated: function ( attr ) {
 
             },
 
@@ -43776,6 +44325,88 @@ THREE.PointerLockControls = function ( camera ) {
                     parent.name = this.name;
                 }
             }
+
+        }
+    );
+
+
+}( window['webtundra'] = window['webtundra'] || {} ));
+
+
+/** Src: ../src/ecmodel/EC_Controls.js **/
+// For conditions of distribution and use, see copyright notice in LICENSE
+
+
+(function ( namespace, undefined ) {
+
+    var ECControls, util, innerWidth, innerHeight;
+
+    util = namespace.util;
+
+    ECControls = namespace.ECControls = function ( sceneMgr ) {
+
+        namespace.Component.call( this, sceneMgr ); //Inherit component properties
+
+        // Other properties
+        this.placeable = null;
+        this.controller = null;
+        this.container = sceneMgr.container;
+
+    };
+
+    namespace.storeComponent( 100, "EC_Controls", ECControls );
+
+
+    ECControls.prototype = util.extend( Object.create( namespace.Component.prototype ),
+        {
+
+            onParentAdded: function ( parent ) {
+                var self = this;
+                this.parent.componentAdded.add( function ( c ) {
+                    if ( c instanceof namespace.ECPlaceable ) {
+                        self.placeable = c;
+                        self.parent.controls = self;
+                    }
+                } );
+            },
+
+            onAttributeUpdated: function ( attr ) {
+            },
+
+            setControls: function ( type ) {
+                var placeable = this.placeable, controlManager = this.sceneManager.controlManager;
+
+                if ( placeable && controlManager && !this.isActive() ) {
+                    if ( type === "freelook" ) {
+                        this.name = "freelook";
+                        this.controller = controlManager.createController( placeable, type );
+                    }
+                }
+            },
+
+            getController: function () {
+                if ( this.controller ) {
+                    return this.controller;
+                }
+                return false;
+            },
+
+            isActive: function () {
+                var controller = this.controller, controls = this.sceneManager.controls;
+
+                if ( controller && controls ) {
+                    return controller === controls;
+                }
+                return false;
+            },
+            setActive: function () {
+                if ( !this.isActive() && this.controller) {
+                    this.sceneManager.controlManager.setControls( this.controller );
+                }
+            }
+
+
+
 
         }
     );
@@ -43810,15 +44441,18 @@ THREE.PointerLockControls = function ( camera ) {
 
 
         var connection = this.connection = sceneMgr.websocket,
-            self = this, e, id, component;
+            self = this;
 
         if ( connection ) {
             connection.bindEvent( "EntityAdded", function ( data ) {
-                namespace.util.log( "Got new Entity " + "( id: " + data['entityId'] + ", name: " + data['name'] +
+                namespace.util.log( "Got new Entity " + "( id: " + data['entityID'] + ", name: " + data['name'] +
                     ", components: " + data['numReplComps'] + " )" );
 
                 self.parseEntity( data );
 
+            } );
+            connection.bindEvent( "EntityRemoved", function ( data ) {
+                namespace.util.log( "Server removed Entity " + JSON.toString(data) );
             } );
 
             connection.bindEvent( "ComponentsRemoved", function ( data ) {
@@ -43853,15 +44487,21 @@ THREE.PointerLockControls = function ( camera ) {
             connection.bindEvent( "AttributesChanged", function ( data ) {
                 //console.log( "AttributesChanged:" );
                 //console.log( data );
-                //namespace.util.log("Got 'AttributesChanged'-event, entity id: " + data.entityId);
-                var ent, attrs = data['attrs'], cId, comp;
+
+                var ent, attrData = data['attrs'], attrs, attrId, compId, comp;
+
                 ent = self.getEntity( data['entityId'] );
+
                 if ( ent ) {
-                    for ( var i in attrs ) {
-                        cId = attrs[i]['compId'];
-                        comp = ent.getComponentById( cId );
+                    for ( compId in attrData ) {
+                        comp = ent.getComponentById( compId );
+
                         if ( comp ) {
-                            comp.updateAttribute( i, attrs[i] );
+                            attrs = attrData[compId];
+
+                            for ( attrId in attrs ) {
+                                comp.updateAttribute( attrId, attrs[attrId] );
+                            }
                         }
                     }
                 }
@@ -43894,17 +44534,18 @@ THREE.PointerLockControls = function ( camera ) {
         },
 
         createLocalEntity: function ( name, components ) {
-            var entities = this.localEntities, e,  id = this.numLocalEntities, i, comp, numComps;
+            var entities = this.localEntities, e, id = this.numLocalEntities, i, comp, numComps;
 
-            e = new namespace.Entity( this.numLocalEntities, name );
+            e = new namespace.Entity( this.numLocalEntities, name, true );
             this.numLocalEntities += 1;
 
-            if(components && util.toType(components) === 'array'){
+            if ( components && util.toType( components ) === 'array' ) {
                 numComps = components.length;
-                for(i = numComps; i--;){
-                    comp = this.createComponent(components[i]);
-                    if(comp){
-                        e.addComponent(comp, id);
+                for ( i = numComps; i--; ) {
+                    comp = this.createComponent( components[i] );
+
+                    if ( comp ) {
+                        e.addComponent( comp, i );
                     }
                 }
             }
@@ -43914,18 +44555,18 @@ THREE.PointerLockControls = function ( camera ) {
             return entities[id];
         },
 
-        parseEntity: function( json ) {
-            var e, component, id;
-            if ( json['entityId'] ) {
-                e = this.createEntity( json['entityId'] );
+        parseEntity: function ( json ) {
+            var e, component, i, components = json['components'], id = json['entityID'];
 
-                if ( json.hasOwnProperty( 'components' ) ) {
-                    for ( id in json['components'] ) {
-                        component = this.parseComponent( id, json['components'][id] );
+            if ( id ) {
+                e = this.createEntity( id, json['name'] );
+
+                if ( components ) {
+                    for ( i in components ) {
+                        component = this.parseComponent( i, components[i] );
                         if ( component ) {
-                            component.setParentEnt( e );
                             //console.log( component );
-                            e.addComponent( component, id );
+                            e.addComponent( component, i );
                         }
                     }
                 }
@@ -43936,8 +44577,7 @@ THREE.PointerLockControls = function ( camera ) {
         },
 
         parseComponent: function ( id, data ) {
-            var component, typeId, name, attributes,
-                sceneManager = this.sceneManager, components = namespace.ECOMPONENTS;
+            var component, typeId, name, attributes;
 
             if ( !id || !data['typeId'] ) {
                 return false;
@@ -43956,8 +44596,9 @@ THREE.PointerLockControls = function ( camera ) {
             if ( component ) {
                 component.id = id;
                 component.name = name;
+
                 for ( var cid in attributes ) {
-                    component.addAttribute( cid, attributes[cid] );
+                    component.updateAttribute( cid, attributes[cid]['val'], attributes[cid]['name'] );
                 }
             }
             //console.log(component)
@@ -43970,34 +44611,34 @@ THREE.PointerLockControls = function ( camera ) {
             var components = namespace.ECOMPONENTS, isTypeId, i;
 
             if ( !components ) {
-                console.error( "ECManager: Component storage namespace.ECOMPONENTS was not available," +
+                console.warn( "ECManager: Component storage namespace.ECOMPONENTS was not available," +
                     " unable to create component object." );
                 return false;
             }
 
-            isTypeId = !isNaN(type);
+            isTypeId = !isNaN( type );
 
             if ( isTypeId ) {
                 if ( components.hasOwnProperty( type + '' ) ) {
                     return new components[type].Constructor( this.sceneManager );
                 }
-                console.error("ECManager: Error while creating component; Unknown type id:", type );
+                console.warn( "ECManager: Error while creating component; Unknown type id:", type );
                 return false;
 
             } else if ( type instanceof namespace.Component ) {
                 return type( this.sceneManager );
 
-            } else if ( !isTypeId && type.indexOf("EC_") !== -1) {
+            } else if ( !isTypeId && type.indexOf( "EC_" ) !== -1 ) {
                 for ( i in components ) {
                     if ( components[i].typeName === type ) {
                         return new components[i].Constructor( this.sceneManager );
                     }
                 }
-                console.error("ECManager: Error while creating component; Unknown type name:", type );
+                console.warn( "ECManager: Error while creating component; Unknown type name:", type );
                 return false;
 
             } else {
-                console.error("ECManager: Error while creating component; Unknown type:", type );
+                console.warn( "ECManager: Error while creating component; Unknown type:", type );
                 return false;
             }
 
@@ -44015,11 +44656,34 @@ THREE.PointerLockControls = function ( camera ) {
             //TODO: Remove from scene and from hierarchy
         },
 
-        getEntity: function ( id ) {
-            var entities = this.entities;
-            if ( entities.hasOwnProperty( id ) ) {
-                return entities[id];
+        getEntity: function ( id, local ) {
+            var entities, index, ent;
+
+            if ( id === undefined ) {
+                return false;
             }
+
+            if ( local ) {
+                entities = this.localEntities;
+            } else {
+                entities = this.entities;
+            }
+
+
+            if ( !isNaN( id ) ) {
+                if ( entities.hasOwnProperty( id ) ) {
+                    return entities[id];
+                }
+            } else if ( typeof id === "string" ) {
+                for ( index in entities ) {
+                    ent = entities[index];
+
+                    if ( ent.name === id ) {
+                        return ent;
+                    }
+                }
+            }
+
             return false;
         }
 
@@ -44035,9 +44699,8 @@ THREE.PointerLockControls = function ( camera ) {
 (function ( namespace, undefined ) {
     var utils = namespace.util;
 
-    var AssetManager = namespace.AssetManager = function ( gui, remoteStorage ) {
-        //Ref to GUI
-        this.GUI = gui;
+    var AssetManager = namespace.AssetManager = function ( remoteStorage ) {
+
         this.meshType = 'dae';
         this.remoteStorage = remoteStorage;
 
@@ -44122,6 +44785,7 @@ THREE.PointerLockControls = function ( camera ) {
             request.open( "GET", opts.url, true );
             request.responseType = opts.responseType;
             request.assetName = opts.assetName;
+            request.url = opts.url;
 
             if ( typeof opts.mimeType === 'string' ) {
                 request.overrideMimeType( opts.mimeType );
@@ -44214,10 +44878,11 @@ THREE.PointerLockControls = function ( camera ) {
      *
      * @param assetName
      * @param type
+     * @param storage
      * @param relPath
      * @return {*}
      */
-    AssetManager.prototype.requestAsset = function ( assetName, type, relPath ) {
+    AssetManager.prototype.requestAsset = function ( assetName, type, storage, relPath ) {
         var request, asset, responseType = "", mimeType = null;
 
         if ( typeof type === 'string' ) {
@@ -44264,9 +44929,13 @@ THREE.PointerLockControls = function ( camera ) {
             relPath = '';
         }
 
+        if(!storage || typeof storage !== "string"){
+            storage = this.remoteStorage;
+        }
+
 
         request = this.createRequest( {
-            url: this.remoteStorage + relPath + assetName,
+            url: storage + relPath + assetName,
             responseType: responseType,
             mimeType: mimeType,
             assetName: assetName,
@@ -44314,7 +44983,7 @@ THREE.PointerLockControls = function ( camera ) {
         console.log( "Processing", name, "..." );
         //loader.options.convertUpAxis = true;
 
-        result = loader.parse( xml, undefined, this.remoteStorage );
+        result = loader.parse( xml, undefined, request.url );
         console.log( "Asset parsed. Post-processing..." );
         scene = result.scene;
 
@@ -44397,6 +45066,76 @@ THREE.PointerLockControls = function ( camera ) {
 }( window['webtundra'] = window['webtundra'] || {} ));
 
 /** Src: ../src/scene/CameraManager.js **/
+// For conditions of distribution and use, see copyright notice in LICENSE
+
+
+(function ( namespace, undefined ) {
+
+    var CameraManager, util;
+
+    util = namespace.util;
+
+
+    CameraManager = namespace.CameraManager = function ( sceneMgr ) {
+        var sceneManager, ecManager;
+
+        if ( !sceneMgr ) {
+            throw new Error( "CameraManager: Could not get SceneManager object." );
+        }
+
+        sceneManager = sceneMgr;
+        ecManager = sceneMgr.ecManager;
+
+
+        function onEntityCreated( entity ) {
+            var name = entity.name, e;
+
+            if ( name ) {
+                if ( name.toLowerCase() === "freelookcameraspawnpos" ) {
+                    console.warn("Got freelook camera spawn position")
+                    e = createCameraEntity( "freelookcamera" );
+                    e.placeable.transform = entity.placeable.transform;
+                    e.controls.getController().reset();
+                }
+            }
+        }
+
+        function createCameraEntity( type ) {
+            var ent, controller, name = type.toLowerCase();
+
+            ent = ecManager.getEntity( name, true );
+
+            if ( ent ) {
+                return ent;
+            } else {
+
+                if ( name === "freelookcamera" ) {
+                    ent = ecManager.createLocalEntity( "freelookcamera", ["EC_Placeable", "EC_Name", "EC_Camera", "EC_Controls"] );
+                    console.warn( "CameraManager: Creating FreelookCamera." );
+                    console.warn( ent );
+                    ent.name = "freelookcamera";
+                    ent.controls.setControls("freelook");
+                    controller = ent.controls.getController();
+                    controller.movementSpeed = 20;
+
+                    return ent;
+                }
+            }
+
+            return false;
+        }
+
+
+        return {
+            onEntityCreated: onEntityCreated,
+            createCameraEntity: createCameraEntity
+
+        };
+
+    };
+
+
+}( window['webtundra'] = window['webtundra'] || {} ));
 
 
 /** Src: ../src/scene/SceneManager.js **/
@@ -44434,10 +45173,11 @@ THREE.PointerLockControls = function ( camera ) {
         opts = extend( {}, defaults, options );
 
         // Three.js settings
-        THREE.Object3D.defaultEulerOrder = opts.eulerOrder;
+        THREE.Object3D.defaultEulerOrder = this.eulerOrder = opts.eulerOrder;
 
 
         this.time = Date.now();
+        this.clock = new THREE.Clock();
         this.container = opts.container;
         this.controls = null;
         this.renderer = null;
@@ -44445,55 +45185,49 @@ THREE.PointerLockControls = function ( camera ) {
         this.skyBoxScene = null;
         this.mainCamera = null;
         this.skyBoxCamera = null;
-        this.loadedObjects = [];
         this.remoteStorage = opts.remoteStorage;
 
         this.websocket = opts.websocket;
 
-        this.assetManager = new namespace.AssetManager( {}, this.remoteStorage );
+        this.assetManager = new namespace.AssetManager( this.remoteStorage );
 
         this.ecManager = new namespace.ECManager( this );
+
+        this.cameraManager = new namespace.CameraManager( this );
+
+        this.controlManager = new namespace.Controls( this );
 
 
         this.init();
     };
 
-    SceneManager.prototype.onEntityCreated = function ( entity ){
-        var name = entity.name, ecManager = this.ecManager, e, comp;
-
-        if(name){
-            if(name === "freelookcameraspawnpos"){
-                e = ecManager.createLocalEntity("freelookcamera", ["EC_Placeable", "EC_Name", "EC_Camera"]);
-                console.error(e);
-            }
-        }
-    };
-
     SceneManager.prototype.renderLoop = function () {
-        var self = this;
+        var self = this, clock = this.clock, controls = this.controls, renderer = this.renderer;
 
         (function loop() {
             window.requestAnimationFrame( loop );
 
-            self.controls.isOnObject( false );
+            /*
+             self.controls.isOnObject( false );
 
-            self.controls.rayCaster.ray.origin.copy( self.controls.getObject().position );
-            self.controls.rayCaster.ray.origin.y -= 10;
+             self.controls.rayCaster.ray.origin.copy( self.controls.getObject().position );
+             self.controls.rayCaster.ray.origin.y -= 10;
 
-            var intersections = self.controls.rayCaster.intersectObjects( self.loadedObjects ),
-                distance;
+             var intersections = self.controls.rayCaster.intersectObjects( self.loadedObjects ),
+             distance;
 
-            if ( intersections.length > 0 ) {
+             if ( intersections.length > 0 ) {
 
-                distance = intersections[ 0 ].distance;
+             distance = intersections[ 0 ].distance;
 
-                if ( distance > 0 && distance < 10 ) {
+             if ( distance > 0 && distance < 10 ) {
 
-                    self.controls.isOnObject( true );
+             self.controls.isOnObject( true );
 
-                }
+             }
 
-            }
+             }
+             */
 
             /*
              self.camera.position.y = 10;
@@ -44501,7 +45235,7 @@ THREE.PointerLockControls = function ( camera ) {
              self.camera.position.z = Math.floor(Math.sin( self.time *0.0005) * 200);
              self.camera.lookAt( new THREE.Vector3(0,0,0) );
              */
-            self.controls.update( Date.now() - self.time );
+            controls.update( clock.getDelta() );
 
 
             self.skyBoxCamera.rotation.setEulerFromRotationMatrix(
@@ -44510,10 +45244,10 @@ THREE.PointerLockControls = function ( camera ) {
                 THREE.Object3D.defaultEulerOrder
             );
 
-            self.renderer.render( self.skyBoxScene, self.skyBoxCamera );
-            self.renderer.render( self.scene, self.mainCamera );
+            renderer.render( self.skyBoxScene, self.skyBoxCamera );
+            renderer.render( self.scene, self.mainCamera );
 
-            self.time = Date.now();
+            //self.time = Date.now();
         }());
 
 
@@ -44539,14 +45273,7 @@ THREE.PointerLockControls = function ( camera ) {
     };
 
     SceneManager.prototype.addToScene = function ( object ) {
-        var self = this;
         this.scene.add( object );
-        object.traverse( function ( child ) {
-            if ( child instanceof THREE.Mesh ) {
-                self.loadedObjects.push( child );
-            }
-
-        } );
         //console.log( object )
 
     };
@@ -44555,12 +45282,6 @@ THREE.PointerLockControls = function ( camera ) {
 
         this.scene.remove( object );
 
-    };
-
-    SceneManager.prototype.changeMainCamera = function ( camera ) {
-        if(camera instanceof THREE.Camera){
-            this.mainCamera = camera;
-        }
     };
 
     SceneManager.prototype.addSkyBox = function ( skyBox ) {
@@ -44608,6 +45329,32 @@ THREE.PointerLockControls = function ( camera ) {
                 scene.add( light );
             }
         }
+    };
+
+    SceneManager.prototype.setMainCamera = function ( cameraEntity ) {
+        var entity, camComp, camera, camControls;
+
+        if ( cameraEntity === undefined ) {
+            entity = this.cameraManager.createCameraEntity( "freelookcamera" );
+        } else if ( cameraEntity instanceof namespace.Entity ) {
+            entity = cameraEntity;
+        }
+
+        if ( entity ) {
+            camComp = entity.getComponent( namespace.ECCamera );
+            if ( camComp ) {
+                camera = camComp.getCameraObject();
+                camControls = entity.controls;
+
+                if ( camControls ) {
+                    camControls.setActive();
+                }
+
+                if ( camera instanceof THREE.PerspectiveCamera ) {
+                    this.mainCamera = camera;
+                }
+            }
+        }
 
     };
 
@@ -44641,7 +45388,8 @@ THREE.PointerLockControls = function ( camera ) {
 
         var body = document.body, renderer, scene, skyBoxScene, camera, skyBoxCamera, controls,
             container = this.container, websocket = this.websocket,
-            assetManager = this.assetManager, self = this;
+            assetManager = this.assetManager, ecManager = this.ecManager, cameraManager = this.cameraManager,
+            self = this;
 
 
         // *** SCENE AND SKYBOX ***
@@ -44650,11 +45398,9 @@ THREE.PointerLockControls = function ( camera ) {
 
 
         // *** CAMERAS ***
-
-        camera = this.mainCamera = new THREE.PerspectiveCamera( 35, ( innerWidth( container ) / innerHeight( container )), 1, 10000 );
-        camera.lookAt( scene.position );
         skyBoxCamera = this.skyBoxCamera = new THREE.PerspectiveCamera( 35, (innerWidth( container ) / innerHeight( container )), 1, 10000 );
         skyBoxCamera.lookAt( scene.position );
+        this.setMainCamera();
 
 
         // *** RENDERER ***
@@ -44664,6 +45410,7 @@ THREE.PointerLockControls = function ( camera ) {
             clearAlpha: 1,
             preserveDrawingBuffer: false
         } );
+
         //renderer.setFaceCulling( THREE.CullFaceNone );
         renderer.autoClear = false;
         renderer.gammaInput = true;
@@ -44680,70 +45427,70 @@ THREE.PointerLockControls = function ( camera ) {
 
 
         // *** CONTROLS ***
+        /*
+         controls = this.controls = new THREE.PointerLockControls( this.mainCamera );
 
-        controls = this.controls = new THREE.PointerLockControls( this.mainCamera );
-        scene.add( this.controls.getObject() );
+         scene.add( this.controls.getObject() );
 
-        controls.rayCaster = new THREE.Raycaster();
-        controls.rayCaster.ray.direction.set( 0, -1, 0 );
+         controls.rayCaster = new THREE.Raycaster();
+         controls.rayCaster.ray.direction.set( 0, -1, 0 );
 
-        controls.enabled = false;
+         controls.enabled = false;
 
-        function pointerLockChange() {
-            if ( document.mozPointerLockElement === body ||
-                document.webkitPointerLockElement === body ||
-                document.pointerLockElement === body ) {
-                self.controls.enabled = true;
-                return;
-            }
-            self.controls.enabled = false;
-        }
+         function pointerLockChange() {
+         if ( document.mozPointerLockElement === body ||
+         document.webkitPointerLockElement === body ||
+         document.pointerLockElement === body ) {
+         self.controls.enabled = true;
+         return;
+         }
+         self.controls.enabled = false;
+         }
 
-        function fullScreenChange() {
-            if ( document.webkitFullscreenElement === body ||
-                document.mozFullscreenElement === body ||
-                document.mozFullScreenElement === body ) { // Older API upper case 'S'.
-                // Element is fullscreen, now we can request pointer lock
-                body.requestPointerLock = body.requestPointerLock ||
-                    body.mozRequestPointerLock ||
-                    body.webkitRequestPointerLock;
-                body.requestPointerLock();
-            }
-        }
+         function fullScreenChange() {
+         if ( document.webkitFullscreenElement === body ||
+         document.mozFullscreenElement === body ||
+         document.mozFullScreenElement === body ) { // Older API upper case 'S'.
+         // Element is fullscreen, now we can request pointer lock
+         body.requestPointerLock = body.requestPointerLock ||
+         body.mozRequestPointerLock ||
+         body.webkitRequestPointerLock;
+         body.requestPointerLock();
+         }
+         }
 
-        document.addEventListener( 'webkitpointerlockchange', pointerLockChange, false );
-        document.addEventListener( 'mozpointerlockchange', pointerLockChange, false );
-        document.addEventListener( 'pointerlockchange', pointerLockChange, false );
-        document.addEventListener( 'fullscreenchange', fullScreenChange, false );
-        document.addEventListener( 'mozfullscreenchange', fullScreenChange, false );
-        document.addEventListener( 'webkitfullscreenchange', fullScreenChange, false );
+         document.addEventListener( 'webkitpointerlockchange', pointerLockChange, false );
+         document.addEventListener( 'mozpointerlockchange', pointerLockChange, false );
+         document.addEventListener( 'pointerlockchange', pointerLockChange, false );
+         document.addEventListener( 'fullscreenchange', fullScreenChange, false );
+         document.addEventListener( 'mozfullscreenchange', fullScreenChange, false );
+         document.addEventListener( 'webkitfullscreenchange', fullScreenChange, false );
 
-        body.addEventListener( 'click', function ( event ) {
-            if ( body.webkitRequestPointerLock ) {
-                if ( document.mozPointerLockElement !== body &&
-                    document.webkitPointerLockElement !== body &&
-                    document.pointerLockElement !== body ) {
-                    body.requestPointerLock = body.requestPointerLock ||
-                        body.mozRequestPointerLock ||
-                        body.webkitRequestPointerLock;
-                    body.requestPointerLock();
-                }
-            } else {
-                body.requestFullscreen = body.requestFullscreen ||
-                    body.mozRequestFullscreen ||
-                    body.mozRequestFullScreen || // Older API upper case 'S'.
-                    body.webkitRequestFullscreen;
-                body.requestFullscreen();
-            }
+         body.addEventListener( 'click', function ( event ) {
+         if ( body.webkitRequestPointerLock ) {
+         if ( document.mozPointerLockElement !== body &&
+         document.webkitPointerLockElement !== body &&
+         document.pointerLockElement !== body ) {
+         body.requestPointerLock = body.requestPointerLock ||
+         body.mozRequestPointerLock ||
+         body.webkitRequestPointerLock;
+         body.requestPointerLock();
+         }
+         } else {
+         body.requestFullscreen = body.requestFullscreen ||
+         body.mozRequestFullscreen ||
+         body.mozRequestFullScreen || // Older API upper case 'S'.
+         body.webkitRequestFullscreen;
+         body.requestFullscreen();
+         }
 
-        }, false );
+         }, false );
 
-
-
+         */
         // *** SIGNAL LISTENERS ***
         //Windows resize listener
         this.windowResize();
-        this.ecManager.entityCreated.add(this.onEntityCreated, this);
+        ecManager.entityCreated.add( cameraManager.onEntityCreated, cameraManager );
 
         if ( websocket ) {
             websocket.bindEvent( "RemoteStorage", function ( data ) {
@@ -44780,7 +45527,7 @@ THREE.PointerLockControls = function ( camera ) {
 (function ( namespace, undefined ) {
 
     var Renderer = function ( options ) {
-
+        //TODO: Include renderer spefici functions here and do refactoring. This is not currently in use!
         // Sets the WebGL canvas resolution (5-10 fps render speed increase with lower resolution)
         function setRenderQuality( quality ) {
             if ( typeof(quality) === 'undefined' )

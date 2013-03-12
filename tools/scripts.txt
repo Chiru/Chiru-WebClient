@@ -4,14 +4,17 @@
 
 # Source files
 ../src/WebClient.js
+../src/general/Detector.js
 ../src/general/Workers.js
 ../src/general/Signals.js
 ../src/parsers/ColladaLoader.js
 ../src/parsers/OgreXMLParser.js
 ../src/parsers/parseUri.js
 ../src/parsers/MeshParser.js
+../src/controls/Controls.js
+../src/controls/FreeLookControls.js
+../src/controls/AvatarControls.js
 ../src/controls/PointerLockControls.js
-../src/general/Detector.js
 ../src/networking/WSManager.js
 ../src/ecmodel/Entity.js
 ../src/ecmodel/Attribute.js
@@ -24,6 +27,7 @@
 ../src/ecmodel/EC_Material.js
 ../src/ecmodel/EC_Placeable.js
 ../src/ecmodel/EC_Name.js
+../src/ecmodel/EC_Controls.js
 ../src/ecmodel/ECManager.js
 ../src/scene/AssetManager.js
 ../src/scene/CameraManager.js

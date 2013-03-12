@@ -48,7 +48,7 @@
                     ent.name = "freelookcamera";
                     ent.controls.setControls("freelook");
                     controller = ent.controls.getController();
-                    controller.movementSpeed = 10;
+                    controller.movementSpeed = 20;
 
                     return ent;
                 }

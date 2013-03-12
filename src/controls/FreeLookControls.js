@@ -201,7 +201,6 @@
                 moveUp = true;
                 break;
 
-            case 17: /*ctrl*/
             case 70: /*F*/
                 moveDown = true;
                 break;

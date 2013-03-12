@@ -2,7 +2,7 @@
 (function ( namespace, undefined ) {
 
     var Renderer = function ( options ) {
-
+        //TODO: Include renderer spefici functions here and do refactoring. This is not currently in use!
         // Sets the WebGL canvas resolution (5-10 fps render speed increase with lower resolution)
         function setRenderQuality( quality ) {
             if ( typeof(quality) === 'undefined' )

@@ -6,6 +6,7 @@
  * @version 0.1
  * @namespace webtundra
  * @memberOf window
+ * @author Toni Dahl
  **/
 
 

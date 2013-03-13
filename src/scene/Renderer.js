@@ -1,9 +1,16 @@
 // For conditions of distribution and use, see copyright notice in LICENSE
+
+/**
+ * @author Toni Dahl
+ */
+
 (function ( namespace, undefined ) {
 
     var Renderer = function ( options ) {
-        //TODO: Include renderer spefici functions here and do refactoring. This is not currently in use!
+        //TODO: Include rendering specific methods here and do refactoring.
         // Sets the WebGL canvas resolution (5-10 fps render speed increase with lower resolution)
+
+        /*
         function setRenderQuality( quality ) {
             if ( typeof(quality) === 'undefined' )
                 quality = 'high';
@@ -22,6 +29,7 @@
                 _sceneController.sceneParams.resolution = 0.5;
             }
         }
+        */
 
     }
 }( window['webtundra'] = window.webtundra || {} ));

@@ -1,7 +1,7 @@
+// For conditions of distribution and use, see copyright notice in LICENSE
+
 /**
- * @author mrdoob / http://mrdoob.com/
- * @author alteredq / http://alteredqualia.com/
- * @author paulirish / http://paulirish.com/
+ * @author Toni Dahl
  */
 
 (function ( namespace, undefined ) {

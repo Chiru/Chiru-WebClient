@@ -1,3 +1,7 @@
+### For conditions of distribution and use, see copyright notice in LICENSE
+
+## @author Toni Dahl
+
 for i in *.mesh
 do
     # Conversion from MESH to XML

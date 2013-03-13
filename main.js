@@ -4,6 +4,8 @@
  * Example file
  * The actual WebNaali library is used here by the end users
  *
+ * @author Toni Dahl
+ *
  */
 
 

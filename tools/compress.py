@@ -5,6 +5,8 @@ For conditions of distribution and use, see copyright notice in LICENSE
 This compression script combines all the JavaScript files together and then compresses and optimizes
 the resulted file with Google Closure Compiler
 
+@author Toni Dahl
+
 """
 
 

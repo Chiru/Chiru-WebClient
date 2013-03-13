@@ -1,10 +1,7 @@
-// For conditions of distribution and use, see copyright notice in LICENSE
-
-
 /**
  * @version parseUri 1.2.2
  * @author Steven Levithan <stevenlevithan.com>
- *
+ * @license MIT
 **/
 
 function parseUri (str) {
@@ -36,6 +33,14 @@ parseUri.options = {
     }
 };
 
+
+// For conditions of distribution and use, see copyright notice in LICENSE
+
+/**
+ * @author Toni Dahl
+ */
+
+/*
 // Gets the url from browser's address-bar and parses it
 function parseUrl( url ) {
     var parsed = parseUri( url );
@@ -107,3 +112,5 @@ function parseStorageUrl( url ) {
     _connection.storageUrl = "http://" + parsed['host'] + parsed.directory;
 
 }
+
+    */

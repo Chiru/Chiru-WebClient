@@ -1,5 +1,8 @@
 // For conditions of distribution and use, see copyright notice in LICENSE
 
+/**
+ * @author Toni Dahl
+ */
 
 (function ( namespace, undefined ) {
     var Workers = namespace.Workers = function () {

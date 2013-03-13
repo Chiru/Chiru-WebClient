@@ -11,8 +11,8 @@ import argparse
 
 def main():
 
-    out_uncompressed = '../build/webnaali.js'
-    out = '../build/webnaali.min.js'
+    out_uncompressed = '../build/webtundra.js'
+    out = '../build/webtundra.min.js'
     externs = 'externs.js'
     scripts = 'scripts.txt'
 

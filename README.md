@@ -1,4 +1,5 @@
 # README
+[Project page and Documentation](http://k1ll3rf0x.github.com/Chiru-WebClient/ "Project page and docs")
 
 This JavaScript library implements a light-weight web client currently for realXtend Tundra server and it needs a WebSocketModule add-on
 installed into the Tundra server so a connection through a WebSocket can be established. This project

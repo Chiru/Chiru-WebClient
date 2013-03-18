@@ -2,7 +2,7 @@
  * JS Signals <http://millermedeiros.github.com/js-signals/>
  * Released under the MIT license
  * @author Miller Medeiros
- * @version 1.0.0 - Build: 268 (2012/11/29 05:48 PM)
+ * @author Toni Dahl
  */
 
 (function ( namespace, undefined ) {
@@ -213,7 +213,7 @@
          * <p><strong>IMPORTANT:</strong> Setting this property during a dispatch will only affect the next dispatch, if you want to stop the propagation of a signal use `halt()` instead.</p>
          * @type boolean
          */
-        active: true,
+        active: false,
 
         /**
          * @param {Function} listener
@@ -256,6 +256,8 @@
                 --n;
             } while ( this._bindings[n] && binding._priority <= this._bindings[n]._priority );
             this._bindings.splice( n + 1, 0, binding );
+            this.active = true;
+
         },
 
         /**
@@ -323,6 +325,10 @@
                 this._bindings[i]._destroy(); //no reason to a SignalBinding exist if it isn't attached to a signal
                 this._bindings.splice( i, 1 );
             }
+
+            if(this._bindings.length === 0 ){
+                this.active = false;
+            }
             return listener;
         },
 
@@ -335,6 +341,7 @@
                 this._bindings[n]._destroy();
             }
             this._bindings.length = 0;
+            this.active = false;
         },
 
         /**
@@ -361,6 +368,7 @@
             if ( !this.active ) {
                 return;
             }
+            //console.log("Signal dispatched.");
 
             var paramsArr = Array.prototype.slice.call( arguments ),
                 n = this._bindings.length,
@@ -383,6 +391,7 @@
             do {
                 n--;
             } while ( bindings[n] && this._shouldPropagate && bindings[n].execute( paramsArr ) !== false );
+
         },
 
         /**

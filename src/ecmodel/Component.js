@@ -28,12 +28,69 @@
 
         this.sceneManager = sceneMgr;
 
+        /**
+         * A Signal that is dispatched when an attribute of this component is updated.
+         *
+         * @memberOf Component#
+         * @name attributeUpdated
+         * @type Signal
+         */
+
+        this.attributeUpdated = new namespace.Signal();
+
+        /**
+         * Unique component id in the scope of entity
+         *
+         * @memberOf Component#
+         * @name id
+         * @type Number
+         */
+
         this.id = null;
+
+        /**
+         * Parent entity or component of this component.
+         *
+         * @memberOf Component#
+         * @name parent
+         * @type {Entity|Component}
+         */
+
         this.parent = null;
+
+
         this.attributes = {};
+
         this.attributeMap = {};
+
+        /**
+         * Name of the component. Not unique identifier.
+         *
+         * @memberOf Component#
+         * @name name
+         * @type String
+         */
+
         this.name = '';
+
+        /**
+         * Type id of the component type. e.g. 20
+         *
+         * @memberOf Component#
+         * @name attributeUpdated
+         * @type Number
+         */
+
         this.typeId = null;
+
+        /**
+         * Type name of the component type. e.g. "EC_Placeable"
+         *
+         * @memberOf Component#
+         * @name attributeUpdated
+         * @type String
+         */
+
         this.typeName = null;
 
 
@@ -67,6 +124,16 @@
 
         onAttributeUpdated: function ( attr ) {
         },
+
+
+        /**
+         *
+         * @param {String} name Name of the Attribute
+         * @param {*} value Value of the attribute
+         * @param {namespace.ENUMS.ATTRIBUTES} type Attribute type enum.
+         * @param {String} setterName Custom name for the setter function. Default value is the name of the attribute.
+         * @returns {namespace.Attribute} Attribute object.
+         */
 
         createAttribute: function ( name, value, type, setterName ) {
             var attr, proto, attributes = this.attributes;
@@ -115,6 +182,7 @@
                             attribute = attributes[name];
                             attribute.updateValue( val );
                             this.onAttributeUpdated( attribute );
+                            this.attributeUpdated.dispatch( attribute );
                         }
 
                     }),

@@ -40,6 +40,7 @@
 
         this.name = Attribute.parseName( name );
         this.val = Attribute.parse( value, this.type );
+        this.id = null;
 
         this.setter = setterName || this.name;
 

@@ -143,6 +143,7 @@
 
             if ( !this.components.hasOwnProperty( id + '' ) ) {
                 component.setParentEnt(this);
+                component.id = id;
                 this.components[id] = component;
                 this.componentAdded.dispatch( component );
 

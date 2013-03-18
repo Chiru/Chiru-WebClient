@@ -41,7 +41,6 @@
         }
 
 
-
         var mouseXDelta = 0,
             mouseYDelta = 0,
             mouseXStart = 0,
@@ -54,7 +53,7 @@
             theta = 0,
             viewHalfX = 0,
             viewHalfY = 0,
-            mouseDragOn = false,
+            mouseDown = false,
             moveForward = false,
             moveBackward = false,
             moveLeft = false,
@@ -140,8 +139,7 @@
             mouseYStart = event.mouseY;
             this.computeTargetPosition();
 
-            mouseDragOn = true;
-
+            mouseDown = true;
 
         };
 
@@ -151,7 +149,7 @@
             event.preventDefault();
             event.stopPropagation();
 
-            mouseDragOn = false;
+            mouseDown = false;
             oldLat = lat;
             oldLon = lon;
             mouseXDelta = mouseYDelta = 0;
@@ -161,13 +159,17 @@
             event.preventDefault();
             event.stopPropagation();
 
-            if ( mouseDragOn ) {
+           if(mouseDown){
                 this.getMousePosition( event );
 
                 mouseXDelta = event.mouseX - mouseXStart;
                 mouseYDelta = event.mouseY - mouseYStart;
 
                 this.computeTargetPosition();
+
+                this.object.lookAt( targetPosition );
+                this.placeable.setRotation( radToDeg( rotation.x ), radToDeg( rotation.y ),
+                    radToDeg( rotation.z ) );
 
             }
         };
@@ -255,12 +257,6 @@
             if ( freeze ) {
 
                 return;
-            }
-
-            if ( mouseDragOn ) {
-                this.object.lookAt( targetPosition );
-                this.placeable.setRotation( radToDeg( rotation.x ), radToDeg( rotation.y ),
-                    radToDeg( rotation.z ) );
             }
 
             actualMoveSpeed = delta * this.movementSpeed;

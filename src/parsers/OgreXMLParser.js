@@ -6,7 +6,7 @@
 
 (function ( namespace, undefined ) {
 
-    var OgreXMLParser = namespace['OgreXMLParser'] = (function () {
+    var OgreXMLParser = namespace.OgreXMLParser = (function () {
         var meshParser, materialParser;
 
         // OgreMesh parser
@@ -29,6 +29,7 @@
 
                 for ( i = nSubmeshes; i--; ) {
                     submesh = submeshes.snapshotItem( i );
+                    console.log(submesh)
                     tGeom = new THREE.Geometry();
 
                     parseMesh( submesh, xml, tGeom );
@@ -60,7 +61,7 @@
             function parseFaces( element, xml, wrapper ) {
                 var faces, nFaces, face, faceDim, i;
 
-                faces = getElements( "//faces/face", xml, element );
+                faces = getElements( "faces/face", xml, element );
                 nFaces = faces.snapshotLength;
 
                 for ( i = nFaces; i--; ) {
@@ -81,7 +82,7 @@
                 var geometry, vertexCount, vertexBuffer, bufferAttrs, vertices, i,
                     hasPositions, hasNormals, hasDiffColours, hasSpecColours,
                     texChannels, texCoordDim,
-                    position, normal, texCoord, vertex;
+                    position, normal, texCoord, vertex, temp;
 
                 geometry = element.getElementsByTagName( "geometry" )[0];
                 vertexCount = parseInt( geometry.getAttribute( "vertexcount" ), 10 );
@@ -102,8 +103,16 @@
                 if ( vertexBuffer.hasAttribute( 'texture_coords' ) ) {
                     texChannels = parseInt( vertexBuffer.getAttribute( 'texture_coords' ), 10 );
                     if ( vertexBuffer.hasAttribute( 'texture_coord_dimensions_0' ) ) {
-                        texCoordDim = parseInt( vertexBuffer.getAttribute( 'texture_coord_dimensions_0' ), 10 );
-                        if ( texCoordDim !== 2 ) {
+                        temp = parseInt( vertexBuffer.getAttribute( 'texture_coord_dimensions_0' ), 10 );
+
+                        //Checking if we have correct value for texture channel dimension
+                        if( !temp ){
+                            temp = vertexBuffer.getAttribute( 'texture_coord_dimensions_0' );
+                            texCoordDim = parseInt(temp.substr(-1), 10); // Getting the last character of e.g. "float2"
+                        }else{
+                            texCoordDim = temp;
+                        }
+                        if ( texCoordDim !== 2 ) {
                             throw new Error( ["OgreXMLParser: Only 2-dimensional uv-coordinates for texture channels are supported."] );
                         }
                     } else {
@@ -114,7 +123,7 @@
                     }
                 }
 
-                vertices = getElements( "//vertex", xml, vertexBuffer );
+                vertices = getElements( "vertex", xml, vertexBuffer );
 
                 for ( i = vertexCount; i--; ) {
                     vertex = vertices.snapshotItem( i );

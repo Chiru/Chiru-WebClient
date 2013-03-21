@@ -8,27 +8,41 @@
 (function ( namespace, undefined ) {
     var utils = namespace.util;
 
-    var AssetManager = namespace.AssetManager = function ( remoteStorage ) {
+    var AssetManager = namespace.AssetManager = function ( storageUrl, meshType ) {
 
-        this.meshType = 'dae';
-        this.remoteStorage = remoteStorage;
+        var meshTypes,  meshAssets, textureAssets, materialAssets,
+            processDelayFunc, requestQueue, remoteStorage,
+            assetParser;
 
-        this.meshAssets = {};
-        this.textureAssets = {};
-        this.materialAssets = {};
+        meshTypes = {
+            'ogre': {meshFileExt: 'mesh.xml', matFileExt: 'material'},
+            'collada': {meshFileExt: 'dae', matFileExt: null}
+        };
 
-        /*
+        if(!meshTypes.hasOwnProperty(meshType)){
+            throw new Error(["AssetManager: Unsupported mesh type: " + meshType]);
+        }
+
+        meshAssets = {};
+        textureAssets = {};
+        materialAssets = {};
+
+        remoteStorage = storageUrl || null;
+        assetParser = new namespace.MeshParser(meshType);
+
+
+
         // Passed to settimeout function
-        var assetProcessDelay = function () {
-            this.processAsset( arguments[0], arguments[1], arguments[2], arguments[3] );
-        }.bind( this );
-        */
+        processDelayFunc = function () {
+            processAsset( arguments[0], arguments[1], arguments[2], arguments[3] );
+        };
+
 
         /**
          *
          * @type {Object}
          */
-        var requestQueue = {
+        requestQueue = {
             queue: [],
             requests: {}
         };
@@ -38,7 +52,7 @@
          * @param name
          */
 
-        this.removeRequest = function ( name ) {
+        function removeRequest ( name ) {
             var requests = requestQueue.requests, queue = requestQueue.queue, queueLen = queue.length, i;
 
             if ( requests.hasOwnProperty( name ) ) {
@@ -50,7 +64,7 @@
             if ( queue.length === 0 ) {
                 console.log( "All requests processed!" );
             }
-        };
+        }
 
 
         /**
@@ -59,7 +73,7 @@
          * @return {*}
          */
 
-        this.createRequest = function ( options ) {
+        function createRequest ( options ) {
 
             var defaults = {
                     url: '',
@@ -110,13 +124,13 @@
                         request.downloaded = true;
 
                         //TODO: Convert this to queue system where assets are processed one by one after download is complete
-                        self.processAsset( request, assetReadySig, opts.assetName, opts.assetType );
+                        //self.processAsset( request, assetReadySig, opts.assetName, opts.assetType );
 
                         //Gives the program some time to breath after download to increase responsiveness
-                        /*
-                        setTimeout( assetProcessDelay, 1000 * queueLen, request,
-                            assetReady, opts.assetName, opts.assetType);
-                        */
+
+                        setTimeout( processDelayFunc, 500 * queueLen, request,
+                            assetReadySig, opts.assetName, opts.assetType);
+
 
 
                     } else if ( request.status === 404 ) {
@@ -144,232 +158,283 @@
 
 
             return assetReadySig;
-        };
+        }
 
 
-    };
+        /**
+         *
+         * @param url
+         */
 
-    /**
-     *
-     * @param url
-     */
-
-    AssetManager.prototype.setRemoteStorage = function ( url ) {
-        console.log( "Setting remote asset storage to: " + url );
-        utils.log( "Setting remote asset storage to: " + url );
-        this.remoteStorage = url;
-    };
+        function setRemoteStorage ( url ) {
+            console.log( "Setting remote asset storage to: " + url );
+            utils.log( "Setting remote asset storage to: " + url );
+            remoteStorage = url;
+        }
 
 
-    /**
-     *
-     * @param assetFileName
-     * @param forceType
-     * @return {*}
-     */
-    AssetManager.prototype.cleanFileName = function ( assetFileName, forceType ) {
+        /**
+         *
+         * @param assetFileName
+         * @param forceType
+         * @return {*}
+         */
+        function cleanFileName( assetFileName, forceType ) {
+            var fileName, type;
 
-        var fileName = assetFileName.split( '//' ).pop().split( '.' ),
+            if(!assetFileName){
+                console.error("AssetManager:", "Got empty Asset filename.");
+                return '';
+            }
+
+
+            fileName = assetFileName.split( '//' ).pop().split( '.' );
             type = fileName.slice( -1 )[0];
 
-        if ( forceType ) {
-            if ( type.toLowerCase() !== forceType ) {
-                fileName[fileName.length - 1] = forceType;
-                assetFileName = fileName.join( '.' );
+            if ( forceType ) {
+                if ( type.toLowerCase() !== forceType ) {
+                    fileName[fileName.length - 1] = forceType;
+                    assetFileName = fileName.join( '.' );
+                }
             }
+
+            return assetFileName;
         }
 
-        return assetFileName;
-    };
+
+        /**
+         *
+         * @param assetName
+         * @param type
+         * @param storage
+         * @param relPath
+         * @return {*}
+         */
+        function requestAsset( assetName, type, storage, relPath ) {
+            var request, asset, responseType = "", mimeType = null;
+
+            if ( typeof type === 'string' ) {
+                type = type.toLowerCase();
+
+                switch (type) {
+                case 'mesh':
+                {
+                    if ( meshAssets.hasOwnProperty( assetName ) ) {
+                        console.log( "Mesh:", assetName, "already downloaded" );
+                        return false;
+                    }
+
+                    if ( !document.implementation || !document.implementation.createDocument ) {
+                        throw new Error( ["AssetManager: Your browser can't process XML!"] );
+                    }
+                    assetName = cleanFileName( assetName, meshTypes[meshType].meshFileExt );
+
+                    mimeType = 'text/xml';
+
+                }
+                    break;
+                case 'material':
+                {
+                    if ( materialAssets.hasOwnProperty( assetName ) ) {
+                        console.log( "Material:", assetName, "already downloaded" );
+                        return false;
+                    }
+
+                    if ( !document.implementation || !document.implementation.createDocument ) {
+                        throw new Error( ["AssetManager: Your browser can't process XML!"] );
+                    }
+                    assetName = cleanFileName( assetName, meshTypes[meshType].matFileExt );
+
+                    mimeType = 'text/plain';
+
+                }
+                    break;
+                case 'texture':
+                {
+                    if ( textureAssets.hasOwnProperty( assetName ) ) {
+                        console.log( "Texture:", assetName, "already downloaded" );
+                        return false;
+                    }
+
+                    responseType = "arraybuffer";
+                    assetName = cleanFileName( assetName );
+                }
+                    break;
+                default:
+                    throw new Error( ["AssetManager: Invalid asset type requested: " + type] );
+                }
+
+            } else {
+                throw new Error( ["AssetManager: Requested asset type must be a string."] );
+            }
+
+            if ( !relPath ) {
+                relPath = '';
+            }
+
+            if(!storage || typeof storage !== "string"){
+                storage = remoteStorage;
+            }
 
 
-    /**
-     *
-     * @param assetName
-     * @param type
-     * @param storage
-     * @param relPath
-     * @return {*}
-     */
-    AssetManager.prototype.requestAsset = function ( assetName, type, storage, relPath ) {
-        var request, asset, responseType = "", mimeType = null;
+            request = createRequest( {
+                url: storage + relPath + assetName,
+                responseType: responseType,
+                mimeType: mimeType,
+                assetName: assetName,
+                assetType: type
+            } );
 
-        if ( typeof type === 'string' ) {
-            type = type.toLowerCase();
 
+            return request;
+        }
+
+        /**
+         *
+         * @param request
+         * @param signal
+         * @param name
+         * @param type
+         */
+
+        function processAsset( request, signal, name, type ) {
             switch (type) {
             case 'mesh':
-            {
-                if ( this.meshAssets.hasOwnProperty( assetName ) ) {
-                    console.log( "Mesh:", assetName, "already downloaded" );
-                    return false;
-                }
-
-                if ( !document.implementation || !document.implementation.createDocument ) {
-                    throw new Error( ["AssetManager: Your browser can't process XML!"] );
-                }
-                assetName = this.cleanFileName( assetName, this.meshType );
-
-                mimeType = 'text/xml';
-
-            }
+                processMesh( request, signal, name );
+                break;
+            case 'texture':
+                processTexture( request, signal, name );
                 break;
             case 'material':
-            case 'texture':
-            {
-                if ( this.textureAssets.hasOwnProperty( assetName ) ) {
-                    console.log( "texture:", assetName, "already downloaded" );
-                    return false;
-                }
-
-                responseType = "arraybuffer";
-                assetName = this.cleanFileName( assetName );
-            }
+                processMaterial( request, signal, name );
                 break;
-            default:
-                throw new Error( ["AssetManager: Invalid asset type requested: " + type] );
+
+            }
+        }
+
+        /**
+         *
+         * @param request
+         * @param signal
+         * @param name
+         */
+        function processMesh( request, signal, name ) {
+            console.log("Processing mesh", name);
+
+                var xml = request.responseXML,
+                meshGroup = [], self = this;
+
+            assetParser.parseMesh( xml, name, meshGroup, request.url );
+
+            if ( !meshAssets.hasOwnProperty( name ) ) {
+                meshAssets[name] = meshGroup;
             }
 
-        } else {
-            throw new Error( ["AssetManager: Requested asset type must be a string."] );
-        }
-
-        if ( !relPath ) {
-            relPath = '';
-        }
-
-        if(!storage || typeof storage !== "string"){
-            storage = this.remoteStorage;
-        }
-
-
-        request = this.createRequest( {
-            url: storage + relPath + assetName,
-            responseType: responseType,
-            mimeType: mimeType,
-            assetName: assetName,
-            assetType: type
-        } );
-
-
-        return request;
-    };
-
-    /**
-     *
-     * @param request
-     * @param signal
-     * @param name
-     * @param type
-     */
-
-    AssetManager.prototype.processAsset = function ( request, signal, name, type ) {
-        switch (type) {
-        case 'mesh':
-            this.processMesh( request, signal, name );
-            break;
-        case 'texture':
-            this.processTexture( request, signal, name );
-            break;
-        case 'material':
-            this.processMaterial( request, signal, name );
-            break;
-
-        }
-    };
-
-    /**
-     *
-     * @param request
-     * @param signal
-     * @param name
-     */
-    AssetManager.prototype.processMesh = function ( request, signal, name ) {
-        var loader = new THREE.ColladaLoader(), material, geometry, xml = request.responseXML,
-            scene, meshGroup = [], self = this, result, index;
-
-        //console.time( 'Processing time' );
-        console.log( "Processing", name, "..." );
-        //loader.options.convertUpAxis = true;
-
-        result = loader.parse( xml, undefined, request.url );
-        console.log( "Asset parsed. Post-processing..." );
-        scene = result.scene;
-
-        scene.traverse( function ( child ) {
-            if ( child instanceof THREE.Mesh ) {
-                meshGroup.push( [child.geometry.clone(), child.material.clone()] );
+            if ( signal instanceof namespace.Signal ) {
+                signal.dispatch( meshAssets[name] );
             }
-        } );
 
+            removeRequest( name );
 
-        if ( !this.meshAssets.hasOwnProperty( name ) ) {
-            meshGroup.name = name;
-            this.meshAssets[name] = meshGroup;
+            //console.timeEnd( 'Processing time' );
+
+            console.log( "Processing complete." );
+            console.log(meshGroup)
+
         }
-        if ( signal instanceof namespace.Signal ) {
-            signal.dispatch( self.meshAssets[name] );
+
+        /**
+         *
+         * @param request
+         * @param signal
+         * @param name
+         */
+        function processTexture( request, signal, name ) {
+            console.log("Processing texture", name);
+
+            var buffer = request.response,
+                dds = THREE.ImageUtils.parseDDS( buffer, true ),
+                self = this;
+
+            dds.name = name;
+
+            if ( !textureAssets.hasOwnProperty( name ) ) {
+                textureAssets[name] = dds;
+            }
+
+            if ( signal instanceof namespace.Signal ) {
+                signal.dispatch( textureAssets[name] );
+            }
+
+            removeRequest( name );
+
+
         }
 
-        this.removeRequest( name );
+        /**
+         *
+         * @param request
+         * @param signal
+         * @param name
+         */
+        function processMaterial( request, signal, name ) {
+            console.log("Processing material", name);
 
-        scene = null;
-        result = null;
-        loader = null;
+            var data = request.responseText,
+                materialGroup = {}, self = this;
 
-        //console.timeEnd( 'Processing time' );
+            assetParser.parseMaterial( data, name, materialGroup, request.url );
 
-        console.log( "Processing complete." );
+            if ( !materialAssets.hasOwnProperty( name ) ) {
+                materialAssets[name] = materialGroup;
+            }
 
+            if ( signal instanceof namespace.Signal ) {
+                signal.dispatch( materialGroup[name] );
+            }
+
+            removeRequest( name );
+
+            //console.timeEnd( 'Processing time' );
+
+            console.log( "Processing complete." );
+            console.log(materialGroup)
+
+        }
+
+        /**
+         *
+         * @param assetRef
+         * @param type
+         * @return {*}
+         */
+        function getAsset( assetRef, type ) {
+            if ( type === 'mesh' ) {
+                if ( meshAssets.hasOwnProperty( assetRef ) ) {
+                    return meshAssets[assetRef];
+                }
+            } else if ( type === 'texture' ) {
+                if ( textureAssets.hasOwnProperty( assetRef ) ) {
+                    return textureAssets[assetRef];
+                }
+            } else if ( type === 'material' ) {
+                if ( materialAssets.hasOwnProperty( assetRef ) ) {
+                    return materialAssets[assetRef];
+                }
+            }
+            return false;
+        }
+
+
+        // ### Exposed methods ###
+        return {
+            requestAsset: requestAsset,
+            getAsset: getAsset,
+            cleanFileName: cleanFileName,
+            setRemoteStorage: setRemoteStorage
+        };
     };
 
-    /**
-     *
-     * @param request
-     * @param signal
-     * @param name
-     */
-    AssetManager.prototype.processTexture = function ( request, signal, name ) {
-        var buffer = request.response,
-            dds = THREE.ImageUtils.parseDDS( buffer, true ),
-            self = this;
 
-        dds.name = name;
-
-        if ( !this.textureAssets.hasOwnProperty( name ) ) {
-            this.textureAssets[name] = dds;
-        }
-
-        if ( signal instanceof namespace.Signal ) {
-            signal.dispatch( self.textureAssets[name] );
-        }
-
-        this.removeRequest( name );
-
-
-    };
-
-    /**
-     *
-     * @param request
-     * @param signal
-     * @param name
-     */
-    AssetManager.prototype.processMaterial = function ( request, signal, name ) {
-
-    };
-
-    /**
-     *
-     * @param assetRef
-     * @param type
-     * @return {*}
-     */
-    AssetManager.prototype.getAsset = function ( assetRef, type ) {
-        if ( this.meshAssets.hasOwnProperty( assetRef ) ) {
-            return this.meshAssets[assetRef];
-        }
-        return false;
-    };
 
 }( window['webtundra'] = window['webtundra'] || {} ));

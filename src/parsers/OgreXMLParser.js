@@ -29,11 +29,9 @@
 
                 for ( i = nSubmeshes; i--; ) {
                     submesh = submeshes.snapshotItem( i );
-                    console.log(submesh)
                     tGeom = new THREE.Geometry();
 
                     parseMesh( submesh, xml, tGeom );
-                    console.log( tGeom );
 
                     result.push( tGeom );
                 }
@@ -198,18 +196,20 @@
                 };
 
             function parseMaterialScript( matString ) {
-                var lines, nLines, line, matContext, waitingOpenBrace, i, material;
-                material = new THREE.MeshPhongMaterial();
+                var lines, nLines, line, matContext, waitingOpenBrace,  materialGroup,
+                    i;
+                materialGroup = {};
 
                 waitingOpenBrace = false;
 
                 matContext = {
                     section: 'none',
-                    material: material
+                    material: null,
+                    matGroup: materialGroup
                 };
 
                 //Remove leading spaces from string at each line
-                matString = matString.replace( /^ +|\s+$/gm, '' );
+                matString = matString.replace( /^[ \t]+|[ \t]+$/gm, '' );
 
                 //Get script lines
                 lines = matString.split( '\n' );
@@ -222,13 +222,13 @@
 
                     //Ignore empty lines and comment lines
                     if ( !line || line.indexOf( '//' ) !== -1 ) {
-                        console.log("skipping line: "+line);
+                        console.warn("OgreMaterialParser: skipping line: "+ i);
                         continue;
                     }
 
                     if ( waitingOpenBrace ) {
                         if ( line !== "{" ) {
-                            console.log("OgreXMLParser: Expected a '{', but got:", line );
+                            console.warn("OgreMaterialParser: Expected a '{', but got:", line );
                         }
                         waitingOpenBrace = false;
 
@@ -240,9 +240,10 @@
                 }
                 //console.log( matContext );
 
-                delete matContext.material;
+                delete matContext.matGroup;
+                console.log(materialGroup)
 
-                return material;
+                return materialGroup;
 
 
             }
@@ -253,7 +254,7 @@
                 case 'none':
                 {
                     if ( line === '}' ) {
-                        throw new Error( ["OgreXMLParser: Unexpected '}' at: " + section] );
+                        throw new Error( ["OgreMaterialParser: Unexpected '}' at: " + section] );
                     } else {
                         return getSectionParser( line, section, matContext );
                     }
@@ -265,7 +266,9 @@
 
                     if ( line === '}' ) {
                         // End of material
-                        console.log( "Material parsed" );
+                        matContext.matGroup[matContext.material.name] = matContext.material;
+                        delete matContext.material;
+                        matContext.section = 'none';
                     } else {
                         return getSectionParser( line, section, matContext );
                     }
@@ -330,12 +333,14 @@
                         return true;
                     }
                 } else {
-                    throw new Error( ["OgreXMLParser: Unsupported material section: " + section] );
+                    throw new Error( ["OgreMaterialParser: Unsupported material section: " + section] );
                 }
             }
 
             function parseMaterial( line, matContext ) {
                 console.log( "Parsing material root section..." );
+                matContext.material = new THREE.MeshPhongMaterial();
+
                 if ( line.length >= 2 ) {
                     matContext.material.name = line[1].replace( /\s+/g, '' );
                 } else {

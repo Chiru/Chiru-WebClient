@@ -6,7 +6,7 @@
 
 (function ( namespace, undefined ) {
 
-    var OgreXMLParser = namespace.OgreXMLParser = (function () {
+    var OgreXMLParser = namespace.OgreXMLParser = function (assetManager) {
         var meshParser, materialParser;
 
         // OgreMesh parser
@@ -15,7 +15,7 @@
 
             function parseMeshXML( xml ) {
 
-                var root, result = [], geomGroup = [], submeshes, nSubmeshes, submesh,
+                var root, result = [], submeshes, nSubmeshes, submesh, meshMatRef,
                     tGeom, i;
 
                 root = xml.documentElement;
@@ -29,11 +29,16 @@
 
                 for ( i = nSubmeshes; i--; ) {
                     submesh = submeshes.snapshotItem( i );
+                    meshMatRef = submesh.getAttribute( "material" );
                     tGeom = new THREE.Geometry();
 
                     parseMesh( submesh, xml, tGeom );
 
-                    result.push( tGeom );
+                    tGeom.computeCentroids();
+                    tGeom.computeFaceNormals();
+                    tGeom.computeVertexNormals();
+
+                    result.push( {'geometry':tGeom, 'material': meshMatRef } );
                 }
 
                 return result;
@@ -41,7 +46,7 @@
             }
 
             function parseMesh( element, xml, wrapper ) {
-                var elAttributes = element.attributes;
+                var elAttributes = element.attributes, facesInfo;
 
                 if ( elAttributes.length !== 4 ) {
                     throw new Error( ["OgreXMLParser: <submesh> had invalid amount of attributes."] );
@@ -50,8 +55,8 @@
                     throw new Error( ["OgreXMLParser: Unsupported operation type wanted for submesh. Use 'triangle_list' for now."] );
                 }
 
-                parseFaces( element, xml, wrapper );
-                parseGeometry( element, xml, wrapper );
+                facesInfo = parseFaces( element, xml, wrapper );
+                parseGeometry( element, xml, wrapper, facesInfo );
 
             }
 
@@ -71,16 +76,17 @@
 
                     wrapper.faces[i] = new THREE.Face3( parseInt( face[0].nodeValue, 10 ), parseInt( face[1].nodeValue, 10 ),
                         parseInt( face[2].nodeValue, 10 ) );
-
                 }
+
+                return {faceDimension: faceDim, nFaces: nFaces};
 
             }
 
-            function parseGeometry( element, xml, wrapper ) {
+            function parseGeometry( element, xml, wrapper, facesInfo ) {
                 var geometry, vertexCount, vertexBuffer, bufferAttrs, vertices, i,
-                    hasPositions, hasNormals, hasDiffColours, hasSpecColours,
+                    hasPositions, hasNormals, hasUvs, hasDiffColours, hasSpecColours,
                     texChannels, texCoordDim,
-                    position, normal, texCoord, vertex, temp;
+                    position, normal, uv, uvs, texCoord, vertex, temp;
 
                 geometry = element.getElementsByTagName( "geometry" )[0];
                 vertexCount = parseInt( geometry.getAttribute( "vertexcount" ), 10 );
@@ -123,6 +129,8 @@
 
                 vertices = getElements( "vertex", xml, vertexBuffer );
 
+                //Temp storage for texCoords
+                uvs = [];
                 for ( i = vertexCount; i--; ) {
                     vertex = vertices.snapshotItem( i );
 
@@ -133,11 +141,28 @@
                     }
                     if ( hasNormals ) {
                         normal = vertex.getElementsByTagName( "normal" )[0].attributes;
-                        wrapper.faceVertexUvs[0][i] = new THREE.Vector2( parseFloat( normal[0].nodeValue ),
-                            parseFloat( normal[1].nodeValue ) );
+                        //wrapper.
+                    }
+                    if(texCoordDim === 2){
+                        uv = vertex.getElementsByTagName( "texcoord" )[0].attributes;
+                        uvs[i] = new THREE.Vector2( parseFloat( uv[0].nodeValue ),
+                            parseFloat( uv[1].nodeValue ) );
                     }
 
                 }
+
+                //Applying uvs to faces
+                if ( facesInfo.faceDimension === 3 ) {
+                    for ( i = facesInfo.nFaces; i--; ) {
+                        uv = vertex.getElementsByTagName( "texcoord" )[0].attributes;
+                        wrapper.faceVertexUvs[0][i] = [uvs[wrapper.faces[i].a],
+                                                       uvs[wrapper.faces[i].b],
+                                                       uvs[wrapper.faces[i].c]];
+                    }
+                }
+
+                uvs.length = 0;
+
             }
 
 
@@ -208,21 +233,22 @@
                     matGroup: materialGroup
                 };
 
-                //Remove leading spaces from string at each line
-                matString = matString.replace( /^[ \t]+|[ \t]+$/gm, '' );
+                //Removing leading and trailing tabs and spaces from the string lines
+                matString = matString.replace( /^[ \t\r]+|[ \t\r]+$/gm, '' );
 
-                //Get script lines
+                //Getting script lines
                 lines = matString.split( '\n' );
                 nLines = lines.length;
 
-                console.log( lines );
-                //Process lines
+                //console.log( lines );
+
+                //Processing lines
                 for ( i = 0; i < nLines; i++ ) {
                     line = lines[i];
 
                     //Ignore empty lines and comment lines
-                    if ( !line || line.indexOf( '//' ) !== -1 ) {
-                        console.warn("OgreMaterialParser: skipping line: "+ i);
+                    if (!line || /^\s*$/.test(line)|| line.indexOf( '//' ) !== -1 ) {
+                        //console.warn("OgreMaterialParser: skipping line: "+ i);
                         continue;
                     }
 
@@ -236,12 +262,11 @@
                         waitingOpenBrace = parseMatScriptLine( line, matContext );
                     }
 
-
                 }
+
                 //console.log( matContext );
 
                 delete matContext.matGroup;
-                console.log(materialGroup)
 
                 return materialGroup;
 
@@ -266,8 +291,8 @@
 
                     if ( line === '}' ) {
                         // End of material
-                        matContext.matGroup[matContext.material.name] = matContext.material;
-                        delete matContext.material;
+                        matContext.matGroup[matContext.material.name] = new THREE.MeshPhongMaterial(matContext.material);
+                        matContext.props = null;
                         matContext.section = 'none';
                     } else {
                         return getSectionParser( line, section, matContext );
@@ -290,8 +315,6 @@
                 {
                     if ( line === '}' ) {
                         // End of pass
-
-
                         matContext.section = 'technique';
 
                     } else {
@@ -330,7 +353,7 @@
                     if ( parserGroup.hasOwnProperty( splat[0] ) ) {
                         return parserGroup[splat[0]]( splat, matContext );
                     } else {
-                        return true;
+                        return false;
                     }
                 } else {
                     throw new Error( ["OgreMaterialParser: Unsupported material section: " + section] );
@@ -338,7 +361,7 @@
             }
 
             function parseMaterial( line, matContext ) {
-                console.log( "Parsing material root section..." );
+                //console.log( "Parsing material root section..." );
                 matContext.material = new THREE.MeshPhongMaterial();
 
                 if ( line.length >= 2 ) {
@@ -365,7 +388,7 @@
             }
 
             function parseTechnique( line, matContext ) {
-                console.log( "Parsing technique section..." );
+                //console.log( "Parsing technique section..." );
                 // Just changing section here
                 matContext.section = 'technique';
 
@@ -374,7 +397,7 @@
             }
 
             function parsePass( line, matContext ) {
-                console.log( "Parsing pass section..." );
+                //console.log( "Parsing pass section..." );
                 // Just changing section here
 
                 matContext.section = 'pass';
@@ -410,7 +433,7 @@
             }
 
             function parseTexUnit( line, matContext ) {
-                console.log( "Parsing texture_unit section..." );
+                //console.log( "Parsing texture_unit section..." );
                 // Just changing section here
 
                 matContext.section = 'texture_unit';
@@ -423,7 +446,7 @@
 
                 var parameter = line[0].replace( /\s+/g, '' );
 
-                console.log( "Parsing texture param:", parameter );
+                //console.log( "Parsing texture param:", parameter );
 
                 if ( parameter === "texture" ) {
                     if ( line.length >= 2 ) {
@@ -443,7 +466,37 @@
             }
 
             function parseTexture( textureRef, matContext ) {
-                //TODO: Download and create texture
+                var request = assetManager.requestAsset(textureRef, 'texture' ),
+                    material = matContext.material;
+
+                if(request){
+                    (function(mat){
+                        request.mat = mat;
+                        mat.map = new THREE.CompressedTexture();
+                        mat.map.wrapS = THREE.RepeatWrapping;
+                        mat.map.wrapT = THREE.RepeatWrapping;
+                        mat.map.repeat.x = 1.0;
+                        mat.map.repeat.y = 1.0;
+                        mat.map.minFilter = mat.map.magFilter = THREE.LinearFilter;
+                        mat.map.flipY = false;
+
+                        request.add( function ( tex ) {
+                            if ( tex && mat ) {
+                                var texture = mat.map;
+                                texture.format = tex.format;
+                                texture.mipmaps = tex.mipmaps;
+                                texture.image.width = tex.width;
+                                texture.image.height = tex.height;
+                                texture.generateMipmaps = false;
+                                texture.mapping = new THREE.UVMapping();
+                                texture.needsUpdate = true;
+
+                        }
+
+                    });
+                    }(material));
+
+                }
             }
 
 
@@ -457,5 +510,5 @@
             parseMaterial: materialParser
         };
 
-    }());
+    };
 }( window['webtundra'] = window.webtundra || {} ));

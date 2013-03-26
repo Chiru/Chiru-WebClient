@@ -39,33 +39,6 @@
 
     namespace.ws.bindEvent( "disconnected", function ( e ) {
         console.log( "WebSocket closed." );
-        /*
-         self.websocket.parseMessage(JSON.stringify({event:'EntityAdded',
-         data: {entityId: '1',
-         components:{1:
-         {typeId: '17', id:'1',
-         attributes:
-         {1:{name:"Mesh ref", val:"WoodPallet.mesh"}, 0:{name:"Transform", val:"0,0,0,0,0,0,0.14,0.2,0.14", typeId: '16'}}},
-         2:{typeId: '20', id:'1',
-         attributes:
-         {0:{name: "Transform", val:"0,-5,0,0,0,0,100,1,100"}}}
-         }
-         }
-         }))
-         self.websocket.parseMessage(JSON.stringify({event:'EntityAdded',
-         data: {entityId: '2',
-         components:{1:
-         {typeId: '17', id:'1',
-         attributes:
-         {1:{name: "Mesh ref", val:"fish.mesh"}, 0:{name: "Transform", val:"0,0,0,0,0,0,1,1,1", typeId: '16'}}},
-         2:{typeId: '20', id:'1',
-         attributes:
-         {0:{name: "Transform", val:"1.45201,-4.65185,5.40487,-47.8323,42.1262,-145.378,1,1,1"}}}
-         }
-         }
-         }))
-         */
-
     } );
 
     namespace.ws.bindEvent( "reconnecting", function ( e ) {
@@ -79,7 +52,12 @@
 
 
     //Initializing the scene manager
-    namespace.scene = webtundra.initScene( {container: namespace.container, websocket: namespace.ws} );
+    namespace.scene = webtundra.initScene(
+        {
+            container: namespace.container,
+            websocket: namespace.ws,
+            meshType: 'ogre'
+        } );
 
 
     // Starting the scene manager

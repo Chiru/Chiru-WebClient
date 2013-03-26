@@ -10,9 +10,16 @@
 
     var AssetManager = namespace.AssetManager = function ( storageUrl, meshType ) {
 
-        var meshTypes,  meshAssets, textureAssets, materialAssets,
-            processDelayFunc, requestQueue, remoteStorage,
-            assetParser;
+        var meshTypes, meshAssets, textureAssets, materialAssets,
+             requestQueue, remoteStorage, assetParser, publicMethods;
+
+        // Exposed methods
+        publicMethods = {
+            requestAsset: requestAsset,
+            getAsset: getAsset,
+            cleanFileName: cleanFileName,
+            setRemoteStorage: setRemoteStorage
+        };
 
         meshTypes = {
             'ogre': {meshFileExt: 'mesh.xml', matFileExt: 'material'},
@@ -28,14 +35,7 @@
         materialAssets = {};
 
         remoteStorage = storageUrl || null;
-        assetParser = new namespace.MeshParser(meshType);
-
-
-
-        // Passed to settimeout function
-        processDelayFunc = function () {
-            processAsset( arguments[0], arguments[1], arguments[2], arguments[3] );
-        };
+        assetParser = new namespace.AssetParser(meshType, publicMethods);
 
 
         /**
@@ -64,6 +64,14 @@
             if ( queue.length === 0 ) {
                 console.log( "All requests processed!" );
             }
+        }
+
+
+        /**
+         *
+         */
+        function processDelayFunc() {
+            processAsset( arguments[0], arguments[1], arguments[2], arguments[3] );
         }
 
 
@@ -128,7 +136,7 @@
 
                         //Gives the program some time to breath after download to increase responsiveness
 
-                        setTimeout( processDelayFunc, 500 * queueLen, request,
+                        setTimeout( processDelayFunc, 100 * queueLen, request,
                             assetReadySig, opts.assetName, opts.assetType);
 
 
@@ -175,30 +183,48 @@
 
         /**
          *
-         * @param assetFileName
+         * @param fileRef
          * @param forceType
          * @return {*}
          */
-        function cleanFileName( assetFileName, forceType ) {
+        function cleanFileName( fileRef, forceType, useBaseName ) {
             var fileName, type;
 
-            if(!assetFileName){
-                console.error("AssetManager:", "Got empty Asset filename.");
+            if ( !fileRef ) {
+                console.error( "AssetManager:", "Got empty Asset filename." );
                 return '';
             }
 
+            fileName = fileRef.split( '//' ).pop();
 
-            fileName = assetFileName.split( '//' ).pop().split( '.' );
-            type = fileName.slice( -1 )[0];
+            if ( useBaseName ) {
+                fileName = getBaseFileName( fileName );
+            }
 
             if ( forceType ) {
-                if ( type.toLowerCase() !== forceType ) {
-                    fileName[fileName.length - 1] = forceType;
-                    assetFileName = fileName.join( '.' );
+                fileName = fileName.split( '.' );
+                if ( fileName.length > 1 ) {
+                    type = fileName.slice( -1 )[0];
+
+                    if ( type.toLowerCase() !== forceType ) {
+                        fileName[fileName.length - 1] = forceType;
+                        fileRef = fileName.join( '.' );
+                    }
+                } else {
+                    fileRef = fileName[0] + '.' + forceType;
                 }
             }
 
-            return assetFileName;
+
+            return fileRef;
+        }
+
+        function getBaseFileName(fileName){
+            if(typeof fileName === 'string'){
+                return fileName.split( '.' )[0];
+            }
+
+            return false;
         }
 
 
@@ -243,7 +269,7 @@
                     if ( !document.implementation || !document.implementation.createDocument ) {
                         throw new Error( ["AssetManager: Your browser can't process XML!"] );
                     }
-                    assetName = cleanFileName( assetName, meshTypes[meshType].matFileExt );
+                    assetName = cleanFileName( assetName, meshTypes[meshType].matFileExt, true );
 
                     mimeType = 'text/plain';
 
@@ -322,9 +348,9 @@
             console.log("Processing mesh", name);
 
                 var xml = request.responseXML,
-                meshGroup = [], self = this;
+                meshGroup, self = this;
 
-            assetParser.parseMesh( xml, name, meshGroup, request.url );
+            meshGroup = assetParser.parseMesh( xml, name, request.url );
 
             if ( !meshAssets.hasOwnProperty( name ) ) {
                 meshAssets[name] = meshGroup;
@@ -381,16 +407,16 @@
             console.log("Processing material", name);
 
             var data = request.responseText,
-                materialGroup = {}, self = this;
+                materialGroup, self = this;
 
-            assetParser.parseMaterial( data, name, materialGroup, request.url );
+            materialGroup = assetParser.parseMaterial( data, name, request.url );
 
             if ( !materialAssets.hasOwnProperty( name ) ) {
                 materialAssets[name] = materialGroup;
             }
 
             if ( signal instanceof namespace.Signal ) {
-                signal.dispatch( materialGroup[name] );
+                signal.dispatch( materialAssets[name] );
             }
 
             removeRequest( name );
@@ -398,7 +424,7 @@
             //console.timeEnd( 'Processing time' );
 
             console.log( "Processing complete." );
-            console.log(materialGroup)
+            //console.log(materialGroup)
 
         }
 
@@ -425,14 +451,26 @@
             return false;
         }
 
+        function saveAsset(assetRef, data, type) {
+            if ( type === 'mesh' ) {
+                if ( meshAssets.hasOwnProperty( assetRef ) ) {
+                    return meshAssets[assetRef];
+                }
+            } else if ( type === 'texture' ) {
+                if ( textureAssets.hasOwnProperty( assetRef ) ) {
+                    return textureAssets[assetRef];
+                }
+            } else if ( type === 'material' ) {
+                if ( materialAssets.hasOwnProperty( assetRef ) ) {
+                    return materialAssets[assetRef];
+                }
+            }
+            return false;
+        }
+
 
         // ### Exposed methods ###
-        return {
-            requestAsset: requestAsset,
-            getAsset: getAsset,
-            cleanFileName: cleanFileName,
-            setRemoteStorage: setRemoteStorage
-        };
+        return publicMethods;
     };
 
 

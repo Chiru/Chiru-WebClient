@@ -22,13 +22,14 @@
      * @param {object} container Container DOM element for WebGL renderer.
      */
 
-    var SceneManager = namespace['SceneManager'] = function ( options ) {
+    var SceneManager = namespace.SceneManager = function ( options ) {
 
         var defaults = {
                 eulerOrder: 'ZYX',
                 container: document.body,
                 websocket: null,
-                remoteStorage: 'http://127.0.0.1:8000/'
+                remoteStorage: 'http://127.0.0.1:8000/',
+                meshType: 'ogre'
             },
             opts;
 
@@ -52,7 +53,7 @@
 
         this.websocket = opts.websocket;
 
-        this.assetManager = new namespace.AssetManager( this.remoteStorage );
+        this.assetManager = new namespace.AssetManager( this.remoteStorage, opts.meshType );
 
         this.ecManager = new namespace.ECManager( this );
 
@@ -272,6 +273,7 @@
             clearColor: 0x87CEEB,
             clearAlpha: 1,
             preserveDrawingBuffer: false
+
         } );
 
         //renderer.setFaceCulling( THREE.CullFaceNone );

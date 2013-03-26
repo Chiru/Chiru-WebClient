@@ -15,8 +15,8 @@
 
             function parseMeshXML( xml ) {
 
-                var root, result = [], submeshes, nSubmeshes, submesh, meshMatRef,
-                    tGeom, i;
+                var root, result = [], resultElement, submeshes, nSubmeshes, submesh, meshMatRef,
+                    tGeom, sharedGeometry, sharedVertexData, i;
 
                 root = xml.documentElement;
 
@@ -24,29 +24,40 @@
                     throw new Error( ["OgreXMLParser: Invalid root node."] );
                 }
 
+                sharedGeometry = getElements("//sharedgeometry", xml, root);
+                if(sharedGeometry.snapshotLength > 0){
+                    console.warn("Ogre xml has shared geometry!")
+                    sharedVertexData = parseGeometry( sharedGeometry.snapshotItem(0), xml );
+                }
+
                 submeshes = getElements( "//submeshes/submesh", xml, root );
                 nSubmeshes = submeshes.snapshotLength;
 
                 for ( i = nSubmeshes; i--; ) {
+                    resultElement = {};
                     submesh = submeshes.snapshotItem( i );
                     meshMatRef = submesh.getAttribute( "material" );
+
                     tGeom = new THREE.Geometry();
 
-                    parseMesh( submesh, xml, tGeom );
+                    parseMesh( submesh, xml, sharedVertexData, tGeom );
 
                     tGeom.computeCentroids();
-                    tGeom.computeFaceNormals();
-                    tGeom.computeVertexNormals();
+                    if(tGeom.normals.length === 0){
+                        tGeom.computeFaceNormals();
+                        tGeom.computeVertexNormals();
+                    }
+                    //tGeom.computeTangents();
 
-                    result.push( {'geometry':tGeom, 'material': meshMatRef } );
+                    result.push( {'geometry':tGeom, 'materialRef': meshMatRef } );
                 }
 
                 return result;
 
             }
 
-            function parseMesh( element, xml, wrapper ) {
-                var elAttributes = element.attributes, facesInfo;
+            function parseMesh( element, xml, sharedVertexData, geomObject ) {
+                var elAttributes = element.attributes, faceData, vertexData, geometry;
 
                 if ( elAttributes.length !== 4 ) {
                     throw new Error( ["OgreXMLParser: <submesh> had invalid amount of attributes."] );
@@ -55,17 +66,27 @@
                     throw new Error( ["OgreXMLParser: Unsupported operation type wanted for submesh. Use 'triangle_list' for now."] );
                 }
 
-                facesInfo = parseFaces( element, xml, wrapper );
-                parseGeometry( element, xml, wrapper, facesInfo );
+                faceData = parseFaces( element, xml );
+                if(element.getAttribute( "usesharedvertices" ) === "true" && sharedVertexData){
+                    console.warn("Mesh uses shared vertices!")
+                    vertexData = sharedVertexData;
+                }else{
+                    geometry = element.getElementsByTagName( "geometry" )[0];
+                    vertexData = parseGeometry( geometry, xml );
+                }
+
+
+                applyValues(faceData, vertexData, geomObject );
 
             }
 
 
-            function parseFaces( element, xml, wrapper ) {
-                var faces, nFaces, face, faceDim, i;
+            function parseFaces( element, xml ) {
+                var faces, nFaces, face, faceData, faceDim, i;
 
                 faces = getElements( "faces/face", xml, element );
                 nFaces = faces.snapshotLength;
+                faceData = [];
 
                 for ( i = nFaces; i--; ) {
                     face = faces.snapshotItem( i ).attributes;
@@ -74,21 +95,25 @@
                         throw new Error( ["OgreXMLParser: Error in a face."] );
                     }
 
-                    wrapper.faces[i] = new THREE.Face3( parseInt( face[0].nodeValue, 10 ), parseInt( face[1].nodeValue, 10 ),
+                    faceData[i] = new THREE.Face3( parseInt( face[0].nodeValue, 10 ), parseInt( face[1].nodeValue, 10 ),
                         parseInt( face[2].nodeValue, 10 ) );
                 }
 
-                return {faceDimension: faceDim, nFaces: nFaces};
+                return {faceDimension: faceDim, faces: faceData};
 
             }
 
-            function parseGeometry( element, xml, wrapper, facesInfo ) {
-                var geometry, vertexCount, vertexBuffer, bufferAttrs, vertices, i,
+            function parseGeometry( geometry, xml ) {
+
+                if(!geometry){
+                    return false;
+                }
+
+                var vertexCount, vertexBuffer, bufferAttrs, vertices, i,
                     hasPositions, hasNormals, hasUvs, hasDiffColours, hasSpecColours,
                     texChannels, texCoordDim,
-                    position, normal, uv, uvs, texCoord, vertex, temp;
+                    position, positions, normal, normals, uv, uvs, vertex, temp;
 
-                geometry = element.getElementsByTagName( "geometry" )[0];
                 vertexCount = parseInt( geometry.getAttribute( "vertexcount" ), 10 );
                 vertexBuffer = geometry.getElementsByTagName( "vertexbuffer" )[0];
 
@@ -119,29 +144,36 @@
                         if ( texCoordDim !== 2 ) {
                             throw new Error( ["OgreXMLParser: Only 2-dimensional uv-coordinates for texture channels are supported."] );
                         }
+
+                        hasUvs = true;
                     } else {
                         throw new Error( ["OgreXMLParser: Texture coordinate dimensions are needed if texture channel is defined."] );
                     }
                     if ( texChannels > 1 ) {
-                        throw new Error( ["OgreXMLParser: One texture channel per vertexbuffer is supported."] );
+                        console.warn("OgreXMLParser: One texture channel per vertexbuffer is supported. Using the first channel." );
                     }
                 }
 
                 vertices = getElements( "vertex", xml, vertexBuffer );
 
-                //Temp storage for texCoords
+                //Storages for vertex data
+                positions = [];
+                normals = [];
                 uvs = [];
+
+                // Getting vertex data
                 for ( i = vertexCount; i--; ) {
                     vertex = vertices.snapshotItem( i );
 
                     if ( hasPositions ) {
                         position = vertex.getElementsByTagName( "position" )[0].attributes;
-                        wrapper.vertices[i] = new THREE.Vector3( parseFloat( position[0].nodeValue ), parseFloat( position[1].nodeValue ),
+                        positions[i] = new THREE.Vector3( parseFloat( position[0].nodeValue ), parseFloat( position[1].nodeValue ),
                             parseFloat( position[2].nodeValue ) );
                     }
                     if ( hasNormals ) {
                         normal = vertex.getElementsByTagName( "normal" )[0].attributes;
-                        //wrapper.
+                        normals[i] = new THREE.Vector3( parseFloat( normal[0].nodeValue ), parseFloat( normal[1].nodeValue ),
+                            parseFloat( normal[2].nodeValue ) );
                     }
                     if(texCoordDim === 2){
                         uv = vertex.getElementsByTagName( "texcoord" )[0].attributes;
@@ -151,17 +183,60 @@
 
                 }
 
-                //Applying uvs to faces
-                if ( facesInfo.faceDimension === 3 ) {
-                    for ( i = facesInfo.nFaces; i--; ) {
-                        uv = vertex.getElementsByTagName( "texcoord" )[0].attributes;
-                        wrapper.faceVertexUvs[0][i] = [uvs[wrapper.faces[i].a],
-                                                       uvs[wrapper.faces[i].b],
-                                                       uvs[wrapper.faces[i].c]];
-                    }
+
+                return {positions: positions, normals: normals, uvs: uvs, nVertices: vertexCount};
+
+            }
+
+            function applyValues( faceData, vertexData, geomObject ) {
+
+                if ( !faceData || !vertexData ) {
+                    return false;
                 }
 
-                uvs.length = 0;
+                var  nVertices = vertexData.nVertices, positions = vertexData.positions, normals = vertexData.normals,
+                    hasNormals = normals.length === nVertices, uvs = vertexData.uvs, hasUVs = uvs.length === nVertices,
+                    faces = faceData.faces, nFaces, i;
+
+                if ( positions.length === nVertices ) {
+
+                    for ( i = nVertices; i--; ) {
+                        geomObject.vertices[i] = positions[i];
+
+                        if ( hasNormals ) {
+                            geomObject.normals[i] = normals[i];
+                        }
+                    }
+                }else{
+                    return false;
+                }
+
+                if ( faces ) {
+                    nFaces = faces.length;
+                    for ( i = nFaces; i--; ) {
+                        geomObject.faces[i] = faces[i];
+                    }
+
+                    //Applying uvs to faces
+                    if ( faceData.faceDimension === 3 ) {
+                        for ( i = nFaces; i--; ) {
+                            if(hasUVs){
+                            geomObject.faceVertexUvs[0][i] = [uvs[faces[i].a],
+                                                              uvs[faces[i].b],
+                                                              uvs[faces[i].c]];
+                            }
+                            if(hasNormals){
+                            faces[i].vertexNormals = [normals[faces[i].a],
+                                                      normals[faces[i].b],
+                                                      normals[faces[i].c]];
+                            }
+                        }
+                    }
+                }else{
+                    return false;
+                }
+
+                return true;
 
             }
 
@@ -221,16 +296,14 @@
                 };
 
             function parseMaterialScript( matString ) {
-                var lines, nLines, line, matContext, waitingOpenBrace,  materialGroup,
-                    i;
-                materialGroup = {};
-
-                waitingOpenBrace = false;
+                var lines, nLines, line, matContext,
+                    i, materialGroup = {}, waitingOpenBrace = false;
 
                 matContext = {
                     section: 'none',
-                    material: null,
-                    matGroup: materialGroup
+                    materialProps: {},
+                    matGroup: materialGroup,
+                    textureLoaded: new namespace.Signal()
                 };
 
                 //Removing leading and trailing tabs and spaces from the string lines
@@ -264,7 +337,7 @@
 
                 }
 
-                //console.log( matContext );
+                console.log( materialGroup );
 
                 delete matContext.matGroup;
 
@@ -288,11 +361,25 @@
 
                 case 'material':
                 {
-
                     if ( line === '}' ) {
                         // End of material
-                        matContext.matGroup[matContext.material.name] = new THREE.MeshPhongMaterial(matContext.material);
-                        matContext.props = null;
+                        var props = matContext.materialProps, material;
+
+                        material = matContext.matGroup[props.name] = new THREE.MeshPhongMaterial(props);
+
+                        if(material.map){
+                            // The usual case: Texture is loaded after material has been processed. Here we extract information
+                            // from the texture and add correct properties to the material so the texture is rendered correctly
+                            matContext.textureLoaded.addOnce(function(tex){
+                                if(tex.format === THREE.RGBA_S3TC_DXT1_Format || tex.format === THREE.RGBA_S3TC_DXT3_Format ||
+                                    tex.format === THREE.RGBA_S3TC_DXT5_Format){
+                                    material.alphaTest = 0.5;
+                                    material.transparent = true;
+                                    //material.depthTest = false;
+                                }
+                            });
+                        }
+
                         matContext.section = 'none';
                     } else {
                         return getSectionParser( line, section, matContext );
@@ -362,12 +449,11 @@
 
             function parseMaterial( line, matContext ) {
                 //console.log( "Parsing material root section..." );
-                matContext.material = new THREE.MeshPhongMaterial();
 
                 if ( line.length >= 2 ) {
-                    matContext.material.name = line[1].replace( /\s+/g, '' );
+                    matContext.materialProps.name = line[1].replace( /\s+/g, '' );
                 } else {
-                    matContext.material.name = "unnamed";
+                    matContext.materialProps.name = "unnamed";
                 }
                 matContext.section = 'material';
                 return true;
@@ -381,7 +467,7 @@
                     }
                 }
 
-                matContext.material.receiveShadow = shadowOn;
+                matContext.materialProps.receiveShadow = shadowOn;
 
                 return false;
 
@@ -415,16 +501,20 @@
                     if ( values.length >= 3 ) {
 
                         if ( parameter === "specular" ) {
-                            matContext.material.specular.setRGB( values[0], values[1], values[2] );
+                            matContext.materialProps.specular = new THREE.Color();
+                            matContext.materialProps.specular.setRGB( values[0], values[1], values[2] );
 
                         } else if ( parameter === "diffuse" ) {
-                            matContext.material.color.setRGB( values[0], values[1], values[2] );
+                            matContext.materialProps.color = new THREE.Color();
+                            matContext.materialProps.color.setRGB( values[0], values[1], values[2] );
 
                         } else if ( parameter === "emissive" ) {
-                            matContext.material.emissive.setRGB( values[0], values[1], values[2] );
+                            matContext.materialProps.emissive = new THREE.Color();
+                            matContext.materialProps.emissive.setRGB( values[0], values[1], values[2] );
 
                         } else if ( parameter === "ambient" ) {
-                            matContext.material.ambient.setRGB( values[0], values[1], values[2] );
+                            matContext.materialProps.ambient = new THREE.Color();
+                            matContext.materialProps.ambient.setRGB( values[0], values[1], values[2] );
                         }
                     }
                 }
@@ -444,13 +534,15 @@
 
             function parseTexParam( line, matContext ) {
 
-                var parameter = line[0].replace( /\s+/g, '' );
+                var parameter = line[0].replace( /\s+/g, '' ), data;
 
                 //console.log( "Parsing texture param:", parameter );
 
                 if ( parameter === "texture" ) {
                     if ( line.length >= 2 ) {
-                        parseTexture( line[1], matContext );
+                        data = line.slice(1, line.length ).join(" ");
+                        data = encodeURIComponent(data);
+                        parseTexture( data, matContext );
                     }
 
                 } else if ( parameter === "tex_address_mode" ) {
@@ -467,35 +559,39 @@
 
             function parseTexture( textureRef, matContext ) {
                 var request = assetManager.requestAsset(textureRef, 'texture' ),
-                    material = matContext.material;
+                    props = matContext.materialProps, map;
+
+                map = props.map = new THREE.CompressedTexture();
+                map.minFilter = map.magFilter = THREE.LinearFilter;
+                map.wrapS = THREE.RepeatWrapping;
+                map.wrapT = THREE.RepeatWrapping;
+                map.repeat.x = 1.0;
+                map.repeat.y = 1.0;
+                map.flipY = false;
 
                 if(request){
-                    (function(mat){
-                        request.mat = mat;
-                        mat.map = new THREE.CompressedTexture();
-                        mat.map.wrapS = THREE.RepeatWrapping;
-                        mat.map.wrapT = THREE.RepeatWrapping;
-                        mat.map.repeat.x = 1.0;
-                        mat.map.repeat.y = 1.0;
-                        mat.map.minFilter = mat.map.magFilter = THREE.LinearFilter;
-                        mat.map.flipY = false;
-
                         request.add( function ( tex ) {
-                            if ( tex && mat ) {
-                                var texture = mat.map;
-                                texture.format = tex.format;
-                                texture.mipmaps = tex.mipmaps;
-                                texture.image.width = tex.width;
-                                texture.image.height = tex.height;
-                                texture.generateMipmaps = false;
-                                texture.mapping = new THREE.UVMapping();
-                                texture.needsUpdate = true;
+                            if ( tex ) {
+                                map.format = tex.format;
+                                map.mipmaps = tex.mipmaps;
+                                map.image.width = tex.width;
+                                map.image.height = tex.height;
+                                map.generateMipmaps = false;
+                                map.mapping = new THREE.UVMapping();
 
+                                // If texture is loaded before the material processing has been ended, add alpha properties to material props
+                                if(map.format === THREE.RGBA_S3TC_DXT1_Format || map.format === THREE.RGBA_S3TC_DXT3_Format ||
+                                    map.format === THREE.RGBA_S3TC_DXT5_Format){
+                                    props.alphaTest = 0.5;
+                                    props.transparent = true;
+                                    //props.depthTest = false;
+                                }
+                                map.needsUpdate = true;
+
+                                matContext.textureLoaded.dispatch(map);
                         }
 
                     });
-                    }(material));
-
                 }
             }
 

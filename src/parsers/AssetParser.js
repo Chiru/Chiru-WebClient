@@ -20,7 +20,7 @@
         };
 
         parseMesh = (function () {
-            var parseFunc, parser, parseResult;
+            var parseFunc, parser;
 
             function parseMesh( data, name, requestUrl ) {
                 var meshGroup;
@@ -35,30 +35,44 @@
                 return parseFunc( data, name, requestUrl );
             }
 
-            function hasMaterialRef( el ) {
-                return el.material;
-            }
-
             if ( type === 'ogre' ) {
+
+                function hasMaterialRef( el ) {
+                    return el.materialRef;
+                }
+
                 parseFunc = function ( data, name, requestUrl ) {
+                    var request, result;
+
                     parser = parsers[type];
 
                     try {
-                        parseResult = parser.parseMeshXML( data );
+                        result = {
+                            geometryGroup: parser.parseMeshXML( data ),
+                            materialReady: new namespace.Signal(),
+                            hasMaterials: false
+                        };
                     } catch (e) {
                         console.error( "AssetParser: Error while parsing Ogre XML mesh", requestUrl, e.stack );
                         return false;
                     }
 
-                    if ( parseResult ) {
+                    if ( result.geometryGroup ) {
 
-                        if(parseResult.some(hasMaterialRef)){
-                           assetManager.requestAsset( name, 'material');
+                        //Requesting material file if some submeshes use materials
+                        if(result.geometryGroup.some(hasMaterialRef)){
+                            result.hasMaterials = true;
 
+                            request = assetManager.requestAsset( name, 'material');
+                            if(request){
+                                request.add(function(matGroup){
+                                    result.materialReady.dispatch(matGroup);
+                                });
+                            }
                         }
                     }
 
-                    return parseResult;
+                    return result;
                 };
 
             } else if ( type === 'collada' ) {

@@ -27,6 +27,7 @@
         this.createAttribute( "transform", [0, 0, 0, 0, 0, 0, 1, 1, 1], 'transform' );
         this.createAttribute( "meshref", "", 'assetref', "meshRef" );
         this.createAttribute( "castshadows", false, 'bool', "castShadows" );
+        this.createAttribute( "drawdistance", 0, 'real', "drawDistance" );
 
         // Signals
         this.meshChanged = new namespace.Signal();
@@ -114,26 +115,90 @@
                         this.onMeshLoaded();
                     }
                 }
+
+                //test
+               // assetManager.requestAsset( meshRef, 'material', this.storage );
+
             },
 
-            prepareMesh: function ( mesh ) {
-                var group = new THREE.Object3D(), newMesh, groupLen, i;
+            prepareMesh: function ( meshData ) {
+                var assetManager = this.sceneManager.assetManager, meshNode = new THREE.Object3D(), materialRef,
+                    material, materialGroup, hasMaterials, newMesh, geometryGroup, geomGroupLen, geometry, materialRdy, i;
 
-                if ( !mesh ) {
+                if ( !meshData ) {
                     return false;
                 }
-                groupLen = mesh.length;
-                for ( i = groupLen; i--; ) {
 
-                    newMesh = new THREE.Mesh( mesh[i][0], mesh[i][1] );
-                    newMesh['castShadow'] = this.castShadows;
-                    newMesh['receiveShadow'] = this.castShadows;
-                    newMesh.material.side = THREE.DoubleSide;
-                    group.add( newMesh );
+                geometryGroup = meshData.geometryGroup;
+                geomGroupLen = meshData.geometryGroup.length;
+                materialRdy = meshData.materialReady;
+                hasMaterials = meshData.hasMaterials;
 
+                for ( i = geomGroupLen; i--; ) {
+                    geometry = geometryGroup[i].geometry;
+                    materialRef = geometryGroup[i].materialRef;
+
+                    // If the mesh refers to materials, use them. Otherwise use default material.
+                    if ( hasMaterials ) {
+                        materialGroup = assetManager.getAsset( this.meshRef, 'material' );
+
+                        if ( materialGroup ) {
+                            // Getting correct material for mesh from the material group
+                            material = materialGroup[materialRef];
+                        }
+                    }
+
+                    // Setting default material
+                    if ( !material ) {
+                        material = new THREE.MeshPhongMaterial( { wireframe: true, color: 0x39FF14} );
+                    }
+
+                    // Forcing double sided materials for now so optimized oulu3D scene would look better
+                    material.side = THREE.DoubleSide;
+
+                    // Setting mesh properties
+                    newMesh = new THREE.Mesh( geometry, material );
+                    newMesh.meshRef = this.meshRef;
+                    newMesh.materialRef = materialRef;
+                    newMesh.castShadow = this.castShadows;
+                    newMesh.receiveShadow = this.castShadows;
+                    console.warn("mesh name in ecmesh:",newMesh.meshRef)
+                    console.warn("materialRef in ecmesh",newMesh.materialRef)
+
+
+                    // If mesh uses material, but it has not yet been processed, wait until it is processed and change the default material
+                    if ( hasMaterials && !materialGroup ) {
+                        (function ( mesh ) {
+                            materialRdy.add( function ( matGroup ) {
+
+                                console.warn( "Trying to assign a new material:" );
+                                console.warn("mesh name in signal:",mesh.meshRef)
+                                console.warn("materialRef in signal",mesh.materialRef)
+                                console.warn( matGroup );
+                                console.warn( matGroup[mesh.materialRef]);
+
+                                if(!mesh.materialRef || !matGroup || !matGroup[mesh.materialRef]){
+                                    return;
+                                }
+
+                                mesh.material = matGroup[mesh.materialRef];
+
+                                // Forcing double sided materials for now so optimized oulu3D scene would look better
+                                mesh.material.side = THREE.DoubleSide;
+                                mesh.material.needsUpdate = true;
+
+                                //Geometry must be updated after changing the material
+                                mesh.geometry.buffersNeedUpdate = true;
+                                mesh.geometry.uvsNeedUpdate = true;
+                            } );
+                        }( newMesh ));
+                    }
+
+
+                    meshNode.add( newMesh );
                 }
 
-                return group;
+                return meshNode;
             },
 
             setMesh: function () {

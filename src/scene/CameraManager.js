@@ -27,7 +27,7 @@
 
             if ( name ) {
                 if ( name.toLowerCase() === "freelookcameraspawnpos" ) {
-                    console.warn("Got freelook camera spawn position")
+                    //console.warn("Got freelook camera spawn position")
                     e = createCameraEntity( "freelookcamera" );
                     e.placeable.transform = entity.placeable.transform;
                     e.controls.getController().reset();
@@ -46,8 +46,7 @@
 
                 if ( name === "freelookcamera" ) {
                     ent = ecManager.createLocalEntity( "freelookcamera", ["EC_Placeable", "EC_Name", "EC_Camera", "EC_Controls"] );
-                    console.warn( "CameraManager: Creating FreelookCamera." );
-                    console.warn( ent );
+                    //console.warn( "CameraManager: Creating FreelookCamera." );
                     ent.name = "freelookcamera";
                     ent.controls.setControls("freelook");
                     controller = ent.controls.getController();

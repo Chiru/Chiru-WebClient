@@ -31,7 +31,14 @@
     }
 
 
-    //Initializing the websocket connection and adding some basic events
+    // ### Initializing GUI ###
+
+    namespace.progressIndicator = webtundra.GUI.createGUIComponent( 'progressIndicator', {
+        context: document.getElementById( 'loadingScreen' )
+    } );
+
+    // ### Initializing the WebSocket manager ###
+
     namespace.ws = webtundra.initConnection( /*'130.231.12.58'*/wsAddress.split(":")[0], wsAddress.split(":")[1], {allowReconnect: false} );
     namespace.ws.bindEvent( "connected", function ( url ) {
         console.log( "WebSocket connection opened." );
@@ -51,7 +58,7 @@
     } );
 
 
-    //Initializing the scene manager
+    // ### Initializing the scene manager ###
     namespace.scene = webtundra.initScene(
         {
             container: namespace.container,
@@ -60,10 +67,12 @@
         } );
 
 
-    // Starting the scene manager
+    // ### Starting the scene manager ###
     namespace.scene.start();
 
 
+
+    // Printing some WebGL info
     console.log( "Supported WebGL extensions:" );
     console.log( namespace.container.children[0].getContext( 'experimental-webgl' ).getSupportedExtensions() );
 
@@ -108,71 +117,6 @@
      namespace.worker.postMessage(  {url:document.location.href});
      */
 
-
-
-    //Testing OgreXML parsing
-/*
-    var ogreparser = webtundra.OgreXMLParser, pos, geom;
-
-    function load( url, callback ) {
-        var request = new XMLHttpRequest();
-
-        request.open( "GET", url, false );
-
-        request.onreadystatechange = function () {
-
-            if ( request.readyState === 4 ) {
-
-                if ( request.status === 200 ) {
-                    console.log( "Downloaded." );
-
-                    if ( request.responseXML ) {
-                        callback( request.responseXML );
-                    } else if ( request.responseText ) {
-                        callback( request.responseText );
-                    }
-
-                }
-            }
-        };
-        request.send( null );
-
-    }
-    function processDelay(xml){
-        geom = ogreparser.parseMeshXML( xml );
-
-        load( '/scenes/avatar/default.material', processMaterial );
-    }
-
-    function processMesh( xml ) {
-
-        setTimeout(processDelay, 1000*pos, xml);
-
-    }
-
-    function processMaterial( string ) {
-        var mat, mesh;
-        mat = ogreparser.parseMaterial( string );
-        mesh = new THREE.Mesh( geom[0], mat );
-        mesh.position.set( 0, mesh.id, 0 );
-
-        console.log( mesh );
-
-        namespace.scene.addToScene( mesh );
-
-    }
-
-    function parseTest() {
-        load( '/scenes/avatar/fish.mesh.xml', processMesh );
-
-
-    }
-
-    for ( var i = 100; i--; ) {
-        pos = i;
-        parseTest();
-    }
-*/
 
 }( window.myNamespace = window.myNamespace || {} ));
 

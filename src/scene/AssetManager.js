@@ -11,7 +11,7 @@
     var AssetManager = namespace.AssetManager = function ( storageUrl, meshType ) {
 
         var meshTypes, meshAssets, textureAssets, materialAssets,
-             requestQueue, remoteStorage, assetParser, publicMethods;
+             requestQueue, remoteStorage, assetParser, publicMethods, GUIProgressIndicator;
 
         // Exposed methods
         publicMethods = {
@@ -47,6 +47,9 @@
             requests: {}
         };
 
+
+        GUIProgressIndicator = namespace.GUI.getGUIComponent('loader');
+
         /**
          *
          * @param name
@@ -59,6 +62,11 @@
                 queue.splice(queue.indexOf(name), 1);
                 delete requests[name];
                 //console.log( "Request:", name, "deleted" );
+
+                // Showing progress in the GUI
+                if(GUIProgressIndicator){
+                    GUIProgressIndicator.updateProgress();
+                }
             }
 
             if ( queue.length === 0 ) {
@@ -159,6 +167,10 @@
             try {
                 console.log( "Requesting: " + opts.url );
                 request.send( null );
+
+                if(GUIProgressIndicator){
+                    GUIProgressIndicator.setTotal();
+                }
 
             } catch (e) {
                 console.log( 'error', e.message + ", when requesting: " + opts.url );
@@ -364,8 +376,8 @@
 
             //console.timeEnd( 'Processing time' );
 
-            console.log( "Processing complete." );
-            console.log(meshGroup)
+            console.log( "Mesh",name,"processed!");
+            //console.log(meshGroup)
 
         }
 
@@ -393,7 +405,7 @@
             }
 
             removeRequest( name );
-
+            console.log( "Texture",name,"processed!" );
 
         }
 
@@ -423,7 +435,7 @@
 
             //console.timeEnd( 'Processing time' );
 
-            console.log( "Processing complete." );
+            console.log( "Material",name,"processed!" );
             //console.log(materialGroup)
 
         }

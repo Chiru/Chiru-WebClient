@@ -8,20 +8,21 @@ body, html {
 }
 a { color: skyblue }
 
-div#pageLoader {
+div#loadingScreen {
     color: #FFFFFF;
     position: absolute;
     float:left;
     height:50px;
-    width:250px;
+    width:300px;
     top:50%;
     left:50%;
     text-align: center;
-    margin-left:-125px;
-    margin-top:-25px;
+    margin-left:-150px;
+    margin-top:-50px;
     font-family: Charcoal, sans-serif;
     font-size: 2em;
     font-weight:bold;
+    visibility: hidden;
 }
 
 div#top {

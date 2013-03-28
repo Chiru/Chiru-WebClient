@@ -6,7 +6,7 @@
 
 (function ( namespace, undefined ) {
 
-    var Detector = namespace['Detector'] = {
+    var Detector = namespace.Detector = {
 
         canvas: !!window.CanvasRenderingContext2D,
         webgl: (function () {

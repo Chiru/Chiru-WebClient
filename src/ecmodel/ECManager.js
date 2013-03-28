@@ -33,12 +33,11 @@
             connection.bindEvent( "EntityAdded", function ( data ) {
                 namespace.util.log( "Got new Entity " + "( id: " + data['entityID'] + ", name: " + data['name'] +
                     ", components: " + data['numReplComps'] + " )" );
-
                 self.parseEntity( data );
 
             } );
             connection.bindEvent( "EntityRemoved", function ( data ) {
-                namespace.util.log( "Server removed Entity " + JSON.toString(data) );
+                namespace.util.log( "Server removed Entity " + data['entityID'] );
             } );
 
             connection.bindEvent( "ComponentsRemoved", function ( data ) {
@@ -107,11 +106,11 @@
             if ( !entities.hasOwnProperty( id ) ) {
                 entities[id] = new namespace.Entity( id, name );
 
-                entities[id].componentAdded.add( function ( c ) {
+                /*entities[id].componentAdded.add( function ( c ) {
 
                     // Debug print
                     console.log( "Component", c.id, "added to entity:", c.parent.id );
-                } );
+                } );*/
 
                 return entities[id];
             }

@@ -76,7 +76,7 @@
                 parent = this.parent;
                 if ( parent ) {
                     parent.placeable = this;
-                    console.log( "Adding placeable to scene" )
+                    //console.log( "Adding placeable to scene" )
                     this.updateSceneNode();
 
                     this.sceneManager.addToScene( this.sceneNode );

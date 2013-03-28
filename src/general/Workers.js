@@ -5,7 +5,11 @@
  */
 
 (function ( namespace, undefined ) {
-    var Workers = namespace.Workers = function () {
+    var Workers;
+
+
+    Workers = namespace.Workers = function () {
+
         var workers = {},
             workerCount = 0,
             queue = [];

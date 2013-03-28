@@ -8,6 +8,8 @@
 
     var util = namespace.util;
 
+    //TODO: Do refactoring and cleaning
+
     var AssetParser = namespace.AssetParser = function (meshType, assetManager) {
         var type, parsers,
             parseMesh, parseMaterial;

@@ -131,6 +131,8 @@
                     return false;
                 }
 
+                //TODO: Refactor this function
+
                 geometryGroup = meshData.geometryGroup;
                 geomGroupLen = meshData.geometryGroup.length;
                 materialRdy = meshData.materialReady;

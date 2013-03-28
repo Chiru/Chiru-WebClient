@@ -136,7 +136,6 @@
             loaderObj.show();
 
             guiObjects['loader'] = loaderObj;
-            console.warn( loaderObj )
 
             return loaderObj;
         }

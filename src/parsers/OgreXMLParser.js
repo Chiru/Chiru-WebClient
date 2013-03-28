@@ -15,7 +15,7 @@
 
             function parseMeshXML( xml ) {
 
-                var root, result = [], resultElement, submeshes, nSubmeshes, submesh, meshMatRef,
+                var root, result = [], resultElement, submeshes, nSubmeshes, submesh, meshMatRef, matFile,
                     tGeom, sharedGeometry, sharedVertexData, i;
 
                 root = xml.documentElement;
@@ -26,7 +26,6 @@
 
                 sharedGeometry = getElements("//sharedgeometry", xml, root);
                 if(sharedGeometry.snapshotLength > 0){
-                    console.warn("Ogre xml has shared geometry!")
                     sharedVertexData = parseGeometry( sharedGeometry.snapshotItem(0), xml );
                 }
 
@@ -38,18 +37,24 @@
                     submesh = submeshes.snapshotItem( i );
                     meshMatRef = submesh.getAttribute( "material" );
 
+                    if(meshMatRef.indexOf('#') === -1){
+                        matFile = meshMatRef;
+                    }else{
+                        matFile = null;
+                    }
+
                     tGeom = new THREE.Geometry();
 
                     parseMesh( submesh, xml, sharedVertexData, tGeom );
 
                     tGeom.computeCentroids();
+                    tGeom.computeFaceNormals();
                     if(tGeom.normals.length === 0){
-                        tGeom.computeFaceNormals();
                         tGeom.computeVertexNormals();
                     }
-                    //tGeom.computeTangents();
 
-                    result.push( {'geometry':tGeom, 'materialRef': meshMatRef } );
+
+                    result.push( {geometry:tGeom, materialRef: meshMatRef, materialFileRef: matFile } );
                 }
 
                 return result;
@@ -68,7 +73,6 @@
 
                 faceData = parseFaces( element, xml );
                 if(element.getAttribute( "usesharedvertices" ) === "true" && sharedVertexData){
-                    console.warn("Mesh uses shared vertices!")
                     vertexData = sharedVertexData;
                 }else{
                     geometry = element.getElementsByTagName( "geometry" )[0];
@@ -317,7 +321,9 @@
 
                 //Processing lines
                 for ( i = 0; i < nLines; i++ ) {
-                    line = lines[i];
+
+                    // Get line and remove extra space between items
+                    line = lines[i].replace(/\s+/g,' ');
 
                     //Ignore empty lines and comment lines
                     if (!line || /^\s*$/.test(line)|| line.indexOf( '//' ) !== -1 ) {

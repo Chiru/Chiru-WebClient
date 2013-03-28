@@ -37,12 +37,15 @@
 
             if ( type === 'ogre' ) {
 
-                function hasMaterialRef( el ) {
-                    return el.materialRef;
-                }
+
 
                 parseFunc = function ( data, name, requestUrl ) {
-                    var request, result;
+                    var request, result, materialFileRef, usesMaterials,  geometryGroup,
+                        i;
+
+                    usesMaterials = function ( el ) {
+                        return el.materialRef;
+                    };
 
                     parser = parsers[type];
 
@@ -50,7 +53,8 @@
                         result = {
                             geometryGroup: parser.parseMeshXML( data ),
                             materialReady: new namespace.Signal(),
-                            hasMaterials: false
+                            hasMaterials: false,
+                            usesSeparateMatFiles: false
                         };
                     } catch (e) {
                         console.error( "AssetParser: Error while parsing Ogre XML mesh", requestUrl, e.stack );
@@ -60,14 +64,35 @@
                     if ( result.geometryGroup ) {
 
                         //Requesting material file if some submeshes use materials
-                        if(result.geometryGroup.some(hasMaterialRef)){
+                        if(result.geometryGroup.some(usesMaterials)){
                             result.hasMaterials = true;
+                            geometryGroup = result.geometryGroup;
 
-                            request = assetManager.requestAsset( name, 'material');
-                            if(request){
-                                request.add(function(matGroup){
-                                    result.materialReady.dispatch(matGroup);
-                                });
+                            for ( i = geometryGroup.length; i--; ) {
+                                if ( geometryGroup[i].materialFileRef ) {
+                                    result.usesSeparateMatFiles = true;
+
+                                    geometryGroup[i].materialReady = new namespace.Signal();
+                                    request = assetManager.requestAsset( geometryGroup[i].materialFileRef, 'material' );
+
+                                    if ( request ) {
+                                        (function ( signal, request ) {
+                                            request.add( function ( matGroup ) {
+                                                signal.dispatch( matGroup );
+                                            } );
+                                        }( geometryGroup[i].materialReady, request ));
+                                    }
+                                }
+                            }
+
+                            if ( !result.usesSeparateMatFiles) {
+                                request = assetManager.requestAsset( name, 'material' );
+
+                                if ( request ) {
+                                    request.add( function ( matGroup ) {
+                                        result.materialReady.dispatch( matGroup );
+                                    } );
+                                }
                             }
                         }
                     }

@@ -101,7 +101,6 @@
              */
             controls.update( clock.getDelta() );
 
-
             self.skyBoxCamera.rotation.setEulerFromRotationMatrix(
                 self.mainCamera.parent.matrixWorld,
                 //self.camera.matrixWorld,
@@ -276,16 +275,17 @@
 
         } );
 
-        //renderer.setFaceCulling( THREE.CullFaceNone );
         renderer.autoClear = false;
-        renderer.gammaInput = true;
-        renderer.gammaOutput = true;
-        /*
-         renderer.shadowMapEnabled = true;
-         renderer.shadowMapSoft = true;
-         renderer.shadowMapCascade = false;
-         */
-        //renderer.physicallyBasedShading = true;
+        //renderer.gammaInput = true;
+        //renderer.gammaOutput = true;
+        renderer.shadowMapAutoUpdate = true;
+        renderer.shadowMapEnabled = true;
+        renderer.shadowMapSoft = false;
+        renderer.shadowMapType = THREE.PCFSoftShadowMap;
+        renderer.shadowMapCascade = false;
+        renderer.shadowMapCullFace = THREE.CullFaceNone;
+
+        renderer.physicallyBasedShading = true;
 
         renderer.setSize( innerWidth( this.container ), innerHeight( this.container ) );
         container.appendChild( this.renderer.domElement );
@@ -352,6 +352,7 @@
          }, false );
 
          */
+
         // *** SIGNAL LISTENERS ***
         //Windows resize listener
         this.windowResize();
@@ -365,7 +366,7 @@
 
         // *** HELPERS FOR DEVELOPING ***
         var axes = new THREE.AxisHelper( 50 );
-        axes.position.y = 10;
+        axes.position.y = 30;
         scene.add( axes );
 
     };

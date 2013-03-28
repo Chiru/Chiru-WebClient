@@ -70,10 +70,10 @@
                     sunLight = this.sunLight = new THREE.DirectionalLight();
                     this.updateSunLight();
                     sceneManager.addToScene( sunLight );
+                    sceneManager.addToScene( new THREE.DirectionalLightHelper(sunLight, 2.5) );
 
                 }
             },
-
 
             updateSunLight: function () {
                 var sunLight = this.sunLight, sunColor = this.sunColor,
@@ -81,22 +81,30 @@
 
                 if ( sunLight ) {
                     sunLight.color.setRGB( sunColor[0], sunColor[1], sunColor[2] );
-                    //sunLight.color.multiplyScalar(this.sunBrightness['val']);
+                    sunLight.intensity = this.brightness;
+
                     if ( this.sunCastShadows ) {
                         sunLight.castShadow = true;
-                        //sunLight.shadowCameraVisible = true;
-                        sunLight.shadowDarkness = 0.6;
-                        sunLight.shadowBias = 0.000065;
+                        sunLight.shadowCameraVisible = true;
+                        sunLight.shadowCameraFar = 3500;
+                        sunLight.shadowBias = -0.00022;
+                        sunLight.shadowCameraNear = 200;
+                        sunLight.shadowCameraFar = 10000;
+                        sunLight.shadowCameraFov = 70;
+                        sunLight.shadowDarkness = 0.35;
+                        sunLight.shadowMapWidth = 2048;
+                        sunLight.shadowMapHeight = 2048;
+                        /*
                         sunLight.shadowCascade = false;
                         sunLight.shadowCascadeCount = 3;
-                        sunLight.shadowCascadeNearZ = [ -1.000, 0.9, 0.975 ];
-                        sunLight.shadowCascadeFarZ = [  0.9, 0.975, 1.000 ];
-                        sunLight.shadowCascadeWidth = [ 1024, 1024, 1024 ];
-                        sunLight.shadowCascadeHeight = [ 1024, 1024, 1024 ];
-                        sunLight.shadowCascadeBias = [ 0.00005, 0.000065, 0.000065 ];
-                        //sunLight.shadowCascadeOffset.set( 0, 0, -5 );
-                        sunLight.shadowMapWidth = 1024;
-                        sunLight.shadowMapHeight = 1024;
+                         sunLight.shadowCascadeNearZ = [ 0.9, 0.975, 1.000 ];
+                         sunLight.shadowCascadeFarZ = [  0.9, 0.975, 1.000 ];
+                         sunLight.shadowCascadeWidth = [ 2048, 2048, 2048 ];
+                         sunLight.shadowCascadeHeight = [ 2048, 2048, 2048 ];
+                         sunLight.shadowCascadeBias = [ -0.00022, -0.00022, -0.00022 ];
+                        */
+
+
                     }
                     sunLight.position.set( -1000 * dir[0], -1000 * dir[1], -1000 * dir[2] );
                     sunLight.target.position.set( 0, 0, 0 );

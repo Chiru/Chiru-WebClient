@@ -18,6 +18,7 @@
             requestAsset: requestAsset,
             getAsset: getAsset,
             cleanFileName: cleanFileName,
+            getBaseFileName: getBaseFileName,
             setRemoteStorage: setRemoteStorage
         };
 
@@ -72,6 +73,7 @@
             if ( queue.length === 0 ) {
                 console.log( "All requests processed!" );
             }
+
         }
 
 
@@ -151,16 +153,19 @@
 
                     } else if ( request.status === 404 ) {
                         console.log( 'error', "File not found from: " + opts.url );
+                        removeRequest( request.assetName );
                     }
 
                 }
             };
 
             request.onabort = function () {
+                removeRequest( request.assetName );
             };
 
             request.onerror = function ( e ) {
                 console.log( 'error', "Failed to download: " + opts.url );
+                removeRequest( request.assetName );
             };
 
 
@@ -257,15 +262,16 @@
                 switch (type) {
                 case 'mesh':
                 {
+                    assetName = cleanFileName( assetName, meshTypes[meshType].meshFileExt );
+
                     if ( meshAssets.hasOwnProperty( assetName ) ) {
-                        console.log( "Mesh:", assetName, "already downloaded" );
+                        //console.log( "Mesh:", assetName, "already downloaded" );
                         return false;
                     }
 
                     if ( !document.implementation || !document.implementation.createDocument ) {
                         throw new Error( ["AssetManager: Your browser can't process XML!"] );
                     }
-                    assetName = cleanFileName( assetName, meshTypes[meshType].meshFileExt );
 
                     mimeType = 'text/xml';
 
@@ -273,15 +279,16 @@
                     break;
                 case 'material':
                 {
+                    assetName = cleanFileName( assetName, meshTypes[meshType].matFileExt, true );
+
                     if ( materialAssets.hasOwnProperty( assetName ) ) {
-                        console.log( "Material:", assetName, "already downloaded" );
+                        //console.log( "Material:", assetName, "already downloaded" );
                         return false;
                     }
 
                     if ( !document.implementation || !document.implementation.createDocument ) {
                         throw new Error( ["AssetManager: Your browser can't process XML!"] );
                     }
-                    assetName = cleanFileName( assetName, meshTypes[meshType].matFileExt, true );
 
                     mimeType = 'text/plain';
 
@@ -289,13 +296,14 @@
                     break;
                 case 'texture':
                 {
+                    assetName = cleanFileName( assetName );
+
                     if ( textureAssets.hasOwnProperty( assetName ) ) {
-                        console.log( "Texture:", assetName, "already downloaded" );
+                        //console.log( "Texture:", assetName, "already downloaded" );
                         return false;
                     }
 
                     responseType = "arraybuffer";
-                    assetName = cleanFileName( assetName );
                 }
                     break;
                 default:
@@ -336,6 +344,7 @@
          */
 
         function processAsset( request, signal, name, type ) {
+
             switch (type) {
             case 'mesh':
                 processMesh( request, signal, name );
@@ -394,6 +403,11 @@
                 dds = THREE.ImageUtils.parseDDS( buffer, true ),
                 self = this;
 
+            removeRequest( name );
+
+            if(dds.format === null){
+                return;
+            }
             dds.name = name;
 
             if ( !textureAssets.hasOwnProperty( name ) ) {
@@ -404,7 +418,7 @@
                 signal.dispatch( textureAssets[name] );
             }
 
-            removeRequest( name );
+
             console.log( "Texture",name,"processed!" );
 
         }
@@ -419,24 +433,21 @@
             console.log("Processing material", name);
 
             var data = request.responseText,
-                materialGroup, self = this;
+                materialGroup, matRef;
 
             materialGroup = assetParser.parseMaterial( data, name, request.url );
-
-            if ( !materialAssets.hasOwnProperty( name ) ) {
-                materialAssets[name] = materialGroup;
-            }
-
-            if ( signal instanceof namespace.Signal ) {
-                signal.dispatch( materialAssets[name] );
+            for ( matRef in materialGroup ) {
+                if ( !materialAssets.hasOwnProperty( matRef ) ) {
+                    materialAssets[matRef] = materialGroup[matRef];
+                    if ( signal instanceof namespace.Signal ) {
+                        signal.dispatch( materialAssets[matRef] );
+                    }
+                }
             }
 
             removeRequest( name );
 
-            //console.timeEnd( 'Processing time' );
-
             console.log( "Material",name,"processed!" );
-            //console.log(materialGroup)
 
         }
 
@@ -448,10 +459,12 @@
          */
         function getAsset( assetRef, type ) {
             if ( type === 'mesh' ) {
+                assetRef = cleanFileName( assetRef, meshTypes[meshType].meshFileExt );
                 if ( meshAssets.hasOwnProperty( assetRef ) ) {
                     return meshAssets[assetRef];
                 }
             } else if ( type === 'texture' ) {
+                assetRef = cleanFileName( assetRef );
                 if ( textureAssets.hasOwnProperty( assetRef ) ) {
                     return textureAssets[assetRef];
                 }
@@ -465,16 +478,13 @@
 
         function saveAsset(assetRef, data, type) {
             if ( type === 'mesh' ) {
-                if ( meshAssets.hasOwnProperty( assetRef ) ) {
-                    return meshAssets[assetRef];
+                if ( !meshAssets.hasOwnProperty( assetRef ) ) {
                 }
             } else if ( type === 'texture' ) {
-                if ( textureAssets.hasOwnProperty( assetRef ) ) {
-                    return textureAssets[assetRef];
+                if ( !textureAssets.hasOwnProperty( assetRef ) ) {
                 }
             } else if ( type === 'material' ) {
-                if ( materialAssets.hasOwnProperty( assetRef ) ) {
-                    return materialAssets[assetRef];
+                if ( !materialAssets.hasOwnProperty( assetRef ) ) {
                 }
             }
             return false;

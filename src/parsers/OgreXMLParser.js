@@ -343,8 +343,6 @@
 
                 }
 
-                console.log( materialGroup );
-
                 delete matContext.matGroup;
 
                 return materialGroup;

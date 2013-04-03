@@ -1,4 +1,4 @@
-material detault
+material default
 {
     receive_shadows on
     technique

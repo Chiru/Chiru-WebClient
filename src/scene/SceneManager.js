@@ -193,6 +193,30 @@
             }
         }
     };
+    SceneManager.prototype.createLight = function ( type ) {
+        var light;
+
+        if(type === 0){
+            light =  this.getSceneObject( function ( obj ) {
+                return obj instanceof THREE.PointLight && obj.parent instanceof THREE.Scene;
+            } );
+
+        }else if(type === 1){
+            light = this.getSceneObject( function ( obj ) {
+                return obj instanceof THREE.SpotLight && obj.parent instanceof THREE.Scene;
+            } );
+        }else if(type === 2){
+            light = this.getSceneObject( function ( obj ) {
+                return obj instanceof THREE.DirectionalLight && obj.parent instanceof THREE.Scene;
+            } );
+        }else{
+            return false;
+        }
+
+        return light;
+
+
+    };
 
     SceneManager.prototype.setMainCamera = function ( cameraEntity ) {
         var entity, camComp, camera, camControls;
@@ -243,7 +267,6 @@
             }
         }
         return false;
-
     };
 
 
@@ -252,7 +275,7 @@
         var body = document.body, renderer, scene, skyBoxScene, camera, skyBoxCamera, controls,
             container = this.container, websocket = this.websocket,
             assetManager = this.assetManager, ecManager = this.ecManager, cameraManager = this.cameraManager,
-            self = this;
+            self = this, i;
 
 
         // *** SCENE AND SKYBOX ***
@@ -265,6 +288,11 @@
         skyBoxCamera.lookAt( scene.position );
         this.setMainCamera();
 
+        // *** Creating dummy lights ***
+        for(i=5; i--;){
+            scene.add(new THREE.PointLight(null, 0));
+            scene.add(new THREE.SpotLight(null, 0));
+        }
 
         // *** RENDERER ***
         renderer = this.renderer = new THREE.WebGLRenderer( {
@@ -272,7 +300,6 @@
             clearColor: 0x87CEEB,
             clearAlpha: 1,
             preserveDrawingBuffer: false
-
         } );
 
         renderer.autoClear = false;

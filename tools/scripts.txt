@@ -3,6 +3,7 @@
 ../src/general/Util.js
 
 # Source files
+../src/gui/Gui.js
 ../src/WebClient.js
 ../src/general/Detector.js
 ../src/general/Workers.js
@@ -10,7 +11,7 @@
 ../src/parsers/ColladaLoader.js
 ../src/parsers/OgreXMLParser.js
 ../src/parsers/parseUri.js
-../src/parsers/MeshParser.js
+../src/parsers/AssetParser.js
 ../src/controls/Controls.js
 ../src/controls/FreeLookControls.js
 ../src/controls/AvatarControls.js
@@ -22,10 +23,12 @@
 ../src/ecmodel/EC_Avatar.js
 ../src/ecmodel/EC_Light.js
 ../src/ecmodel/EC_Sky.js
+../src/ecmodel/EC_AnimationController.js
 ../src/ecmodel/EC_Camera.js
 ../src/ecmodel/EC_Mesh.js
 ../src/ecmodel/EC_Material.js
 ../src/ecmodel/EC_Placeable.js
+../src/ecmodel/EC_Dynamic.js
 ../src/ecmodel/EC_Name.js
 ../src/ecmodel/EC_Controls.js
 ../src/ecmodel/ECManager.js

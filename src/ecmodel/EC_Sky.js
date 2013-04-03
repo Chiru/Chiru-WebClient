@@ -99,38 +99,33 @@
                 shader = THREE.ShaderLib[ "cube" ];
                 cubeTexture.mapping = new THREE.UVMapping();
                 shader.uniforms[ "tCube" ].value = cubeTexture;
-
-                /*
-                 //Experimental shader implementation of skybox
-                 shader.uniforms["cameraRotation"] = {type: 'm4', value: inverse};
+                 /*
                  shader.vertexShader = [
-                 "uniform mat4 cameraRotation;",
-                 "varying vec3 vWorldPosition;",
+                     "varying vec3 vWorldPosition;",
 
-                 "void main() {",
+                     "void main() {",
 
-                 "vec4 worldPosition = modelMatrix * vec4( position, 1.0 );",
-                 "vWorldPosition = worldPosition.xyz;",
+                     "vec4 worldPosition = modelMatrix * vec4( position, 1.0 );",
+                     "vWorldPosition = worldPosition.xyz;",
 
-                 "gl_Position = (projectionMatrix * cameraRotation * vec4( position, 1.0 )).xyzw;",
+                     "gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
 
-                 "}"
+                     "}"
                  ].join( "\n" );
 
                  shader.fragmentShader = [
+                     "uniform samplerCube tCube;",
+                     "uniform float tFlip;",
 
-                 "uniform samplerCube tCube;",
-                 "uniform float tFlip;",
+                     "varying vec3 vWorldPosition;",
 
-                 "varying vec3 vWorldPosition;",
+                     "void main() {",
 
-                 "void main() {",
+                     "gl_FragColor = textureCube( tCube, vec3( tFlip * vWorldPosition.x, vWorldPosition.yz ) );",
 
-                 "gl_FragColor = textureCube( tCube, vec3( tFlip * vWorldPosition.x, vWorldPosition.yz ) );",
-
-                 "}"
+                     "}"
                  ].join( "\n" );
-                 */
+                */
                 material = new THREE.ShaderMaterial( {
 
                     fragmentShader: shader.fragmentShader,
@@ -143,43 +138,12 @@
 
 
                 geometry = new THREE.CubeGeometry( distance, distance, distance );
-                /*
-                 // For some reason changing uv mapping has no effect at all. Top face texture has wrong orientation.
+                skyBox = this.skyBox = new THREE.Mesh( geometry, material );
 
-                 function createUvMapping( uvMap ) {
-                 var i, j, mapLen = uvMap.length, uvs = [],
-                 faceUvs, tuple, faceUvLen, result = [];
-                 for ( i = mapLen; i--; ) {
-                 faceUvs = uvMap[i];
-                 faceUvLen = faceUvs.length;
-
-                 for ( j = faceUvLen; j--; ) {
-                 tuple = faceUvs[j];
-                 uvs.push( new THREE.Vector2( tuple[0], tuple[1] ) );
-                 }
-                 result.push(uvs);
-                 uvs = [];
-                 }
-
-                 return result;
-                 }
-
-                 geometry.faceVertexUvs = [[]];
-                 geometry.faceVertexUvs.push( createUvMapping(
-                 [[[0,1],[0,0],[1,0],[1,1]],
-                 [[0,1],[0,0],[1,0],[1,1]],
-                 [[0,0],[1,1],[0,1],[0,0]],
-                 [[0,1],[0,0],[1,0],[1,1]],
-                 [[0,1],[0,0],[1,0],[1,1]],
-                 [[0,1],[0,0],[1,0],[1,1]]]) );
-
-                 geometry.uvsNeedUpdate = true;
-                 geometry.computeCentroids();
-                 geometry.mergeVertices();
-                 */
-
-                skyBox = this.skyBox = new THREE.Mesh( geometry.clone(), material );
-
+                // This has no effect for the top face uv mapping for some reason, hence it has wrong orientation
+                skyBox.geometry.faceVertexUvs[0][2] = [new THREE.Vector2(0, 0), new THREE.Vector2(0, 1),
+                                                       new THREE.Vector2(1, 1), new THREE.Vector2(1, 0)];
+                skyBox.geometry.uvsNeedUpdate = true;
 
                 //this.sceneManager.camera.add(skyBox)
                 this.sceneManager.addSkyBox( skyBox );
@@ -232,10 +196,9 @@
                 texture.image = images;
                 texture.flipY = false;
                 texture.format = dds.format;
-                texture.needsUpdate = true;
                 texture.minFilter = texture.magFilter = THREE.LinearFilter;
                 texture.anisotropy = 4;
-
+                texture.needsUpdate = true;
 
                 return texture;
             },

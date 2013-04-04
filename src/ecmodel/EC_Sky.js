@@ -96,9 +96,13 @@
                 var shader, material, skyBox, geometry, distance = this.distance;
                 //inverse = this.sceneManager.camera.inverse;
 
-                shader = THREE.ShaderLib[ "cube" ];
-                cubeTexture.mapping = new THREE.UVMapping();
-                shader.uniforms[ "tCube" ].value = cubeTexture;
+                if(!cubeTexture){
+                    return;
+                }
+
+                //shader = THREE.ShaderLib[ "cube" ];
+                //cubeTexture.mapping = new THREE.UVMapping();
+                //shader.uniforms[ "tCube" ].value = cubeTexture;
                  /*
                  shader.vertexShader = [
                      "varying vec3 vWorldPosition;",
@@ -126,7 +130,7 @@
                      "}"
                  ].join( "\n" );
                 */
-                material = new THREE.ShaderMaterial( {
+                /*material = new THREE.ShaderMaterial( {
 
                     fragmentShader: shader.fragmentShader,
                     vertexShader: shader.vertexShader,
@@ -134,8 +138,12 @@
                     depthWrite: false,
                     side: THREE.BackSide
 
-                } );
+                } );*/
 
+                material = new THREE.MeshFaceMaterial( cubeTexture );
+                material.depthWrite = false;
+                material.side = THREE.BackSide;
+                console.log(material)
 
                 geometry = new THREE.CubeGeometry( distance, distance, distance );
                 skyBox = this.skyBox = new THREE.Mesh( geometry, material );
@@ -152,13 +160,13 @@
             },
 
             createCubeTexture: function ( textures ) {
-                var images = [], texture = new THREE.CompressedTexture(), dds,
-                    texturesLen = textures.length, name, i, order;
+                var ordered = [], texturesLen = textures.length, name, i, order;
 
 
                 function checkOrder( name ) {
                     if ( typeof name !== 'string' && name !== '' ) {
-                        throw new Error( ["ECSky: Invalid SkyBox texture name!"] );
+                        console.error( "ECSky: Invalid SkyBox texture name!" );
+                        return false;
                     }
 
                     if ( name.indexOf( "front" ) !== -1 ) {
@@ -174,33 +182,22 @@
                     } else if ( name.indexOf( "right" ) !== -1 ) {
                         return 5;
                     } else {
-                        throw new Error( ["ECSky: Invalid SkyBox texture: " + name] );
+                        console.error( "ECSky: Invalid SkyBox texture: " + name );
+                        return false;
                     }
                 }
 
                 for ( i = texturesLen; i--; ) {
-                    dds = textures[i];
-                    name = dds.name;
-                    order = checkOrder( name );
+                    order = checkOrder( textures[i].name );
 
-                    images[order] =
-                    {
-                        format: dds.format,
-                        mipmaps: dds.mipmaps,
-                        width: dds.width,
-                        height: dds.height
-                    };
+                    if (!order) {
+                        return false;
+                    }
+
+                    ordered[order] = textures[i];
                 }
 
-                texture.generateMipmaps = false;
-                texture.image = images;
-                texture.flipY = false;
-                texture.format = dds.format;
-                texture.minFilter = texture.magFilter = THREE.LinearFilter;
-                texture.anisotropy = 4;
-                texture.needsUpdate = true;
-
-                return texture;
+                return ordered;
             },
 
 

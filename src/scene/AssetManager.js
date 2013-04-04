@@ -10,7 +10,7 @@
 
     var AssetManager = namespace.AssetManager = function ( storageUrl, meshType ) {
 
-        var meshTypes, meshAssets, textureAssets, materialAssets,
+        var meshTypes, textureTypes, meshAssets, textureAssets, materialAssets, requestTypes,
              requestQueue, remoteStorage, assetParser, publicMethods, GUIProgressIndicator;
 
         // Exposed methods
@@ -26,6 +26,10 @@
             'ogre': {meshFileExt: 'mesh.xml', matFileExt: 'material'},
             'collada': {meshFileExt: 'dae', matFileExt: null}
         };
+
+        textureTypes = ['dds', 'jpg', 'jpeg', 'png', 'gif'];
+
+        requestTypes = utils.createEnum('xhr', 'image');
 
         if(!meshTypes.hasOwnProperty(meshType)){
             throw new Error(["AssetManager: Unsupported mesh type: " + meshType]);
@@ -91,16 +95,17 @@
          * @return {*}
          */
 
-        function createRequest ( options ) {
+        function createRequest( options ) {
 
             var defaults = {
                     url: '',
+                    requestType: 'xhr',
                     responseType: '',
                     mimeType: null,
                     assetName: null,
                     assetType: null
                 },
-                opts, request, trigger = null, queue = requestQueue.queue, queueLen = queue.length,
+                opts, request, queue = requestQueue.queue, queueLen = queue.length,
                 requests = requestQueue.requests, assetReadySig = new namespace.Signal(),
                 self = this, i;
 
@@ -114,50 +119,63 @@
 
             // Checking if duplicate request exists already in the queue, or creating a new request
             if ( !requests.hasOwnProperty( opts.assetName ) ) {
-                request = new XMLHttpRequest();
+                if ( opts.requestType === requestTypes.xhr ) {
+                    request = new XMLHttpRequest();
+                } else if ( opts.requestType === requestTypes.image ) {
+                    request = new Image();
+                }
                 requests[opts.assetName] = {request: request, signal: assetReadySig};
-                queue.push(opts.assetName);
-           } else{
+                queue.push( opts.assetName );
+            } else {
                 // Returning the signal-object corresponding to requested asset that is already downloading
                 return requests[opts.assetName].signal;
             }
 
 
-            request.open( "GET", opts.url, true );
-            request.responseType = opts.responseType;
-            request.assetName = opts.assetName;
-            request.url = opts.url;
+            if ( opts.requestType === requestTypes.xhr ) {
+                request.open( "GET", opts.url, true );
+                request.responseType = opts.responseType;
+                request.assetName = opts.assetName;
+                request.url = opts.url;
 
-            if ( typeof opts.mimeType === 'string' ) {
-                request.overrideMimeType( opts.mimeType );
+                if ( typeof opts.mimeType === 'string' ) {
+                    request.overrideMimeType( opts.mimeType );
+                }
+
+                request.onreadystatechange = function () {
+
+                    if ( request.readyState === 4 ) {
+                        if ( request.status === 200 ) {
+
+                            console.log( opts.assetName, "downloaded." );
+
+                            request.downloaded = true;
+
+                            //Gives the program some time to breath after download to increase responsiveness
+
+                            setTimeout( processDelayFunc, 100 * queueLen, request,
+                                assetReadySig, opts.assetName, opts.assetType );
+
+                        } else if ( request.status === 404 ) {
+                            console.log( 'error', "File not found from: " + opts.url );
+                            removeRequest( request.assetName );
+                        }
+
+                    }
+                };
+            } else if ( opts.requestType === requestTypes.image ) {
+                request.onload = function () {
+                    console.log( opts.assetName, "downloaded." );
+
+                    request.downloaded = true;
+
+                    //Gives the program some time to breath after download to increase responsiveness
+
+                    setTimeout( processDelayFunc, 100 * queueLen, request,
+                        assetReadySig, opts.assetName, opts.assetType );
+                };
             }
 
-            request.onreadystatechange = function () {
-
-                if ( request.readyState === 4 ) {
-                    if ( request.status === 200 ) {
-
-                        console.log( opts.assetName, "downloaded." );
-
-                        request.downloaded = true;
-
-                        //TODO: Convert this to queue system where assets are processed one by one after download is complete
-                        //self.processAsset( request, assetReadySig, opts.assetName, opts.assetType );
-
-                        //Gives the program some time to breath after download to increase responsiveness
-
-                        setTimeout( processDelayFunc, 100 * queueLen, request,
-                            assetReadySig, opts.assetName, opts.assetType);
-
-
-
-                    } else if ( request.status === 404 ) {
-                        console.log( 'error', "File not found from: " + opts.url );
-                        removeRequest( request.assetName );
-                    }
-
-                }
-            };
 
             request.onabort = function () {
                 removeRequest( request.assetName );
@@ -171,14 +189,18 @@
 
             try {
                 console.log( "Requesting: " + opts.url );
-                request.send( null );
+                if ( opts.requestType === requestTypes.xhr ) {
+                    request.send( null );
+                } else if ( opts.requestType === requestTypes.image ) {
+                    request.src = opts.url;
+                }
 
-                if(GUIProgressIndicator){
+                if ( GUIProgressIndicator ) {
                     GUIProgressIndicator.setTotal();
                 }
 
             } catch (e) {
-                console.log( 'error', e.message + ", when requesting: " + opts.url );
+                console.error( "AssetManager:", "Error", e.message + ", when requesting: " + opts.url );
             }
 
 
@@ -198,12 +220,13 @@
         }
 
 
-        /**
-         *
-         * @param fileRef
-         * @param forceType
-         * @return {*}
-         */
+            /**
+             *
+             * @param fileRef
+             * @param forceType
+             * @param useBaseName
+             * @returns {*}
+             */
         function cleanFileName( fileRef, forceType, useBaseName ) {
             var fileName, type;
 
@@ -254,76 +277,82 @@
          * @return {*}
          */
         function requestAsset( assetName, type, storage, relPath ) {
-            var request, asset, responseType = "", mimeType = null;
+            var request, asset, fileFormat, requestType, responseType = "", mimeType = null;
 
-            if ( typeof type === 'string' ) {
-                type = type.toLowerCase();
+            if ( typeof type !== 'string' ) {
+                throw new Error( ["AssetManager: Requested asset type must be a string."] );
 
-                switch (type) {
-                case 'mesh':
-                {
-                    assetName = cleanFileName( assetName, meshTypes[meshType].meshFileExt );
+            }
+            type = type.toLowerCase();
 
-                    if ( meshAssets.hasOwnProperty( assetName ) ) {
-                        //console.log( "Mesh:", assetName, "already downloaded" );
-                        return false;
-                    }
+            if ( type === 'mesh' ) {
+                assetName = cleanFileName( assetName, meshTypes[meshType].meshFileExt );
 
-                    if ( !document.implementation || !document.implementation.createDocument ) {
-                        throw new Error( ["AssetManager: Your browser can't process XML!"] );
-                    }
-
-                    mimeType = 'text/xml';
-
+                if ( meshAssets.hasOwnProperty( assetName ) ) {
+                    //console.log( "Mesh:", assetName, "already downloaded" );
+                    return false;
                 }
-                    break;
-                case 'material':
-                {
-                    assetName = cleanFileName( assetName, meshTypes[meshType].matFileExt, true );
 
-                    if ( materialAssets.hasOwnProperty( assetName ) ) {
-                        //console.log( "Material:", assetName, "already downloaded" );
-                        return false;
-                    }
-
-                    if ( !document.implementation || !document.implementation.createDocument ) {
-                        throw new Error( ["AssetManager: Your browser can't process XML!"] );
-                    }
-
-                    mimeType = 'text/plain';
-
+                if ( !document.implementation || !document.implementation.createDocument ) {
+                    throw new Error( ["AssetManager: Your browser can't process XML!"] );
                 }
-                    break;
-                case 'texture':
-                {
-                    assetName = cleanFileName( assetName );
 
-                    if ( textureAssets.hasOwnProperty( assetName ) ) {
-                        //console.log( "Texture:", assetName, "already downloaded" );
-                        return false;
-                    }
+                mimeType = 'text/xml';
+                requestType = requestTypes.xhr;
 
-                    responseType = "arraybuffer";
+            } else if ( type === 'material' ) {
+                assetName = cleanFileName( assetName, meshTypes[meshType].matFileExt, true );
+
+                if ( materialAssets.hasOwnProperty( assetName ) ) {
+                    //console.log( "Material:", assetName, "already downloaded" );
+                    return false;
                 }
-                    break;
-                default:
-                    throw new Error( ["AssetManager: Invalid asset type requested: " + type] );
+
+                if ( !document.implementation || !document.implementation.createDocument ) {
+                    throw new Error( ["AssetManager: Your browser can't process XML!"] );
+                }
+
+                mimeType = 'text/plain';
+                requestType = requestTypes.xhr;
+
+            } else if ( type === 'texture' ) {
+                assetName = cleanFileName( assetName );
+
+                if ( textureAssets.hasOwnProperty( assetName ) ) {
+                    //console.log( "Texture:", assetName, "already downloaded" );
+                    return false;
+                }
+
+                fileFormat = assetName.split( '.' ).pop().toLowerCase();
+
+                if ( textureTypes.indexOf( fileFormat ) !== -1 ) {
+                    if ( fileFormat === 'dds' ) {
+                        responseType = 'arraybuffer';
+                        requestType = requestTypes.xhr;
+                    } else {
+                        requestType = requestTypes.image;
+                    }
+                } else {
+                    console.warn( "AssetManager: Texture format", fileFormat, " is not supported. Ignered", assetName );
+
                 }
 
             } else {
-                throw new Error( ["AssetManager: Requested asset type must be a string."] );
+                throw new Error( ["AssetManager: Invalid asset type requested: " + type] );
             }
+
 
             if ( !relPath ) {
                 relPath = '';
             }
 
-            if(!storage || typeof storage !== "string"){
+            if ( !storage || typeof storage !== "string" ) {
                 storage = remoteStorage;
             }
 
 
             request = createRequest( {
+                requestType: requestType,
                 url: storage + relPath + assetName,
                 responseType: responseType,
                 mimeType: mimeType,
@@ -397,21 +426,16 @@
          * @param name
          */
         function processTexture( request, signal, name ) {
+            var texture;
+
             console.log("Processing texture", name);
 
-            var buffer = request.response,
-                dds = THREE.ImageUtils.parseDDS( buffer, true ),
-                self = this;
+            texture = assetParser.parseTexture( request, name, request.url);
 
             removeRequest( name );
 
-            if(dds.format === null){
-                return;
-            }
-            dds.name = name;
-
             if ( !textureAssets.hasOwnProperty( name ) ) {
-                textureAssets[name] = dds;
+                textureAssets[name] = texture;
             }
 
             if ( signal instanceof namespace.Signal ) {

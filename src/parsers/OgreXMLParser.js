@@ -5,6 +5,7 @@
  */
 
 (function ( namespace, undefined ) {
+    var util = namespace.util;
 
     var OgreXMLParser = namespace.OgreXMLParser = function (assetManager) {
         var meshParser, materialParser;
@@ -371,7 +372,6 @@
 
                         material = matContext.matGroup[props.name] = new THREE.MeshPhongMaterial(props);
 
-                        if(material.map){
                             // The usual case: Texture is loaded after material has been processed. Here we extract information
                             // from the texture and add correct properties to the material so the texture is rendered correctly
                             matContext.textureLoaded.addOnce(function(tex){
@@ -381,8 +381,10 @@
                                     material.transparent = true;
                                     //material.depthTest = false;
                                 }
+
+                                material.map = tex;
+                                material.needsUpdate = true;
                             });
-                        }
 
                         matContext.section = 'none';
                     } else {
@@ -546,7 +548,7 @@
                     if ( line.length >= 2 ) {
                         data = line.slice(1, line.length ).join(" ");
                         data = encodeURIComponent(data);
-                        parseTexture( data, matContext );
+                        getTexture( data, matContext );
                     }
 
                 } else if ( parameter === "tex_address_mode" ) {
@@ -561,38 +563,17 @@
 
             }
 
-            function parseTexture( textureRef, matContext ) {
+            function getTexture( textureRef, matContext ) {
                 var request = assetManager.requestAsset(textureRef, 'texture' ),
                     props = matContext.materialProps, map;
 
-                map = props.map = new THREE.CompressedTexture();
-                map.minFilter = map.magFilter = THREE.LinearFilter;
-                map.wrapS = THREE.RepeatWrapping;
-                map.wrapT = THREE.RepeatWrapping;
-                map.repeat.x = 1.0;
-                map.repeat.y = 1.0;
-                map.flipY = false;
+                // Creating dummy texture that is used until the real texture is loaded
+                props.map = THREE.ImageUtils.generateDataTexture( 1, 1, new THREE.Color( Math.random() * 0xffffff ) );
 
                 if(request){
                         request.add( function ( tex ) {
                             if ( tex ) {
-                                map.format = tex.format;
-                                map.mipmaps = tex.mipmaps;
-                                map.image.width = tex.width;
-                                map.image.height = tex.height;
-                                map.generateMipmaps = false;
-                                map.mapping = new THREE.UVMapping();
-
-                                // If texture is loaded before the material processing has been ended, add alpha properties to material props
-                                if(map.format === THREE.RGBA_S3TC_DXT1_Format || map.format === THREE.RGBA_S3TC_DXT3_Format ||
-                                    map.format === THREE.RGBA_S3TC_DXT5_Format){
-                                    props.alphaTest = 0.5;
-                                    props.transparent = true;
-                                    //props.depthTest = false;
-                                }
-                                map.needsUpdate = true;
-
-                                matContext.textureLoaded.dispatch(map);
+                                matContext.textureLoaded.dispatch(tex);
                         }
 
                     });

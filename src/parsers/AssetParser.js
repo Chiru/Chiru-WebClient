@@ -9,8 +9,8 @@
     var util = namespace.util;
 
     var AssetParser = namespace.AssetParser = function (meshType, assetManager) {
-        var type, parsers,
-            parseMesh, parseMaterial;
+        var type, parsers, textureTypes,
+            parseMesh, parseMaterial, parseTexture;
 
         type = meshType || 'ogre';
 
@@ -23,8 +23,6 @@
             var parseFunc, parser;
 
             function parseMesh( data, name, requestUrl ) {
-                var meshGroup;
-
                 if ( !data ) {
                     console.warn( "AssetParser: No mesh data given. Ignoring mesh:", name );
                     return false;
@@ -130,10 +128,48 @@
 
         };
 
+        parseTexture = function(data, name, requestUrl ){
+        var type = name.split('.' ).pop(), image, texture;
+
+                if(type === 'dds'){
+                    image = THREE.ImageUtils.parseDDS( data.response, true );
+
+
+                    if(image.format === null){
+                        return false;
+                    }
+
+                    texture = new THREE.CompressedTexture();
+                    texture.name = name;
+                    texture.minFilter = texture.magFilter = THREE.LinearFilter;
+                    texture.wrapS = THREE.RepeatWrapping;
+                    texture.wrapT = THREE.RepeatWrapping;
+                    texture.repeat.x = 1.0;
+                    texture.repeat.y = 1.0;
+                    texture.flipY = false;
+                    texture.format = image.format;
+                    texture.mipmaps = image.mipmaps;
+                    texture.image.width = image.width;
+                    texture.image.height = image.height;
+                    texture.generateMipmaps = false;
+                    texture.mapping = new THREE.UVMapping();
+
+                    texture.needsUpdate = true;
+
+                } else {
+                    texture = new THREE.Texture();
+                }
+
+
+
+            return texture;
+        };
+
 
         return {
             parseMesh: parseMesh,
-            parseMaterial: parseMaterial
+            parseMaterial: parseMaterial,
+            parseTexture: parseTexture
         };
 
     };

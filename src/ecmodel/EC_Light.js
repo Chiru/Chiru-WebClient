@@ -9,8 +9,9 @@
 
     var ECEnvironmentLight, ECLight, util;
 
-
     util = namespace.util;
+
+    var lightTypes = util.createEnum('point', 'spot', 'directional', 'ambient');
 
     /**
      * ECEnvironmentLight constructor
@@ -67,7 +68,7 @@
                 var sunLight = this.sunLight, sceneManager = this.sceneManager;
 
                 if ( sceneManager && !sunLight ) {
-                    sunLight = this.sunLight = new THREE.DirectionalLight();
+                    sunLight = this.sunLight = this.sceneManager.createLight(lightTypes['directional']);
                     this.updateSunLight();
                     sceneManager.addToScene( sunLight );
                     sceneManager.addToScene( new THREE.DirectionalLightHelper(sunLight, 2.5) );
@@ -81,7 +82,7 @@
 
                 if ( sunLight ) {
                     sunLight.color.setRGB( sunColor[0], sunColor[1], sunColor[2] );
-                    sunLight.intensity = this.brightness/2;
+                    sunLight.intensity = THREE.Math.clamp(this.brightness, 0, 50)/20;
 
                     if ( this.sunCastShadows ) {
                         sunLight.castShadow = true;
@@ -144,15 +145,13 @@
      * @param {object} sceneMgr Pointer to scene manager.
      */
 
-    var lightTypes = util.createEnum('LT_Point', 'LT_Spot', 'LT_Directional');
 
     ECLight = namespace.ECLight = function ( sceneMgr ) {
         //Inherit component properties
         namespace.Component.call( this, sceneMgr );
 
 
-
-        this.createAttribute( "lighttype", lightTypes['LT_Point'], 'int', "lightType" );
+        this.createAttribute( "lighttype", lightTypes['point'], 'int', "lightType" );
         this.createAttribute( "diffusecolor", [1.0, 1.0, 1.0, 1.0], 'color', "diffuseColor" );
         this.createAttribute( "specularcolor", [0.0, 0.0, 0.0, 1.0], 'color', "specularColor" );
         this.createAttribute( "castshadows", false, 'bool', "castShadows" );
@@ -177,7 +176,8 @@
     ECLight.prototype = util.extend( Object.create( namespace.Component.prototype ),
         {
             onAttributeUpdated: function ( attr ) {
-
+                //console.log(attr)
+                this.setupLight();
             },
 
             onParentAdded: function ( parent ) {
@@ -211,19 +211,26 @@
             },
             detachLight: function(){},
             setupLight: function(){
-                var light, diffuse = this.diffuseColor, specular = this.specularColor;
-                light = this.sceneManager.createLight(this.lightType);
+                var light = this.light, diffuse = this.diffuseColor, specular = this.specularColor;
+                if(!light){
+                    light = this.light = this.sceneManager.createLight(this.lightType);
+                    this.offsetNode.add(light);
+                }
+                if(!light){
+                    return;
+                }
+
                 light.color.setRGB(diffuse[0], diffuse[1], diffuse[2]);
                 light.distance = this.lightRange;
                 light.intensity = this.brightness;
 
-                if(lightTypes[this.lightType] === lightTypes['LT_Spot']){
+                if(lightTypes[this.lightType] === lightTypes['spot']){
                     light.castShadow = this.castShadows;
                     light.angle= (Math.PI/180) * this.lightOuterAngle;
                 }
 
-                this.light = light;
-                this.offsetNode.add(light);
+
+
 
             }
 

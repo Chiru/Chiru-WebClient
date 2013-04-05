@@ -46,8 +46,11 @@
                                 "rex_sky_top.dds",
                                 "rex_sky_bot.dds"];
         this.defaultPath = "default_assets/textures/";
-        this.textureAssets = [];
-        this.cubeTexture = null;
+        this.storagePath = this.defaultPath;
+        this.texturesLoaded = 0;
+        this.texturesNeeded = [];
+
+        this.cubeMaterial = null;
         this.skyBox = null;
 
     };
@@ -60,29 +63,37 @@
 
             onAttributeUpdated: function ( attr ) {
                 if ( attr['name'] === "texture" ) {
-                    var textures = this.defaultTextures;
+                    var textures = this.defaultTextures, refs = this.textureRefs;
 
-                    if ( !this.textureRefs.every( function ( e ) {
+                    this.texturesNeeded =  refs.filter(function(elem, pos) {
+                        return refs.indexOf(elem) === pos;
+                    });
+
+                    if ( !refs.every( function ( e ) {
                             return textures.indexOf( e ) !== -1;
                         }
                     ) ) {
                         console.warn("EC_Sky: Using different skybox textures than default. " +
-                            "Trying to request them from remote storage.");
-                        this.defaultPath = "";
+                            "Trying to request them from the remote storage.");
+                        this.storagePath = "";
+                    }else{
+                        this.storagePath = this.defaultPath;
                     }
+                    console.warn(this.texturesNeeded)
+                    this.getTextures();
                 }
 
             },
 
             onParentAdded: function ( parent ) {
-                this.getTextures();
             },
 
             onTextureAssetLoaded: function ( texture ) {
-                if ( this.textureAssets.length === 6 ) {
+                console.warn(texture)
+                if ( this.texturesLoaded === this.texturesNeeded.length ) {
                     console.log( "ECSky: All textures loaded. Creating Sky..." );
-                    this.cubeTexture = this.createCubeTexture( this.textureAssets );
-                    this.createSky( this.cubeTexture );
+                    this.texturesLoaded = 0;
+                    this.createSky(this.createFaceMaterials());
                 }
 
             },
@@ -92,109 +103,91 @@
             },
 
 
-            createSky: function ( cubeTexture ) {
+            createSky: function (faceMaterials) {
                 var shader, material, skyBox, geometry, distance = this.distance;
-                //inverse = this.sceneManager.camera.inverse;
-
-                if(!cubeTexture){
+                console.warn(faceMaterials)
+                if(!faceMaterials){
                     return;
                 }
 
-                //shader = THREE.ShaderLib[ "cube" ];
-                //cubeTexture.mapping = new THREE.UVMapping();
-                //shader.uniforms[ "tCube" ].value = cubeTexture;
-                 /*
-                 shader.vertexShader = [
-                     "varying vec3 vWorldPosition;",
+                material = this.cubeMaterial =  new THREE.MeshFaceMaterial( faceMaterials );
 
-                     "void main() {",
+                if ( !this.skyBox ) {
+                    geometry = new THREE.CubeGeometry( distance, distance, distance );
+                    skyBox = this.skyBox = new THREE.Mesh( geometry, material );
 
-                     "vec4 worldPosition = modelMatrix * vec4( position, 1.0 );",
-                     "vWorldPosition = worldPosition.xyz;",
+                    skyBox.geometry.faceVertexUvs[0][0] = [new THREE.Vector2( 0, 0 ), new THREE.Vector2( 0, 1 ),
+                                                           new THREE.Vector2( 1, 1 ), new THREE.Vector2( 1, 0 )];
+                    skyBox.geometry.faceVertexUvs[0][1] = [new THREE.Vector2( 0, 0 ), new THREE.Vector2( 0, 1 ),
+                                                           new THREE.Vector2( 1, 1 ), new THREE.Vector2( 1, 0 )];
+                    skyBox.geometry.faceVertexUvs[0][2] = [new THREE.Vector2( 1, 0 ), new THREE.Vector2( 0, 0 ),
+                                                           new THREE.Vector2( 0, 1 ), new THREE.Vector2( 1, 1 )];
+                    skyBox.geometry.faceVertexUvs[0][3] = [new THREE.Vector2( 1, 0 ), new THREE.Vector2( 0, 0 ),
+                                                           new THREE.Vector2( 0, 1 ), new THREE.Vector2( 1, 1 )];
+                    skyBox.geometry.faceVertexUvs[0][4] = [new THREE.Vector2( 0, 0 ), new THREE.Vector2( 0, 1 ),
+                                                           new THREE.Vector2( 1, 1 ), new THREE.Vector2( 1, 0 )];
+                    skyBox.geometry.faceVertexUvs[0][5] = [new THREE.Vector2( 0, 0 ), new THREE.Vector2( 0, 1 ),
+                                                           new THREE.Vector2( 1, 1 ), new THREE.Vector2( 1, 0 )];
+                    skyBox.geometry.uvsNeedUpdate = true;
 
-                     "gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
-
-                     "}"
-                 ].join( "\n" );
-
-                 shader.fragmentShader = [
-                     "uniform samplerCube tCube;",
-                     "uniform float tFlip;",
-
-                     "varying vec3 vWorldPosition;",
-
-                     "void main() {",
-
-                     "gl_FragColor = textureCube( tCube, vec3( tFlip * vWorldPosition.x, vWorldPosition.yz ) );",
-
-                     "}"
-                 ].join( "\n" );
-                */
-                /*material = new THREE.ShaderMaterial( {
-
-                    fragmentShader: shader.fragmentShader,
-                    vertexShader: shader.vertexShader,
-                    uniforms: shader.uniforms,
-                    depthWrite: false,
-                    side: THREE.BackSide
-
-                } );*/
-
-                material = new THREE.MeshFaceMaterial( cubeTexture );
-                material.depthWrite = false;
-                material.side = THREE.BackSide;
-                console.log(material)
-
-                geometry = new THREE.CubeGeometry( distance, distance, distance );
-                skyBox = this.skyBox = new THREE.Mesh( geometry, material );
-
-                // This has no effect for the top face uv mapping for some reason, hence it has wrong orientation
-                skyBox.geometry.faceVertexUvs[0][2] = [new THREE.Vector2(0, 0), new THREE.Vector2(0, 1),
-                                                       new THREE.Vector2(1, 1), new THREE.Vector2(1, 0)];
-                skyBox.geometry.uvsNeedUpdate = true;
-
-                //this.sceneManager.camera.add(skyBox)
-                this.sceneManager.addSkyBox( skyBox );
+                    this.skyBox = skyBox;
+                    this.sceneManager.addSkyBox( skyBox );
+                } else {
+                    this.skyBox.material = material;
+                    this.skyBox.uvsNeedUpdate = true;
+                }
 
 
             },
 
-            createCubeTexture: function ( textures ) {
-                var ordered = [], texturesLen = textures.length, name, i, order;
-
-
-                function checkOrder( name ) {
-                    if ( typeof name !== 'string' && name !== '' ) {
-                        console.error( "ECSky: Invalid SkyBox texture name!" );
-                        return false;
-                    }
-
-                    if ( name.indexOf( "front" ) !== -1 ) {
+            checkTextureOrder: function ( name, index ) {
+                if ( name.indexOf( "front" ) !== -1 ) {
+                    return 0;
+                } else if ( name.indexOf( "back" ) !== -1 ) {
+                    return 1;
+                } else if ( name.indexOf( "top" ) !== -1 ) {
+                    return 2;
+                } else if ( name.indexOf( "bot" ) !== -1 ) {
+                    return 3;
+                } else if ( name.indexOf( "left" ) !== -1 ) {
+                    return 4;
+                } else if ( name.indexOf( "right" ) !== -1 ) {
+                    return 5;
+                } else {
+                    if(index === 0){
                         return 0;
-                    } else if ( name.indexOf( "back" ) !== -1 ) {
+                    } else if ( index === 1 ){
                         return 1;
-                    } else if ( name.indexOf( "top" ) !== -1 ) {
-                        return 2;
-                    } else if ( name.indexOf( "bot" ) !== -1 ) {
-                        return 3;
-                    } else if ( name.indexOf( "left" ) !== -1 ) {
+                    } else if ( index === 2 ){
                         return 4;
-                    } else if ( name.indexOf( "right" ) !== -1 ) {
+                    } else if ( index === 3 ) {
                         return 5;
+                    } else if ( index === 4) {
+                        return 2;
+                    } else if ( index === 5) {
+                        return 3;
                     } else {
-                        console.error( "ECSky: Invalid SkyBox texture: " + name );
-                        return false;
+                        return -1;
                     }
                 }
+            },
 
-                for ( i = texturesLen; i--; ) {
-                    order = checkOrder( textures[i].name );
+            createFaceMaterials: function ( ) {
+                var ordered = [],  texture, refs = this.textureRefs, assetManager = this.sceneManager.assetManager,
+                    i, order;
 
-                    if (!order) {
-                        return false;
+                for ( i = refs.length; i--; ) {
+                    texture = assetManager.getAsset( refs[i], 'texture', this.storagePath );
+
+                    if ( texture ) {
+                        order = this.checkTextureOrder( texture.name, i );
+
+                        if ( order === -1 ) {
+                            continue;
+                        }
+
+                        ordered[order] = new THREE.MeshBasicMaterial( {map: texture, side: THREE.BackSide, depthWrite: false} );
                     }
-
-                    ordered[order] = textures[i];
                 }
 
                 return ordered;
@@ -203,41 +196,36 @@
 
             getTextures: function () {
                 var request, texture, i,
-                    refs = this.textureRefs,
-                    refsLen = refs.length,
+                    refs = this.texturesNeeded,
                     assetManager = this.sceneManager.assetManager,
-                    assets = this.textureAssets,
                     self = this;
-
 
                 if ( !assetManager ) {
                     throw new Error( ["ECSky: Could not get AssetManager object, texture load failed;"] );
                 }
 
-
-                if ( refs && refsLen === 6 ) {
+                if ( refs ) {
 
                     var callBack = function ( asset ) {
                         if ( asset ) {
-                            assets.push( asset );
+                            self.texturesLoaded += 1;
                             self.onTextureAssetLoaded( asset );
                         }
                     };
 
-                    for ( i = refsLen; i--; ) {
-                        request = assetManager.requestAsset( refs[i], 'texture', this.defaultPath );
+                    for ( i = refs.length; i--; ) {
+                        request = assetManager.requestAsset( refs[i], 'texture', this.storagePath );
                         if ( request ) {
                             request.add( callBack );
                         } else {
-                            texture = assetManager.getAsset( refs[i], 'texture', this.defaultPath );
+                            texture = assetManager.getAsset( refs[i], 'texture', this.storagePath );
                             if ( texture ) {
-                                assets.push( texture );
-                                self.onTextureAssetLoaded( texture );
+                                this.texturesLoaded += 1;
+                                this.onTextureAssetLoaded( texture );
                             }
                         }
                     }
                 }
-
             }
 
         } // Prototype end

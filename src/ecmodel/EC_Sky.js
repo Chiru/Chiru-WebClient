@@ -49,8 +49,6 @@
         this.storagePath = this.defaultPath;
         this.texturesLoaded = 0;
         this.texturesNeeded = [];
-
-        this.cubeMaterial = null;
         this.skyBox = null;
 
     };
@@ -79,7 +77,7 @@
                     }else{
                         this.storagePath = this.defaultPath;
                     }
-                    console.warn(this.texturesNeeded)
+
                     this.getTextures();
                 }
 
@@ -89,7 +87,6 @@
             },
 
             onTextureAssetLoaded: function ( texture ) {
-                console.warn(texture)
                 if ( this.texturesLoaded === this.texturesNeeded.length ) {
                     console.log( "ECSky: All textures loaded. Creating Sky..." );
                     this.texturesLoaded = 0;
@@ -104,13 +101,12 @@
 
 
             createSky: function (faceMaterials) {
-                var shader, material, skyBox, geometry, distance = this.distance;
-                console.warn(faceMaterials)
+                var material, skyBox, geometry, distance = this.distance;
                 if(!faceMaterials){
                     return;
                 }
 
-                material = this.cubeMaterial =  new THREE.MeshFaceMaterial( faceMaterials );
+                material = new THREE.MeshFaceMaterial( faceMaterials );
 
                 if ( !this.skyBox ) {
                     geometry = new THREE.CubeGeometry( distance, distance, distance );

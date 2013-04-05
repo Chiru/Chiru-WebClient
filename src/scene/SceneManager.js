@@ -153,10 +153,12 @@
             if ( this.getSceneObject( function ( obj ) {
                 return obj.name === 'skyBox';
             }, scene ) ) {
-                return;
+                return false;
             }
             skyBox.name = 'skyBox';
             scene.add( skyBox );
+
+            return true;
         }
     };
 
@@ -208,6 +210,10 @@
         }else if(type === 2){
             light = this.getSceneObject( function ( obj ) {
                 return obj instanceof THREE.DirectionalLight && obj.parent instanceof THREE.Scene;
+            } );
+        }else if(type === 3) {
+            light = this.getSceneObject( function ( obj ) {
+                return obj instanceof THREE.AmbientLight && obj.parent instanceof THREE.Scene;
             } );
         }else{
             return false;
@@ -288,11 +294,13 @@
         skyBoxCamera.lookAt( scene.position );
         this.setMainCamera();
 
-        // *** Creating dummy lights ***
+        // *** Dummy lights ***
         for(i=5; i--;){
             scene.add(new THREE.PointLight(null, 0));
             scene.add(new THREE.SpotLight(null, 0));
         }
+        scene.add(new THREE.DirectionalLight(null, 0));
+        scene.add(new THREE.AmbientLight(null, 0));
 
         // *** RENDERER ***
         renderer = this.renderer = new THREE.WebGLRenderer( {
@@ -307,8 +315,8 @@
         //renderer.gammaOutput = true;
         renderer.shadowMapAutoUpdate = true;
         renderer.shadowMapEnabled = true;
-        renderer.shadowMapSoft = false;
-        renderer.shadowMapType = THREE.PCFSoftShadowMap;
+        //renderer.shadowMapSoft = false;
+        //renderer.shadowMapType = THREE.PCFSoftShadowMap;
         renderer.shadowMapCascade = false;
         renderer.shadowMapCullFace = THREE.CullFaceNone;
 
@@ -316,6 +324,7 @@
 
         renderer.setSize( innerWidth( this.container ), innerHeight( this.container ) );
         container.appendChild( this.renderer.domElement );
+
 
 
         // *** CONTROLS ***

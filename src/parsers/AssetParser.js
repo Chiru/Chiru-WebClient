@@ -158,6 +158,10 @@
 
                 } else {
                     texture = new THREE.Texture();
+                    texture.image = data;
+                    texture.sourceFile = requestUrl;
+                    texture.mapping = new THREE.UVMapping();
+                    texture.needsUpdate = true;
                 }
 
 

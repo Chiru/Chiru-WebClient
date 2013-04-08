@@ -333,12 +333,14 @@
                         requestType = requestTypes.image;
                     }
                 } else {
-                    console.warn( "AssetManager: Texture format", fileFormat, " is not supported. Ignered", assetName );
+                    console.warn( "AssetManager: Texture format", fileFormat, " is not supported. Ignored", assetName );
+                    return false;
 
                 }
 
             } else {
-                throw new Error( ["AssetManager: Invalid asset type requested: " + type] );
+                console.warn("AssetManager: Invalid asset type requested: ", type );
+                return false;
             }
 
 

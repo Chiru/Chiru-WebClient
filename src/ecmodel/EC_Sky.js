@@ -53,6 +53,8 @@
         this.skyBox = null;
 
         this.createSky();
+
+
     };
 
     namespace.storeComponent( 10, "EC_Sky", ECSky );
@@ -92,7 +94,7 @@
                 }
 
                 if ( this.texturesNeeded.length === 0 ) {
-                    console.log( "ECSky: All textures loaded. Creating Sky..." );
+                    console.log( "ECSky: All textures loaded. Updating sky..." );
                     this.texturesLoaded = 0;
                     this.changeFaceTextures();
                 }
@@ -180,7 +182,7 @@
                     return;
                 }
 
-                skyBoxMaterial = this.skyBox.material.materials;
+                skyBoxMaterial = this.skyBox.material;
 
                 for ( i = changedTextures.length; i--; ) {
                     faceIndex = changedTextures[i];
@@ -189,12 +191,11 @@
 
                     if ( texture ) {
                         order = this.getTextureOrder(faceIndex);
-                        skyBoxMaterial[order].map = texture;
-                        skyBoxMaterial[order].needsUpdate = true;
+                        skyBoxMaterial.materials[order].map = texture;
+                        skyBoxMaterial.materials[order].needsUpdate = true;
 
                     }
                 }
-
             },
 
 

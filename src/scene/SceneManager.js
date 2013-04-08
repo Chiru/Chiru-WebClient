@@ -227,6 +227,7 @@
                     this.skyBoxCamera.aspect = camera.aspect;
                     this.skyBoxCamera.near = camera.near;
                     this.skyBoxCamera.far = camera.far;
+                    this.skyBoxCamera.updateProjectionMatrix();
                 }
             }
         }

@@ -72,28 +72,6 @@
             window.requestAnimationFrame( loop );
 
             /*
-             self.controls.isOnObject( false );
-
-             self.controls.rayCaster.ray.origin.copy( self.controls.getObject().position );
-             self.controls.rayCaster.ray.origin.y -= 10;
-
-             var intersections = self.controls.rayCaster.intersectObjects( self.loadedObjects ),
-             distance;
-
-             if ( intersections.length > 0 ) {
-
-             distance = intersections[ 0 ].distance;
-
-             if ( distance > 0 && distance < 10 ) {
-
-             self.controls.isOnObject( true );
-
-             }
-
-             }
-             */
-
-            /*
              self.camera.position.y = 10;
              self.camera.position.x = Math.floor(Math.cos( self.time*0.0005) * 200);
              self.camera.position.z = Math.floor(Math.sin( self.time *0.0005) * 200);
@@ -245,6 +223,10 @@
 
                 if ( camera instanceof THREE.PerspectiveCamera ) {
                     this.mainCamera = camera;
+                    this.skyBoxCamera.fov = camera.fov;
+                    this.skyBoxCamera.aspect = camera.aspect;
+                    this.skyBoxCamera.near = camera.near;
+                    this.skyBoxCamera.far = camera.far;
                 }
             }
         }
@@ -325,69 +307,6 @@
         renderer.setSize( innerWidth( this.container ), innerHeight( this.container ) );
         container.appendChild( this.renderer.domElement );
 
-
-
-        // *** CONTROLS ***
-        /*
-         controls = this.controls = new THREE.PointerLockControls( this.mainCamera );
-
-         scene.add( this.controls.getObject() );
-
-         controls.rayCaster = new THREE.Raycaster();
-         controls.rayCaster.ray.direction.set( 0, -1, 0 );
-
-         controls.enabled = false;
-
-         function pointerLockChange() {
-         if ( document.mozPointerLockElement === body ||
-         document.webkitPointerLockElement === body ||
-         document.pointerLockElement === body ) {
-         self.controls.enabled = true;
-         return;
-         }
-         self.controls.enabled = false;
-         }
-
-         function fullScreenChange() {
-         if ( document.webkitFullscreenElement === body ||
-         document.mozFullscreenElement === body ||
-         document.mozFullScreenElement === body ) { // Older API upper case 'S'.
-         // Element is fullscreen, now we can request pointer lock
-         body.requestPointerLock = body.requestPointerLock ||
-         body.mozRequestPointerLock ||
-         body.webkitRequestPointerLock;
-         body.requestPointerLock();
-         }
-         }
-
-         document.addEventListener( 'webkitpointerlockchange', pointerLockChange, false );
-         document.addEventListener( 'mozpointerlockchange', pointerLockChange, false );
-         document.addEventListener( 'pointerlockchange', pointerLockChange, false );
-         document.addEventListener( 'fullscreenchange', fullScreenChange, false );
-         document.addEventListener( 'mozfullscreenchange', fullScreenChange, false );
-         document.addEventListener( 'webkitfullscreenchange', fullScreenChange, false );
-
-         body.addEventListener( 'click', function ( event ) {
-         if ( body.webkitRequestPointerLock ) {
-         if ( document.mozPointerLockElement !== body &&
-         document.webkitPointerLockElement !== body &&
-         document.pointerLockElement !== body ) {
-         body.requestPointerLock = body.requestPointerLock ||
-         body.mozRequestPointerLock ||
-         body.webkitRequestPointerLock;
-         body.requestPointerLock();
-         }
-         } else {
-         body.requestFullscreen = body.requestFullscreen ||
-         body.mozRequestFullscreen ||
-         body.mozRequestFullScreen || // Older API upper case 'S'.
-         body.webkitRequestFullscreen;
-         body.requestFullscreen();
-         }
-
-         }, false );
-
-         */
 
         // *** SIGNAL LISTENERS ***
         //Windows resize listener

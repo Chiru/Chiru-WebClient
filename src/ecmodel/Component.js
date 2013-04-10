@@ -135,7 +135,7 @@
          * @returns {namespace.Attribute} Attribute object.
          */
 
-        createAttribute: function ( name, value, type, setterName ) {
+        createAttribute: function ( name, value, type, setterName, id ) {
             var attr, proto, attributes = this.attributes;
 
             if ( !name || value === undefined || !type ) {
@@ -195,6 +195,10 @@
                         return false;
                     })
                 } );
+            }
+
+            if(id && !this.attributeMap.hasOwnProperty(id)){
+                this.attributeMap[id] = attr.setter;
             }
 
             return attr;

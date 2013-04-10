@@ -31,9 +31,10 @@
 
         if ( connection ) {
             connection.bindEvent( "EntityAdded", function ( data ) {
-                namespace.util.log( "Got new Entity " + "( id: " + data['entityID'] + ", name: " + data['name'] +
-                    ", components: " + data['numReplComps'] + " )" );
+                /*namespace.util.log( "Got new Entity " + "( id: " + data['entityID'] + ", name: " + data['name'] +
+                    ", components: " + data['numReplComps'] + " )" );*/
                 self.parseEntity( data );
+                console.log(data)
 
             } );
             connection.bindEvent( "EntityRemoved", function ( data ) {
@@ -155,14 +156,14 @@
                         }
                     }
                 }
-
+                //console.log(e)
                 // Emitting entity created signal
                 this.entityCreated.dispatch( e );
             }
         },
 
         parseComponent: function ( id, data ) {
-            var component, typeId, name, attributes;
+            var component, typeId, name, attributes, attrId;
 
             if ( !id || !data['typeId'] ) {
                 return false;
@@ -182,8 +183,14 @@
                 component.id = id;
                 component.name = name;
 
-                for ( var cid in attributes ) {
-                    component.updateAttribute( cid, attributes[cid]['val'], attributes[cid]['name'] );
+                for ( attrId in attributes ) {
+                    if(component instanceof namespace.ECDynamic){
+                        component.createAttribute(attributes[attrId]['name'], attributes[attrId]['val'],
+                            attributes[attrId]['typeId'], null, attrId);
+                        console.warn(attributes[attrId])
+                    } else {
+                        component.updateAttribute( attrId, attributes[attrId]['val'], attributes[attrId]['name'] );
+                    }
                 }
             }
             //console.log(component)

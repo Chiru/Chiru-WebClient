@@ -109,39 +109,56 @@
             }
 
             function parseGeometry( geometry, xml ) {
-
+                var buffers, vertexCount, buffer, i, vertexData = {};
                 if(!geometry){
                     return false;
                 }
+                vertexCount = parseInt( geometry.getAttribute( "vertexcount" ), 10 );
+                buffers = geometry.getElementsByTagName( "vertexbuffer" );
 
-                var vertexCount, vertexBuffer, bufferAttrs, vertices, i,
+                for(i=buffers.length; i--;){
+                    parseVertexBuffer(vertexCount, buffers[i], vertexData, xml);
+                    //console.warn(buffers[i].baseURI)
+                }
+
+               // console.warn(vertexData)
+
+
+                return {positions: vertexData.positions, normals: vertexData.normals, uvs: vertexData.uvs, nVertices: vertexCount};
+
+            }
+
+            function parseVertexBuffer(vertexCount, buffer, resultWrapper, xml){
+                if(!resultWrapper){
+                    resultWrapper = {};
+                }
+                var vertices, i,
                     hasPositions, hasNormals, hasUvs, hasDiffColours, hasSpecColours,
                     texChannels, texCoordDim,
                     position, positions, normal, normals, uv, uvs, vertex, temp;
 
-                vertexCount = parseInt( geometry.getAttribute( "vertexcount" ), 10 );
-                vertexBuffer = geometry.getElementsByTagName( "vertexbuffer" )[0];
 
-                hasPositions = vertexBuffer.hasAttribute( 'positions' ) &&
-                    vertexBuffer.getAttribute( 'positions' ) === 'true';
 
-                hasNormals = vertexBuffer.hasAttribute( 'normals' ) &&
-                    vertexBuffer.getAttribute( 'normals' ) === 'true';
+                hasPositions = buffer.hasAttribute( 'positions' ) &&
+                    buffer.getAttribute( 'positions' ) === 'true';
 
-                hasDiffColours = vertexBuffer.hasAttribute( 'colours_diffuse' ) &&
-                    vertexBuffer.getAttribute( 'colours_diffuse' ) === 'true';
+                hasNormals = buffer.hasAttribute( 'normals' ) &&
+                    buffer.getAttribute( 'normals' ) === 'true';
 
-                hasSpecColours = vertexBuffer.hasAttribute( 'colours_specular' ) &&
-                    vertexBuffer.getAttribute( 'colours_specular' ) === 'true';
+                hasDiffColours = buffer.hasAttribute( 'colours_diffuse' ) &&
+                    buffer.getAttribute( 'colours_diffuse' ) === 'true';
 
-                if ( vertexBuffer.hasAttribute( 'texture_coords' ) ) {
-                    texChannels = parseInt( vertexBuffer.getAttribute( 'texture_coords' ), 10 );
-                    if ( vertexBuffer.hasAttribute( 'texture_coord_dimensions_0' ) ) {
-                        temp = parseInt( vertexBuffer.getAttribute( 'texture_coord_dimensions_0' ), 10 );
+                hasSpecColours = buffer.hasAttribute( 'colours_specular' ) &&
+                    buffer.getAttribute( 'colours_specular' ) === 'true';
+
+                if ( buffer.hasAttribute( 'texture_coords' ) ) {
+                    texChannels = parseInt( buffer.getAttribute( 'texture_coords' ), 10 );
+                    if ( buffer.hasAttribute( 'texture_coord_dimensions_0' ) ) {
+                        temp = parseInt( buffer.getAttribute( 'texture_coord_dimensions_0' ), 10 );
 
                         //Checking if we have correct value for texture channel dimension
                         if( !temp ){
-                            temp = vertexBuffer.getAttribute( 'texture_coord_dimensions_0' );
+                            temp = buffer.getAttribute( 'texture_coord_dimensions_0' );
                             texCoordDim = parseInt(temp.substr(-1), 10); // Getting the last character of e.g. "float2"
                         }else{
                             texCoordDim = temp;
@@ -159,12 +176,12 @@
                     }
                 }
 
-                vertices = getElements( "vertex", xml, vertexBuffer );
+                vertices = getElements( "vertex", xml, buffer );
 
                 //Storages for vertex data
                 positions = [];
-                normals = [];
-                uvs = [];
+                normals =  [];
+                uvs =  [];
 
                 // Getting vertex data
                 for ( i = vertexCount; i--; ) {
@@ -188,8 +205,18 @@
 
                 }
 
+                if(positions.length > 0 ){
+                    resultWrapper.positions = positions;
 
-                return {positions: positions, normals: normals, uvs: uvs, nVertices: vertexCount};
+                }
+                if(normals.length > 0 ){
+                    resultWrapper.normals = normals;
+                }
+
+                if(uvs.length > 0){
+                    resultWrapper.uvs = uvs;
+                }
+
 
             }
 
@@ -282,7 +309,15 @@
                         diffuse: parsePassParam,
                         specular: parsePassParam,
                         emissive: parsePassParam,
-                        texture_unit: parseTexUnit
+                        texture_unit: parseTexUnit,
+                        vertex_program_ref: parseVertexProgramRef,
+                        fragment_program_ref: parseFragmentProgramRef
+                    },
+                    programRef:{
+
+                    },
+                    program: {
+
                     },
                     texture_unit: {
                         texture: parseTexParam,
@@ -318,7 +353,7 @@
                 lines = matString.split( '\n' );
                 nLines = lines.length;
 
-                //console.log( lines );
+                //console.warn( lines );
 
                 //Processing lines
                 for ( i = 0; i < nLines; i++ ) {
@@ -332,6 +367,7 @@
                         continue;
                     }
 
+                    //console.warn("line:",line)
                     if ( waitingOpenBrace ) {
                         if ( line !== "{" ) {
                             console.warn("OgreMaterialParser: Expected a '{', but got:", line );
@@ -387,6 +423,7 @@
                             });
 
                         matContext.section = 'none';
+                        //console.warn("end of material section")
                     } else {
                         return getSectionParser( line, section, matContext );
                     }
@@ -431,6 +468,20 @@
                 }
                     break;
 
+                case 'programRef':
+                {
+                    if ( line === '}' ) {
+                        // End of texture unit sectoin
+                        matContext.section = 'pass';
+
+
+                    } else {
+                        // find & invoke a parser
+                        return getSectionParser( line, section, matContext );
+                    }
+                }
+                    break;
+
                 }
                 return false;
 
@@ -454,7 +505,7 @@
             }
 
             function parseMaterial( line, matContext ) {
-                //console.log( "Parsing material root section..." );
+                //console.warn( "Parsing material root section..." );
 
                 if ( line.length >= 2 ) {
                     matContext.materialProps.name = line[1].replace( /\s+/g, '' );
@@ -480,7 +531,7 @@
             }
 
             function parseTechnique( line, matContext ) {
-                //console.log( "Parsing technique section..." );
+                //console.warn( "Parsing technique section..." );
                 // Just changing section here
                 matContext.section = 'technique';
 
@@ -489,7 +540,7 @@
             }
 
             function parsePass( line, matContext ) {
-                //console.log( "Parsing pass section..." );
+                //console.warn( "Parsing pass section..." );
                 // Just changing section here
 
                 matContext.section = 'pass';
@@ -528,8 +579,26 @@
                 return false;
             }
 
+            function parseVertexProgramRef(line, matContext){
+
+                matContext.section = 'programRef';
+
+
+                //console.warn("Section: vertex program ref")
+                return true;
+            }
+
+            function parseFragmentProgramRef(line, matContext){
+
+                matContext.section = 'programRef';
+
+
+                //console.warn("Section: fragment program ref")
+
+                return true;
+            }
             function parseTexUnit( line, matContext ) {
-                //console.log( "Parsing texture_unit section..." );
+                //console.warn( "Parsing texture_unit section..." );
                 // Just changing section here
 
                 matContext.section = 'texture_unit';

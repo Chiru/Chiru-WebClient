@@ -20,13 +20,13 @@
      * @param {object} sceneMgr Pointer to scene manager.
      */
 
-    Component = namespace.Component = function ( sceneMgr ) {
+    Component = namespace.Component = function ( framework ) {
 
-        if ( !sceneMgr ) {
-            throw new Error( "Component: Could not get SceneManager object." );
+        if ( !framework ) {
+            throw new Error( "Component: Could not get the framework object." );
         }
 
-        this.sceneManager = sceneMgr;
+        this.framework = framework;
 
         /**
          * A Signal that is dispatched when an attribute of this component is updated.

@@ -8,57 +8,56 @@
 (function ( namespace, undefined ) {
     var utils = namespace.util;
 
-    var AssetManager = namespace.AssetManager = function ( storageUrl, meshType ) {
+    var AssetManager = namespace.AssetManager = function ( framework, options ) {
+        var defaults = {
+                remoteStorage: 'http://127.0.0.1:8000/',
+                meshType: 'ogre'
+            },
+            opts = utils.extend( {}, defaults, options );
 
-        var meshTypes, textureTypes, meshAssets, textureAssets, materialAssets, requestTypes,
-             requestQueue, remoteStorage, assetParser, publicMethods, GUIProgressIndicator,
+        // Storage objects for assets and requests
+        var meshAssets = {}, textureAssets = {}, materialAssets = {}, requestQueue = { queue: [], requests: {}};
 
-            assetsReady = new namespace.Signal(), loadProgress = new namespace.Signal();
+        // Asset and request type definitions
+        var meshTypes = {
+                'ogre': {meshFileExt: 'mesh.xml', matFileExt: 'material'},
+                'collada': {meshFileExt: 'dae', matFileExt: null}
+            },
+            textureTypes = ['dds', 'jpg', 'jpeg', 'png', 'gif'],
+            requestTypes = utils.createEnum( 'xhr', 'image' );
 
-        // Exposed methods
-        publicMethods = {
-            requestAsset: requestAsset,
-            getAsset: getAsset,
-            cleanFileName: cleanFileName,
-            getBaseFileName: getBaseFileName,
-            setRemoteStorage: setRemoteStorage,
 
-            assetsReady: assetsReady,
-            loadProgress: loadProgress
-        };
+        var GUIProgressIndicator, self = this;
 
-        meshTypes = {
-            'ogre': {meshFileExt: 'mesh.xml', matFileExt: 'material'},
-            'collada': {meshFileExt: 'dae', matFileExt: null}
-        };
-
-        textureTypes = ['dds', 'jpg', 'jpeg', 'png', 'gif'];
-
-        requestTypes = utils.createEnum('xhr', 'image');
-
-        if(!meshTypes.hasOwnProperty(meshType)){
-            throw new Error(["AssetManager: Unsupported mesh type: " + meshType]);
+        if ( !meshTypes.hasOwnProperty( opts.meshType ) ) {
+            throw new Error( ["AssetManager: Unsupported mesh type: " + opts.meshType] );
         }
 
-        meshAssets = {};
-        textureAssets = {};
-        materialAssets = {};
 
-        remoteStorage = storageUrl || null;
-        assetParser = new namespace.AssetParser(meshType, publicMethods);
+        this.remoteStorage = opts.remoteStorage;
 
+        this.assetParser = new namespace.AssetParser( opts.meshType, this );
 
-        /**
-         *
-         * @type {Object}
-         */
-        requestQueue = {
-            queue: [],
-            requests: {}
-        };
+        // Signals
+        this.assetsReady = new namespace.Signal();
+        this.loadProgress = new namespace.Signal();
 
 
-        GUIProgressIndicator = namespace.GUI.getGUIComponent('loader');
+        // API
+        this.requestAsset = requestAsset;
+        this.getAsset = getAsset;
+        this.cleanFileName = cleanFileName;
+        this.getBaseFileName = getBaseFileName;
+        this.setRemoteStorage = setRemoteStorage;
+
+        GUIProgressIndicator = namespace.GUI.getGUIComponent( 'loader' );
+
+        framework.connection.bindEvent( "RemoteStorage", setRemoteStorage );
+
+
+         function processDelayFunc() {
+            processAsset( arguments[0], arguments[1], arguments[2], arguments[3] );
+        }
 
         /**
          *
@@ -69,31 +68,22 @@
             var requests = requestQueue.requests, queue = requestQueue.queue, i;
 
             if ( requests.hasOwnProperty( name ) ) {
-                queue.splice(queue.indexOf(name), 1);
+                queue.splice( queue.indexOf( name ), 1 );
                 delete requests[name];
                 //console.log( "Request:", name, "deleted" );
 
                 // Showing progress in the GUI
-                if(GUIProgressIndicator){
+                if ( GUIProgressIndicator ) {
                     GUIProgressIndicator.updateProgress();
-                    loadProgress.dispatch(queue.length)
+                    self.loadProgress.dispatch( queue.length );
                 }
             }
 
             if ( queue.length === 0 ) {
                 console.log( "All requests processed!" );
-                assetsReady.dispatch();
+                self.assetsReady.dispatch();
 
             }
-
-        }
-
-
-        /**
-         *
-         */
-        function processDelayFunc() {
-            processAsset( arguments[0], arguments[1], arguments[2], arguments[3] );
         }
 
 
@@ -103,7 +93,7 @@
          * @return {*}
          */
 
-        function createRequest( options ) {
+        function createRequest ( options ) {
 
             var defaults = {
                     url: '',
@@ -114,8 +104,7 @@
                     assetType: null
                 },
                 opts, request, queue = requestQueue.queue, queueLen = queue.length,
-                requests = requestQueue.requests, assetReadySig = new namespace.Signal(),
-                self = this, i;
+                requests = requestQueue.requests, assetReadySig = new namespace.Signal();
 
             // Setting options
             opts = utils.extend( {}, defaults, options );
@@ -215,67 +204,6 @@
             return assetReadySig;
         }
 
-
-        /**
-         *
-         * @param url
-         */
-
-        function setRemoteStorage ( url ) {
-            console.log( "Setting remote asset storage to: " + url );
-            utils.log( "Setting remote asset storage to: " + url );
-            remoteStorage = url;
-        }
-
-
-            /**
-             *
-             * @param fileRef
-             * @param forceType
-             * @param useBaseName
-             * @returns {*}
-             */
-        function cleanFileName( fileRef, forceType, useBaseName ) {
-            var fileName, type;
-
-            if ( !fileRef ) {
-                console.error( "AssetManager:", "Got empty Asset filename." );
-                return '';
-            }
-
-            fileName = fileRef.split( '//' ).pop();
-
-            if ( useBaseName ) {
-                fileName = getBaseFileName( fileName );
-            }
-
-            if ( forceType ) {
-                fileName = fileName.split( '.' );
-                if ( fileName.length > 1 ) {
-                    type = fileName.slice( -1 )[0];
-
-                    if ( type.toLowerCase() !== forceType ) {
-                        fileName[fileName.length - 1] = forceType;
-                        fileRef = fileName.join( '.' );
-                    }
-                } else {
-                    fileRef = fileName[0] + '.' + forceType;
-                }
-            }
-
-
-            return fileRef;
-        }
-
-        function getBaseFileName(fileName){
-            if(typeof fileName === 'string'){
-                return fileName.split( '.' )[0];
-            }
-
-            return false;
-        }
-
-
         /**
          *
          * @param assetName
@@ -294,7 +222,7 @@
             type = type.toLowerCase();
 
             if ( type === 'mesh' ) {
-                assetName = cleanFileName( assetName, meshTypes[meshType].meshFileExt );
+                assetName = cleanFileName( assetName, meshTypes[opts.meshType].meshFileExt );
 
                 if ( meshAssets.hasOwnProperty( assetName ) ) {
                     //console.log( "Mesh:", assetName, "already downloaded" );
@@ -309,7 +237,7 @@
                 requestType = requestTypes.xhr;
 
             } else if ( type === 'material' ) {
-                assetName = cleanFileName( assetName, meshTypes[meshType].matFileExt, true );
+                assetName = cleanFileName( assetName, meshTypes[opts.meshType].matFileExt, true );
 
                 if ( materialAssets.hasOwnProperty( assetName ) ) {
                     //console.log( "Material:", assetName, "already downloaded" );
@@ -347,7 +275,7 @@
                 }
 
             } else {
-                console.warn("AssetManager: Invalid asset type requested: ", type );
+                console.warn( "AssetManager: Invalid asset type requested: ", type );
                 return false;
             }
 
@@ -357,7 +285,7 @@
             }
 
             if ( !storage || typeof storage !== "string" ) {
-                storage = remoteStorage;
+                storage = self.remoteStorage;
             }
 
 
@@ -373,6 +301,66 @@
 
             return request;
         }
+
+        /**
+         *
+         * @param url
+         */
+
+        function setRemoteStorage( url ) {
+            console.log( "Setting remote asset storage to: " + url );
+            utils.log( "Setting remote asset storage to: " + url );
+            self.remoteStorage = url;
+        }
+
+
+        /**
+         *
+         * @param fileRef
+         * @param forceType
+         * @param useBaseName
+         * @returns {*}
+         */
+        function cleanFileName( fileRef, forceType, useBaseName ) {
+            var fileName, type;
+
+            if ( !fileRef ) {
+                console.error( "AssetManager:", "Got empty Asset filename." );
+                return '';
+            }
+
+            fileName = fileRef.split( '//' ).pop();
+
+            if ( useBaseName ) {
+                fileName = getBaseFileName( fileName );
+            }
+
+            if ( forceType ) {
+                fileName = fileName.split( '.' );
+                if ( fileName.length > 1 ) {
+                    type = fileName.slice( -1 )[0];
+
+                    if ( type.toLowerCase() !== forceType ) {
+                        fileName[fileName.length - 1] = forceType;
+                        fileRef = fileName.join( '.' );
+                    }
+                } else {
+                    fileRef = fileName[0] + '.' + forceType;
+                }
+            }
+
+
+            return fileRef;
+        }
+
+        function getBaseFileName( fileName ) {
+            if ( typeof fileName === 'string' ) {
+                return fileName.split( '.' )[0];
+            }
+
+            return false;
+        }
+
 
         /**
          *
@@ -405,12 +393,11 @@
          * @param name
          */
         function processMesh( request, signal, name ) {
-            console.log("Processing mesh", name);
+            console.log( "Processing mesh", name );
 
-                var xml = request.responseXML,
-                meshGroup, self = this;
+            var xml = request.responseXML, meshGroup;
 
-            meshGroup = assetParser.parseMesh( xml, name, request.url );
+            meshGroup = self.assetParser.parseMesh( xml, name, request.url );
 
             if ( !meshAssets.hasOwnProperty( name ) ) {
                 meshAssets[name] = meshGroup;
@@ -424,7 +411,7 @@
 
             //console.timeEnd( 'Processing time' );
 
-            console.log( "Mesh",name,"processed!");
+            console.log( "Mesh", name, "processed!" );
             //console.log(meshGroup)
 
         }
@@ -438,9 +425,9 @@
         function processTexture( request, signal, name ) {
             var texture;
 
-            console.log("Processing texture", name);
+            console.log( "Processing texture", name );
 
-            texture = assetParser.parseTexture( request, name, request.url);
+            texture = self.assetParser.parseTexture( request, name, request.url );
 
             removeRequest( name );
 
@@ -453,7 +440,7 @@
             }
 
 
-            console.log( "Texture",name,"processed!" );
+            console.log( "Texture", name, "processed!" );
 
         }
 
@@ -464,12 +451,12 @@
          * @param name
          */
         function processMaterial( request, signal, name ) {
-            console.log("Processing material", name);
+            console.log( "Processing material", name );
 
             var data = request.responseText,
                 materialGroup, matRef;
 
-            materialGroup = assetParser.parseMaterial( data, name, request.url );
+            materialGroup = self.assetParser.parseMaterial( data, name, request.url );
             for ( matRef in materialGroup ) {
                 if ( !materialAssets.hasOwnProperty( matRef ) ) {
                     materialAssets[matRef] = materialGroup[matRef];
@@ -481,7 +468,7 @@
 
             removeRequest( name );
 
-            console.log( "Material",name,"processed!" );
+            console.log( "Material", name, "processed!" );
 
         }
 
@@ -493,7 +480,7 @@
          */
         function getAsset( assetRef, type ) {
             if ( type === 'mesh' ) {
-                assetRef = cleanFileName( assetRef, meshTypes[meshType].meshFileExt );
+                assetRef = cleanFileName( assetRef, meshTypes[opts.meshType].meshFileExt );
                 if ( meshAssets.hasOwnProperty( assetRef ) ) {
                     return meshAssets[assetRef];
                 }
@@ -510,7 +497,7 @@
             return false;
         }
 
-        function saveAsset(assetRef, data, type) {
+        function saveAsset( assetRef, data, type ) {
             if ( type === 'mesh' ) {
                 if ( !meshAssets.hasOwnProperty( assetRef ) ) {
                 }
@@ -524,11 +511,7 @@
             return false;
         }
 
-
-        // ### Exposed methods ###
-        return publicMethods;
     };
-
 
 
 }( window['webtundra'] = window['webtundra'] || {} ));

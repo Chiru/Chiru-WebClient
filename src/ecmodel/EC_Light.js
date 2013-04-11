@@ -23,9 +23,9 @@
      * @param {object} sceneMgr Pointer to scene manager.
      */
 
-    ECEnvironmentLight = namespace.ECEnvironmentLight = function ( sceneMgr ) {
+    ECEnvironmentLight = namespace.ECEnvironmentLight = function ( framework ) {
         //Inherit component properties
-        namespace.Component.call( this, sceneMgr );
+        namespace.Component.call( this, framework );
 
         // Default attributes
         this.createAttribute( "sunlightcolor", [0.639, 0.639, 0.639, 1.0], 'color', "sunColor" );
@@ -35,6 +35,8 @@
         this.createAttribute( "brightness", 1, 'real' );
 
         // Properties
+        this.sceneManager = framework.sceneManager;
+        this.renderer = framework.renderer;
         this.sunLight = null;
 
     };
@@ -68,7 +70,7 @@
                 var sunLight = this.sunLight, sceneManager = this.sceneManager;
 
                 if ( sceneManager && !sunLight ) {
-                    sunLight = this.sunLight = this.sceneManager.createLight(lightTypes['directional']);
+                    sunLight = this.sunLight = this.renderer.createLight(lightTypes['directional']);
                     this.updateSunLight();
                     sceneManager.addToScene( sunLight );
                     sceneManager.addToScene( new THREE.DirectionalLightHelper(sunLight, 2.5) );
@@ -125,9 +127,9 @@
 
 
             updateAmbientLight: function () {
-                var sceneManager = this.sceneManager, color = this.ambientColor;
-                if ( sceneManager && color ) {
-                    sceneManager.setAmbientLight( color );
+                var renderer = this.renderer, color = this.ambientColor;
+                if ( renderer && color ) {
+                    renderer.setAmbientLight( color );
                 }
 
             }
@@ -146,9 +148,9 @@
      */
 
 
-    ECLight = namespace.ECLight = function ( sceneMgr ) {
+    ECLight = namespace.ECLight = function ( framework ) {
         //Inherit component properties
-        namespace.Component.call( this, sceneMgr );
+        namespace.Component.call( this, framework );
 
 
         this.createAttribute( "lighttype", lightTypes['point'], 'int', "lightType" );
@@ -163,6 +165,7 @@
         //this.createAttribute( "lightinnerangle", 30.0, 'real', "lightInnerAngle" );
         this.createAttribute( "lightouterangle", 40.0, 'real', "lightOuterAngle" );
 
+        this.renderer = framework.renderer;
         this.offsetNode = new THREE.Object3D();
         this.placeable = null;
         this.light = null;
@@ -213,7 +216,7 @@
             setupLight: function(){
                 var light = this.light, diffuse = this.diffuseColor, specular = this.specularColor;
                 if(!light){
-                    light = this.light = this.sceneManager.createLight(this.lightType);
+                    light = this.light = this.renderer.createLight(this.lightType);
                     this.offsetNode.add(light);
                 }
                 if(!light){
@@ -228,9 +231,6 @@
                     light.castShadow = this.castShadows;
                     light.angle= (Math.PI/180) * this.lightOuterAngle;
                 }
-
-
-
 
             }
 

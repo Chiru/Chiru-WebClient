@@ -11,15 +11,18 @@
     util = namespace.util;
 
 
-    CameraManager = namespace.CameraManager = function ( sceneMgr ) {
+    CameraManager = namespace.CameraManager = function ( framework ) {
         var ecManager;
 
-        if ( !sceneMgr ) {
-            throw new Error( "CameraManager: Could not get SceneManager object." );
+        if ( !framework ) {
+            throw new Error( "CameraManager: Could not get framework object." );
         }
 
-        ecManager = sceneMgr.ecManager;
+        ecManager = framework.sceneManager.ecManager;
 
+        if(ecManager){
+            ecManager.entityCreated.add( onEntityCreated, this);
+        }
 
         function onEntityCreated( entity ) {
             var name = entity.name, e;

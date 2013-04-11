@@ -7,13 +7,13 @@
 
 (function ( namespace, undefined ) {
 
-    var ECDynamic, util;
+    var ECRigidBody, util;
 
     util = namespace.util;
 
     //TODO:
 
-    ECDynamic = namespace.ECDynamic = function ( framework ) {
+    ECRigidBody = namespace.ECRigidBody = function ( framework ) {
         //Inherit component properties
         namespace.Component.call( this, framework );
 
@@ -22,10 +22,10 @@
 
     };
 
-    namespace.storeComponent( 25, "EC_Dynamic", ECDynamic );
+    namespace.storeComponent( 23, "EC_RigidBody", ECRigidBody );
 
 
-    ECDynamic.prototype = util.extend( Object.create( namespace.Component.prototype ),
+    ECRigidBody.prototype = util.extend( Object.create( namespace.Component.prototype ),
         {
 
 

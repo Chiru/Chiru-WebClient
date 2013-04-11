@@ -11,9 +11,9 @@
 
     util = namespace.util;
 
-    ECName = namespace.ECName = function ( sceneMgr ) {
+    ECName = namespace.ECName = function ( framework ) {
 
-        namespace.Component.call( this, sceneMgr ); //Inherit component properties
+        namespace.Component.call( this, framework ); //Inherit component properties
 
         // Default attributes
         this.createAttribute("name", "", 'string');

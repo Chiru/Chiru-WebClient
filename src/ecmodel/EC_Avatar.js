@@ -11,13 +11,13 @@
     util = namespace.util;
 
 
-    ECAvatar = namespace.ECAvatar = function ( sceneMgr ) {
+    ECAvatar = namespace.ECAvatar = function ( framework ) {
 
-        namespace.Component.call( this, sceneMgr ); //Inherit component properties
+        namespace.Component.call( this, framework ); //Inherit component properties
 
         this.createAttribute("appearanceref", "default_avatar.avatar", 'assetref', "appearanceRef");
 
-        this.mesh = sceneMgr.ecManager.createComponent("EC_Mesh");
+        this.mesh = framework.sceneManager.ecManager.createComponent("EC_Mesh");
         this.defaultPath = "/default_assets/models/";
 
 

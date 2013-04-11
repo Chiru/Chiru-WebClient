@@ -10,9 +10,10 @@
 
     util = namespace.util;
 
-    FreeLookControls = namespace.FreeLookControls = function ( placeable, sceneMgr ) {
+    FreeLookControls = namespace.FreeLookControls = function ( placeable, framework ) {
 
-        this.domElement = sceneMgr.container;
+        this.renderer = framework.renderer;
+        this.domElement = this.renderer.container;
 
         this.placeable = placeable;
         this.object = new THREE.Object3D(); // Dummy object for transformations
@@ -166,7 +167,6 @@
         };
 
         onMouseMove = function ( event ) {
-            console.warn(self.placeable.parent.id)
             event.preventDefault();
             event.stopPropagation();
 
@@ -187,7 +187,6 @@
 
         onKeyDown = function ( event ) {
             //event.preventDefault();
-
             switch (event.keyCode) {
 
             case 38: /*up*/
@@ -318,7 +317,6 @@
         };
 
         this.disable = function () {
-            console.error("Disabling controls for entity: ", this.placeable.parent.id)
             this.domElement.removeEventListener( 'contextmenu', contextMenu, false );
             this.domElement.removeEventListener( 'mousemove', onMouseMove, false );
             this.domElement.removeEventListener( 'mousedown', onMouseDown, false );
@@ -329,8 +327,6 @@
         };
 
         this.enable = function() {
-            console.error("Enabling controls for entity: ", this.placeable.parent.id)
-
             this.domElement.addEventListener( 'contextmenu', contextMenu, false );
             this.domElement.addEventListener( 'mousemove', onMouseMove, false );
             this.domElement.addEventListener( 'mousedown', onMouseDown, false );

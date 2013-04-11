@@ -21,9 +21,11 @@
      * @param {object} sceneMgr Pointer to scene manager.
      */
 
-    ECMaterial = namespace.ECMaterial = function ( sceneMgr ) {
+    // TODO:
+
+    ECMaterial = namespace.ECMaterial = function ( framework ) {
         //Inherit component properties
-        namespace.Component.call( this, sceneMgr );
+        namespace.Component.call( this, framework );
 
 
     };

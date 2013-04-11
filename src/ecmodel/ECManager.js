@@ -17,16 +17,17 @@
      * @param {object} sceneMgr Pointer to scene manager.
      */
 
-    var ECManager = namespace.ECManager = function ( sceneMgr ) {
+    var ECManager = namespace.ECManager = function ( frameWork ) {
 
-        this.sceneManager = sceneMgr;
+        this.framework = frameWork;
+
         this.entities = {};
         this.localEntities = {};
         this.numLocalEntities = 0;
         this.entityCreated = new namespace.Signal();
 
 
-        var connection = this.connection = sceneMgr.websocket,
+        var connection = this.connection = frameWork.connection,
             self = this;
 
         if ( connection ) {
@@ -212,18 +213,18 @@
 
             if ( isTypeId ) {
                 if ( components.hasOwnProperty( type + '' ) ) {
-                    return new components[type].Constructor( this.sceneManager );
+                    return new components[type].Constructor( this.framework );
                 }
                 console.warn( "ECManager: Error while creating component; Unknown type id:", type );
                 return false;
 
             } else if ( type instanceof namespace.Component ) {
-                return type( this.sceneManager );
+                return type( this.framework );
 
             } else if ( !isTypeId && type.indexOf( "EC_" ) !== -1 ) {
                 for ( i in components ) {
                     if ( components[i].typeName === type ) {
-                        return new components[i].Constructor( this.sceneManager );
+                        return new components[i].Constructor( this.framework );
                     }
                 }
                 console.warn( "ECManager: Error while creating component; Unknown type name:", type );

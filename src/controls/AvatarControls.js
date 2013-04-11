@@ -9,7 +9,7 @@
 
     util = namespace.util;
 
-    AvatarControls = namespace.AvatarControls = function ( object, sceneMgr ) {
+    AvatarControls = namespace.AvatarControls = function ( object, framework ) {
 
 
     };

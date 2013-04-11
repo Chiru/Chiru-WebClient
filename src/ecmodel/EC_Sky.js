@@ -21,9 +21,9 @@
      * @param {object} sceneMgr Pointer to scene manager.
      */
 
-    ECSky = namespace.ECSky = function ( sceneMgr ) {
+    ECSky = namespace.ECSky = function ( framework ) {
         //Inherit component properties
-        namespace.Component.call( this, sceneMgr );
+        namespace.Component.call( this, framework );
 
         // Default attributes
         //this.createAttribute("material", "RexSkyBox", 'assetref');
@@ -39,6 +39,10 @@
 
 
         // Other properties
+
+        this.renderer = framework.renderer;
+        this.assetManager = framework.assetManager;
+
         this.defaultTextures = ["rex_sky_front.dds",
                                 "rex_sky_back.dds",
                                 "rex_sky_left.dds",
@@ -137,7 +141,7 @@
                     skyBox.geometry.uvsNeedUpdate = true;
 
                     this.skyBox = skyBox;
-                    this.sceneManager.addSkyBox( skyBox );
+                    this.renderer.addSkyBox( skyBox );
 
                 }
             },
@@ -176,7 +180,7 @@
 
             changeFaceTextures: function ( ) {
                 var changedTextures = this.changedTextures, skyBoxMaterial, texture,
-                    faceTextures = this.faceTextures, assetManager = this.sceneManager.assetManager, i, faceIndex, order;
+                    faceTextures = this.faceTextures, assetManager = this.assetManager, i, faceIndex, order;
 
                 if(!this.skyBox){
                     return;
@@ -201,7 +205,7 @@
 
             getTextures: function () {
                 var request, texture, texturesNeeded, changedTextures = this.changedTextures, temp,
-                    textureRefs = this.textureRefs, assetManager = this.sceneManager.assetManager,
+                    textureRefs = this.textureRefs, assetManager = this.assetManager,
                     self = this, callBack, i;
 
                 if ( !assetManager ) {

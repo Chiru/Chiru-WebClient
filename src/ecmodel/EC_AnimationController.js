@@ -13,9 +13,9 @@
 
     //TODO:
 
-    ECAnimationController = namespace.ECAnimationController = function ( sceneMgr ) {
+    ECAnimationController = namespace.ECAnimationController = function ( framework ) {
         //Inherit component properties
-        namespace.Component.call( this, sceneMgr );
+        namespace.Component.call( this, framework );
 
         // Default attributes
 

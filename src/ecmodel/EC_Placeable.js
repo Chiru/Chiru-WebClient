@@ -21,9 +21,9 @@
      * @param {object} sceneMgr Pointer to scene manager.
      */
 
-    ECPlaceable = namespace.ECPlaceable = function ( sceneMgr ) {
+    ECPlaceable = namespace.ECPlaceable = function ( framework ) {
 
-        namespace.Component.call( this, sceneMgr ); //Inherit component properties
+        namespace.Component.call( this, framework ); //Inherit component properties
 
         // Default attributes
         this.createAttribute( "transform", [0, 0, 0, 0, 0, 0, 1, 1, 1], 'transform' );
@@ -31,6 +31,7 @@
         this.createAttribute( "visible", true, 'bool' );
 
         // Other properties
+        this.sceneManager = framework.sceneManager;
         this.parentMesh = null;
         this.parentPlaceable = null;
         this.attached = false;

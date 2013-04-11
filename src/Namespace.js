@@ -13,31 +13,39 @@
 (function ( namespace, undefined ) {
 
     // Attributes
-    namespace.VERSION = '0.1 dev';
+    namespace.VERSION = '1.0 alpha';
     namespace.NAME = 'WebTundra';
     namespace.ENUMS = {};
     namespace.ECOMPONENTS = {};
 
-    // Basic methods
-    namespace.initScene = function ( options ) {
-        try {
-            return new namespace.SceneManager( options );
-        } catch (e) {
-            console.log( e.stack );
-            return false;
-        }
+    // API
+
+    namespace.setupRenderer = function ( options ) {
+       return namespace.Framework.setOptions(options, 'renderer');
     };
 
-    namespace.initConnection = function ( host, port, options ) {
-        var socket;
+    namespace.setupScene = function ( options ){
+        return namespace.Framework.setOptions(options, 'scene');
 
-        try {
-            socket = new namespace.WSManager( host, port, options );
-        } catch (e) {
-            console.error( 'ERROR:', e.stack );
-        }
+    };
 
-        return socket;
+    namespace.setupAssetManager = function ( options ){
+        return namespace.Framework.setOptions(options, 'assets');
+
+    };
+
+    namespace.setupSyncManager = function ( options ){
+        return namespace.Framework.setOptions(options, 'sync');
+
+    };
+
+    namespace.setupConnection = function ( options ){
+        return namespace.Framework.setOptions(options, 'connection');
+
+    };
+
+    namespace.startClient = function(){
+        namespace.Framework.start();
     };
 
 
@@ -49,7 +57,8 @@
      * @function
      * @memberOf webtundra
      * @param {Integer | String} id Unique id for the Entity Component constructor function.
-     * @param {function} constructor Component constructor function.
+     * @param typeName
+     * @param {Function} constructor Component constructor function.
      */
 
     namespace.storeComponent = function (id, typeName, constructor) {

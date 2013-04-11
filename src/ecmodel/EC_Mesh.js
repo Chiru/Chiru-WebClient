@@ -19,9 +19,9 @@
      * @param {object} sceneMgr Pointer to scene manager.
      */
 
-    ECMesh = namespace.ECMesh = function ( sceneMgr ) {
+    ECMesh = namespace.ECMesh = function ( framework ) {
 
-        namespace.Component.call( this, sceneMgr ); //Inherit component properties
+        namespace.Component.call( this, framework ); //Inherit component properties
 
         // Default attributes
         this.createAttribute( "transform", [0, 0, 0, 0, 0, 0, 1, 1, 1], 'transform' );
@@ -34,6 +34,10 @@
         this.materialChanged = new namespace.Signal();
 
         // Other properties
+
+        this.assetManager = framework.assetManager;
+        this.sceneManager = framework.sceneManager;
+
         this.placeable = null;
         this.offsetNode = new THREE.Object3D();
         this.mesh = null;
@@ -74,9 +78,9 @@
 
             },
 
-            setPlaceable: function ( ECPlaceable ) {
-                if ( ECPlaceable instanceof namespace.ECPlaceable ) {
-                    this.placeable = ECPlaceable;
+            setPlaceable: function ( placeable ) {
+                if ( placeable instanceof namespace.ECPlaceable ) {
+                    this.placeable = placeable;
                 }
             },
 
@@ -93,7 +97,7 @@
 
 
             loadMesh: function () {
-                var meshRef = this.meshRef, assetManager = this.sceneManager.assetManager,
+                var meshRef = this.meshRef, assetManager = this.assetManager,
                     self = this, request, mesh;
 
                 if ( meshRef === "" ) {
@@ -122,7 +126,7 @@
             },
 
             prepareMesh: function ( meshData ) {
-                var assetManager = this.sceneManager.assetManager, meshNode = new THREE.Object3D(), materialRef, materialFileRef,
+                var assetManager = this.assetManager, meshNode = new THREE.Object3D(), materialRef, materialFileRef,
 
                     material, waitingForMaterial = false, hasMaterials, newMesh, geometryGroup, geomGroupLen,
                     geometry, materialRdy, i;
@@ -249,7 +253,7 @@
                 }
                 sceneNode = placeable.getSceneNode();
 
-                this.sceneManager.removeFromScene( sceneNode );
+                sceneNode.remove(this.offsetNode);
                 this.attached = false;
 
             }

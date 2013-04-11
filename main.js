@@ -39,36 +39,32 @@
 
     // ### Initializing the WebSocket manager ###
 
-    namespace.ws = webtundra.initConnection( /*'130.231.12.58'*/wsAddress.split(":")[0], wsAddress.split(":")[1], {allowReconnect: false} );
-    namespace.ws.bindEvent( "connected", function ( url ) {
-        console.log( "WebSocket connection opened." );
-    } );
-
-    namespace.ws.bindEvent( "disconnected", function ( e ) {
-        console.log( "WebSocket closed." );
-    } );
-
-    namespace.ws.bindEvent( "reconnecting", function ( e ) {
-        console.log( "Attempting to reconnect to " + e.host + " (Attempt: " + e.attempt + ")" );
-
-    } );
-
-    namespace.ws.bindEvent( "error", function ( e ) {
-        console.log( "WebSocket error" + e );
+    webtundra.setupConnection( {
+        host: wsAddress.split(":")[0],
+        port:wsAddress.split(":")[1],
+        allowReconnect: false
     } );
 
 
-    // ### Initializing the scene manager ###
-    namespace.scene = webtundra.initScene(
+     webtundra.setupRenderer(
         {
-            container: namespace.container,
-            websocket: namespace.ws,
+            container: namespace.container
+        } );
+
+    webtundra.setupAssetManager(
+        {
             meshType: 'ogre'
         } );
 
+    // ### Initializing the scene manager ###
+    webtundra.setupScene(
+        {
 
-    // ### Starting the scene manager ###
-    namespace.scene.start();
+        } );
+
+
+    // ### Starting the client ###
+    webtundra.startClient();
 
 
 

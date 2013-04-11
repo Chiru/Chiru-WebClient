@@ -11,14 +11,17 @@
 
     util = namespace.util;
 
-    ECControls = namespace.ECControls = function ( sceneMgr ) {
+    ECControls = namespace.ECControls = function ( framework ) {
 
-        namespace.Component.call( this, sceneMgr ); //Inherit component properties
+        namespace.Component.call( this, framework ); //Inherit component properties
 
         // Other properties
+        this.sceneManager = framework.sceneManager;
+
         this.placeable = null;
         this.controller = null;
-        this.container = sceneMgr.container;
+
+        this.container = framework.renderer.container;
 
         this.placeableListener = function(attr){
             if(attr['name'] === 'transform') {
@@ -100,7 +103,6 @@
                 if ( !this.isActive() && this.controller) {
                     this.sceneManager.controlManager.setControls( this.controller );
                 }
-                console.warn("set active")
             }
 
 

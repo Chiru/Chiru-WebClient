@@ -11,19 +11,21 @@
     util = namespace.util;
 
 
-    Controls = namespace.Controls = function ( sceneMgr ) {
+    Controls = namespace.Controls = function ( framework ) {
 
         var controls = {
             "freelook": namespace.FreeLookControls,
             "avatar":namespace.AvatarControls
-        };
+            }, sceneManager = framework.sceneManager;
 
         function setControls( controller ) {
             if ( controller ) {
-                if(sceneMgr.controls){
-                    sceneMgr.controls.disable();
+                if(sceneManager.controls){
+                    console.warn("disabling controls")
+                    sceneManager.controls.disable();
                 }
-                sceneMgr.controls = controller;
+
+                sceneManager.controls = controller;
                 controller.enable();
             }
         }
@@ -32,7 +34,7 @@
             var controller = false;
 
             if(controls.hasOwnProperty(type)){
-                controller = new controls[type](placeable, sceneMgr);
+                controller = new controls[type](placeable, framework);
             }
 
             return controller;

@@ -13,9 +13,9 @@
     innerWidth = util.innerWidth;
     innerHeight = util.innerHeight;
 
-    ECCamera = namespace.ECCamera = function ( sceneMgr ) {
+    ECCamera = namespace.ECCamera = function ( framework ) {
 
-        namespace.Component.call( this, sceneMgr ); //Inherit component properties
+        namespace.Component.call( this, framework ); //Inherit component properties
 
         // Default attributes
         this.createAttribute( "upvector", [0, 1, 0], 'float3', "upVector" );
@@ -25,6 +25,7 @@
         this.createAttribute( "aspectratio", "", 'string', "aspectRatio" );
 
         // Other properties
+        this.renderer = framework.renderer;
         this.camera = null;
         this.placeable = null;
         this.attached = false;
@@ -104,13 +105,13 @@
             },
 
             setActive: function () {
-                var sceneManager = this.sceneManager, camera = this.camera;
+                var renderer = this.renderer, camera = this.camera;
 
                 if ( !camera || !this.parent || !this.attached ) {
                     return;
                 }
 
-                sceneManager.setMainCamera( this.camera );
+                renderer.setMainCamera( this.camera );
 
 
             },
@@ -140,9 +141,9 @@
                     }
                 }
 
-                // Getting the aspect ratio from sceneManager if it cannot be defined otherwise
-                if ( this.sceneManager && this.sceneManager.container ) {
-                    return innerWidth( this.sceneManager.container ) / innerHeight( this.sceneManager.container );
+                // Getting the aspect ratio from renderer if it cannot be defined otherwise
+                if ( this.renderer && this.renderer.container ) {
+                    return innerWidth( this.renderer.container ) / innerHeight( this.renderer.container );
                 }
 
                 return 1.0;

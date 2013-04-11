@@ -71,9 +71,7 @@
             },
 
             attach: function () {
-                var parent;
-
-                parent = this.parent;
+                var parent = this.parent;
                 if ( parent ) {
                     parent.placeable = this;
                     //console.log( "Adding placeable to scene" )

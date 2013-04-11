@@ -12,13 +12,12 @@
 
 
     CameraManager = namespace.CameraManager = function ( sceneMgr ) {
-        var sceneManager, ecManager;
+        var ecManager;
 
         if ( !sceneMgr ) {
             throw new Error( "CameraManager: Could not get SceneManager object." );
         }
 
-        sceneManager = sceneMgr;
         ecManager = sceneMgr.ecManager;
 
 

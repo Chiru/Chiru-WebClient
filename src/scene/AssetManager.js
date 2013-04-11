@@ -11,7 +11,9 @@
     var AssetManager = namespace.AssetManager = function ( storageUrl, meshType ) {
 
         var meshTypes, textureTypes, meshAssets, textureAssets, materialAssets, requestTypes,
-             requestQueue, remoteStorage, assetParser, publicMethods, GUIProgressIndicator;
+             requestQueue, remoteStorage, assetParser, publicMethods, GUIProgressIndicator,
+
+            assetsReady = new namespace.Signal(), loadProgress = new namespace.Signal();
 
         // Exposed methods
         publicMethods = {
@@ -19,7 +21,10 @@
             getAsset: getAsset,
             cleanFileName: cleanFileName,
             getBaseFileName: getBaseFileName,
-            setRemoteStorage: setRemoteStorage
+            setRemoteStorage: setRemoteStorage,
+
+            assetsReady: assetsReady,
+            loadProgress: loadProgress
         };
 
         meshTypes = {
@@ -61,7 +66,7 @@
          */
 
         function removeRequest ( name ) {
-            var requests = requestQueue.requests, queue = requestQueue.queue, queueLen = queue.length, i;
+            var requests = requestQueue.requests, queue = requestQueue.queue, i;
 
             if ( requests.hasOwnProperty( name ) ) {
                 queue.splice(queue.indexOf(name), 1);
@@ -71,11 +76,14 @@
                 // Showing progress in the GUI
                 if(GUIProgressIndicator){
                     GUIProgressIndicator.updateProgress();
+                    loadProgress.dispatch(queue.length)
                 }
             }
 
             if ( queue.length === 0 ) {
                 console.log( "All requests processed!" );
+                assetsReady.dispatch();
+
             }
 
         }

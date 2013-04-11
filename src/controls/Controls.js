@@ -20,7 +20,11 @@
 
         function setControls( controller ) {
             if ( controller ) {
+                if(sceneMgr.controls){
+                    sceneMgr.controls.disable();
+                }
                 sceneMgr.controls = controller;
+                controller.enable();
             }
         }
 

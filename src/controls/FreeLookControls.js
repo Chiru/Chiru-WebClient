@@ -68,8 +68,18 @@
             degToRad = THREE.Math.degToRad,
             targetPosition = this.target,
             position = this.object.position,
-            rotation = this.object.rotation;
+            rotation = this.object.rotation,
 
+            self = this,
+
+            contextMenu = function ( event ) {
+                event.preventDefault();
+            },
+            onMouseDown,
+            onMouseUp,
+            onMouseMove,
+            onKeyUp,
+            onKeyDown;
 
         this.getMousePosition = function ( event ) {
             var mouseX, mouseY;
@@ -121,30 +131,30 @@
 
         };
 
-        this.onMouseDown = function ( event ) {
+        onMouseDown = function ( event ) {
 
-            if ( this.domElement !== document ) {
+            if ( self.domElement !== document ) {
 
-                this.domElement.focus();
+                self.domElement.focus();
 
             }
 
             event.preventDefault();
             event.stopPropagation();
 
-            this.getMousePosition( event );
+            self.getMousePosition( event );
 
 
             mouseXStart = event.mouseX;
             mouseYStart = event.mouseY;
-            this.computeTargetPosition();
+            self.computeTargetPosition();
 
             mouseDown = true;
 
         };
 
 
-        this.onMouseUp = function ( event ) {
+        onMouseUp = function ( event ) {
 
             event.preventDefault();
             event.stopPropagation();
@@ -155,26 +165,27 @@
             mouseXDelta = mouseYDelta = 0;
         };
 
-        this.onMouseMove = function ( event ) {
+        onMouseMove = function ( event ) {
+            console.warn(self.placeable.parent.id)
             event.preventDefault();
             event.stopPropagation();
 
            if(mouseDown){
-                this.getMousePosition( event );
+                self.getMousePosition( event );
 
                 mouseXDelta = event.mouseX - mouseXStart;
                 mouseYDelta = event.mouseY - mouseYStart;
 
-                this.computeTargetPosition();
+               self.computeTargetPosition();
 
-                this.object.lookAt( targetPosition );
-                this.placeable.setRotation( radToDeg( rotation.x ), radToDeg( rotation.y ),
+               self.object.lookAt( targetPosition );
+               self.placeable.setRotation( radToDeg( rotation.x ), radToDeg( rotation.y ),
                     radToDeg( rotation.z ) );
 
             }
         };
 
-        this.onKeyDown = function ( event ) {
+        onKeyDown = function ( event ) {
             //event.preventDefault();
 
             switch (event.keyCode) {
@@ -216,7 +227,7 @@
 
         };
 
-        this.onKeyUp = function ( event ) {
+        onKeyUp = function ( event ) {
 
             switch (event.keyCode) {
 
@@ -255,7 +266,6 @@
         this.update = function ( delta ) {
 
             if ( freeze ) {
-
                 return;
             }
 
@@ -307,16 +317,28 @@
             //TODO: Reverse calculate lookat target position so that camera wont jump when moving it the first time
         };
 
+        this.disable = function () {
+            console.error("Disabling controls for entity: ", this.placeable.parent.id)
+            this.domElement.removeEventListener( 'contextmenu', contextMenu, false );
+            this.domElement.removeEventListener( 'mousemove', onMouseMove, false );
+            this.domElement.removeEventListener( 'mousedown', onMouseDown, false );
+            this.domElement.removeEventListener( 'mouseup',  onMouseUp, false );
+            this.domElement.removeEventListener( 'keydown', onKeyDown, false );
+            this.domElement.removeEventListener( 'keyup', onKeyUp, false );
+            freeze = true;
+        };
 
-        this.domElement.addEventListener( 'contextmenu', function ( event ) {
-            event.preventDefault();
-        }, false );
+        this.enable = function() {
+            console.error("Enabling controls for entity: ", this.placeable.parent.id)
 
-        this.domElement.addEventListener( 'mousemove', bind( this, this.onMouseMove ), false );
-        this.domElement.addEventListener( 'mousedown', bind( this, this.onMouseDown ), false );
-        this.domElement.addEventListener( 'mouseup', bind( this, this.onMouseUp ), false );
-        this.domElement.addEventListener( 'keydown', bind( this, this.onKeyDown ), false );
-        this.domElement.addEventListener( 'keyup', bind( this, this.onKeyUp ), false );
+            this.domElement.addEventListener( 'contextmenu', contextMenu, false );
+            this.domElement.addEventListener( 'mousemove', onMouseMove, false );
+            this.domElement.addEventListener( 'mousedown', onMouseDown, false );
+            this.domElement.addEventListener( 'mouseup', onMouseUp, false );
+            this.domElement.addEventListener( 'keydown',  onKeyDown, false );
+            this.domElement.addEventListener( 'keyup', onKeyUp, false );
+            freeze = false;
+        };
 
         function bind( scope, fn ) {
 

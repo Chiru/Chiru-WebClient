@@ -66,7 +66,7 @@
     };
 
     SceneManager.prototype.renderLoop = function () {
-        var self = this, clock = this.clock, controls = this.controls, renderer = this.renderer;
+        var self = this, clock = this.clock,  renderer = this.renderer;
 
         (function loop() {
             window.requestAnimationFrame( loop );
@@ -77,18 +77,16 @@
              self.camera.position.z = Math.floor(Math.sin( self.time *0.0005) * 200);
              self.camera.lookAt( new THREE.Vector3(0,0,0) );
              */
-            controls.update( clock.getDelta() );
+            self.controls.update( clock.getDelta() );
 
             self.skyBoxCamera.rotation.setEulerFromRotationMatrix(
                 self.mainCamera.parent.matrixWorld,
-                //self.camera.matrixWorld,
                 THREE.Object3D.defaultEulerOrder
             );
 
             renderer.render( self.skyBoxScene, self.skyBoxCamera );
             renderer.render( self.scene, self.mainCamera );
 
-            //self.time = Date.now();
         }());
 
 
@@ -217,7 +215,7 @@
                 camera = camComp.getCameraObject();
                 camControls = entity.controls;
 
-                if ( camControls ) {
+                if ( !camControls.isActive() ) {
                     camControls.setActive();
                 }
 
@@ -261,9 +259,9 @@
 
     SceneManager.prototype.init = function () {
 
-        var body = document.body, renderer, scene, skyBoxScene, camera, skyBoxCamera, controls,
+        var body = document.body, renderer, scene, skyBoxScene, skyBoxCamera,
             container = this.container, websocket = this.websocket,
-            assetManager = this.assetManager, ecManager = this.ecManager, cameraManager = this.cameraManager,
+            assetManager = this.assetManager, ecManager = this.ecManager,
             self = this, i;
 
 
@@ -312,11 +310,15 @@
         // *** SIGNAL LISTENERS ***
         //Windows resize listener
         this.windowResize();
-        ecManager.entityCreated.add( cameraManager.onEntityCreated, cameraManager );
+
+        assetManager.assetsReady.add(this.renderLoop, this);
+
+        ecManager.entityCreated.add( this.cameraManager.onEntityCreated, this.cameraManager );
 
         if ( websocket ) {
-            websocket.bindEvent( "RemoteStorage", function ( data ) {
-                assetManager.setRemoteStorage( data );
+            websocket.bindEvent( "UserData", function ( data ) {
+                assetManager.setRemoteStorage( data['RemoteStorage'] );
+                this.userID = data['UserID'];
             } );
         }
 
@@ -332,7 +334,6 @@
             if ( !this.websocket ) {
                 throw new Error( ["Invalid WebSocket connection."] );
             }
-            this.renderLoop();
             this.websocket.connect();
         } catch (e) {
             console.error( 'SceneManager:', e.stack );

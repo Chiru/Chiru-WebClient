@@ -20,6 +20,26 @@
         this.controller = null;
         this.container = sceneMgr.container;
 
+        this.placeableListener = function(attr){
+            if(attr['name'] === 'transform') {
+                //TODO: Send attributesUpdated message to server through the web client sync manager
+
+                /*Testing
+                var msg = '{"event":"AttributesChanged", "data":' +
+                '{"entityId":'+this.parent.id+''+
+                    ',"attrs":{'+
+                    '"'+this.id+'":{'+
+                    '"0":'+JSON.stringify(this.placeable.transform)+
+                    '}'+
+                    '}'+
+                    '}'+
+                    '}';
+
+                this.sceneManager.websocket.sendMessage(msg);
+                */
+            }
+        };
+
     };
 
     namespace.storeComponent( 100, "EC_Controls", ECControls );
@@ -30,12 +50,18 @@
 
             onParentAdded: function ( parent ) {
                 var self = this;
-                this.parent.componentAdded.add( function ( c ) {
-                    if ( c instanceof namespace.ECPlaceable ) {
-                        self.placeable = c;
-                        self.parent.controls = self;
-                    }
-                } );
+                if ( !parent.placeable ) {
+                    this.parent.componentAdded.add( function ( c ) {
+                        if ( c instanceof namespace.ECPlaceable ) {
+                            self.placeable = c;
+                            self.parent.controls = self;
+                        }
+                    } );
+                } else {
+                    this.placeable = parent.placeable;
+                    this.parent.controls = self;
+
+                }
             },
 
             onAttributeUpdated: function ( attr ) {
@@ -48,6 +74,8 @@
                     if ( type === "freelook" ) {
                         this.name = "freelook";
                         this.controller = controlManager.createController( placeable, type );
+
+                        placeable.attributeUpdated.add(this.placeableListener,this);
                     }
                 }
             },
@@ -62,15 +90,17 @@
             isActive: function () {
                 var controller = this.controller, controls = this.sceneManager.controls;
 
-                if ( controller && controls ) {
+                if(controller){
                     return controller === controls;
                 }
                 return false;
+
             },
             setActive: function () {
                 if ( !this.isActive() && this.controller) {
                     this.sceneManager.controlManager.setControls( this.controller );
                 }
+                console.warn("set active")
             }
 
 

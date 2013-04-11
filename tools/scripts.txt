@@ -1,10 +1,13 @@
 #Libs and utilities must be placed before other js files
 ../src/libs/three.js
+../src/libs/tween.min.js
 ../src/general/Util.js
 
 # Source files
+../src/Namespace.js
+../src/Framework.js
+
 ../src/gui/Gui.js
-../src/WebClient.js
 ../src/general/Detector.js
 ../src/general/Workers.js
 ../src/general/Signals.js
@@ -15,17 +18,19 @@
 ../src/controls/Controls.js
 ../src/controls/FreeLookControls.js
 ../src/controls/AvatarControls.js
-../src/controls/PointerLockControls.js
+../src/networking/SyncManager.js
 ../src/networking/WSManager.js
 ../src/ecmodel/Entity.js
 ../src/ecmodel/Attribute.js
 ../src/ecmodel/Component.js
+../src/ecmodel/EC_Script.js
 ../src/ecmodel/EC_Avatar.js
 ../src/ecmodel/EC_Light.js
 ../src/ecmodel/EC_Sky.js
 ../src/ecmodel/EC_AnimationController.js
 ../src/ecmodel/EC_Camera.js
 ../src/ecmodel/EC_Mesh.js
+../src/ecmodel/EC_RigidBody.js
 ../src/ecmodel/EC_Material.js
 ../src/ecmodel/EC_Placeable.js
 ../src/ecmodel/EC_Dynamic.js
@@ -33,6 +38,6 @@
 ../src/ecmodel/EC_Controls.js
 ../src/ecmodel/ECManager.js
 ../src/scene/AssetManager.js
+../src/scene/Renderer.js
 ../src/scene/CameraManager.js
 ../src/scene/SceneManager.js
-../src/scene/Renderer.js

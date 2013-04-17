@@ -24,7 +24,6 @@
 
         createRenderer: function ( options ) {
             this.renderer = new namespace.Renderer( this, options );
-            console.log(this)
             return this.renderer;
 
         },
@@ -89,7 +88,6 @@
             if ( !this.renderer ) {
                 try {
                     this.createRenderer( this.options['renderer'] );
-                    console.log( this )
                 } catch (e) {
                     console.error( "Framework: Could not create Renderer:", e.stack );
                 }

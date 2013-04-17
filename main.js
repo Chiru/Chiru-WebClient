@@ -48,7 +48,9 @@
 
      webtundra.setupRenderer(
         {
-            container: namespace.container
+            container: namespace.container,
+            shadows: false,
+            renderQuality: 'high'
         } );
 
     webtundra.setupAssetManager(

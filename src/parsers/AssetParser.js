@@ -67,10 +67,15 @@
 
                             for ( i = geometryGroup.length; i--; ) {
 
+                                // If we got a material file reference from the OgreXMLParser, the material will be requested
+                                // using that reference
                                 if ( geometryGroup[i].materialFileRef ) {
                                     request = assetManager.requestAsset( geometryGroup[i].materialFileRef, 'material' );
+
+                                // Else, if the OgreXMLParser could not decipher what is the material reference defined in the Mesh-file,
+                                // the material will be requested using the mesh file reference.
                                 } else {
-                                    request = assetManager.requestAsset( name, 'material' );
+                                    request = assetManager.requestAsset( assetManager.getBaseFileName(name), 'material' );
                                 }
 
                                 if ( request ) {
@@ -142,8 +147,7 @@
                     texture = new THREE.CompressedTexture();
                     texture.name = name;
                     texture.minFilter = texture.magFilter = THREE.LinearFilter;
-                    texture.wrapS = THREE.RepeatWrapping;
-                    texture.wrapT = THREE.RepeatWrapping;
+                    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
                     texture.repeat.x = 1.0;
                     texture.repeat.y = 1.0;
                     texture.flipY = false;
@@ -161,6 +165,10 @@
                     texture.name = name;
                     texture.image = data;
                     texture.sourceFile = requestUrl;
+                    texture.minFilter = texture.magFilter = THREE.LinearFilter;
+                    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+                    texture.repeat.set(1,1);
+                    texture.flipY = false;
                     texture.mapping = new THREE.UVMapping();
                     texture.needsUpdate = true;
                 }

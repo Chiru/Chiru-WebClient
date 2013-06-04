@@ -23,26 +23,23 @@
 
         this.container = framework.renderer.container;
 
+        /*
         this.placeableListener = function(attr){
             if(attr['name'] === 'transform') {
                 //TODO: Send attributesUpdated message to server through the web client sync manager
 
-                /*Testing
-                var msg = '{"event":"AttributesChanged", "data":' +
-                '{"entityId":'+this.parent.id+''+
+                framework.connection.sendMessage('{"event":"AttributesChanged", "data":' +
+                    '{"entityId":'+this.parent.id+''+
                     ',"attrs":{'+
                     '"'+this.id+'":{'+
                     '"0":'+JSON.stringify(this.placeable.transform)+
                     '}'+
                     '}'+
                     '}'+
-                    '}';
-
-                this.sceneManager.websocket.sendMessage(msg);
-                */
+                '}');
             }
         };
-
+        */
     };
 
     namespace.storeComponent( 100, "EC_Controls", ECControls );
@@ -78,7 +75,7 @@
                         this.name = "freelook";
                         this.controller = controlManager.createController( placeable, type );
 
-                        placeable.attributeUpdated.add(this.placeableListener,this);
+                        //placeable.attributeUpdated.add(this.placeableListener,this);
                     }
                 }
             },

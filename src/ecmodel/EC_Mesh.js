@@ -152,7 +152,7 @@
 
                     // Setting default material
                     if ( !material ) {
-                        material = new THREE.MeshPhongMaterial( { wireframe: true, color: 0x39FF14} );
+                        material = new THREE.MeshPhongMaterial( { wireframe: false,  color: 0x39FF14} );
                         waitingForMaterial = true;
                     }
 
@@ -161,6 +161,8 @@
 
                     // Setting mesh properties
                     newMesh = new THREE.Mesh( geometry, material );
+                    newMesh.occluder = true;
+                    newMesh.occludable = THREE.EdgeOccludable;
                     newMesh.meshRef = this.meshRef;
                     newMesh.materialRef = materialRef;
                     newMesh.castShadow = this.castShadows;
@@ -181,8 +183,7 @@
                                 mesh.geometry.buffersNeedUpdate = true;
                                 mesh.geometry.uvsNeedUpdate = true;
 
-                                // Forcing double sided materials for now so optimized oulu3D scene would look better
-                                //mesh.material.side = THREE.DoubleSide;
+                                //mesh.material.side = THREE.BackSide;
 
                                 mesh.material.needsUpdate = true;
                             } );

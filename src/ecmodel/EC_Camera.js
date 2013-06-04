@@ -20,7 +20,7 @@
         // Default attributes
         this.createAttribute( "upvector", [0, 1, 0], 'float3', "upVector" );
         this.createAttribute( "nearplane", 0.1, 'real', "nearPlane" );
-        this.createAttribute( "farplane", 2000.0, 'real', "farPlane" );
+        this.createAttribute( "farplane", 1000.0, 'real', "farPlane" );
         this.createAttribute( "verticalfov", 45.0, 'real', "fov" );
         this.createAttribute( "aspectratio", "", 'string', "aspectRatio" );
 
@@ -55,7 +55,7 @@
                 if ( !this.camera ) {
                     this.camera = new THREE.PerspectiveCamera();
 
-                    this.setFarClipDist( this.farPlane || 5000 );
+                    this.setFarClipDist( this.farPlane || 1000 );
                     this.setNearClipDist( this.nearPlane || 0.1 );
                     this.setFov( this.fov || 45 );
                     this.setAspectRatio( this.getAspectRatio() );

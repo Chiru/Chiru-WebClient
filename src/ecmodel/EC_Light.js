@@ -73,7 +73,7 @@
                     sunLight = this.sunLight = this.renderer.createLight(lightTypes['directional']);
                     this.updateSunLight();
                     sceneManager.addToScene( sunLight );
-                    sceneManager.addToScene( new THREE.DirectionalLightHelper(sunLight, 2.5) );
+                    //sceneManager.addToScene( new THREE.DirectionalLightHelper(sunLight, 2.5) );
 
                 }
             },

@@ -13,7 +13,8 @@
                 port: "9002",
                 reconnectInterval: 8000,
                 timeout: 8000,
-                allowReconnect: true
+                allowReconnect: true,
+                msgType: 'json'
             }, opts = extend( {}, defaults, options );
 
         var processUserData;
@@ -23,6 +24,7 @@
         this.url = "ws://" + opts.host + ":" + opts.port;
         this.host = opts.host;
         this.port = opts.port;
+        this.msgType = opts.msgType;
 
         this.reconnecting = false;
         this.connectTimer = null;
@@ -42,6 +44,8 @@
 
         // Storage for connection spesific user data
         this.userData = {UserID: null};
+
+        this.msgSerializer = new namespace.MsgSerializer(framework, opts.msgType);
 
         // Hack for firefox
         window.addEventListener( "beforeunload", function () {
@@ -86,6 +90,10 @@
                 return;
             }
 
+            if(this.msgType === 'knet'){
+                this.ws.binaryType = 'arraybuffer';
+            }
+
             //Timeout for connection attempt NOTE: Disabled due abnormal behaviour with Firefox on Android
             /*
              this.connectTimer = setTimeout(function() {
@@ -110,7 +118,7 @@
             }.bind( this );
 
             this.ws.onmessage = function ( evt ) {
-                //console.log("Got msg: " + evt.data);
+                console.log("Got msg: " + evt.data);
                 this.parseMessage( evt.data );
             }.bind( this );
 
@@ -221,7 +229,7 @@
             var eventChain = this.callbacks[eventName], i;
 
             if ( eventChain === undefined ) {
-                console.log( "Error: Received an unknown event: " + eventName );
+                console.warn( "WSManager: Received an unknown event: " + eventName );
                 return;
             }
             for ( i = 0; i < eventChain.length; i++ ) {

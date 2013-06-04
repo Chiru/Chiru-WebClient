@@ -94,7 +94,6 @@
             skyBoxCamera.lookAt( scene.position );
 
             this.setMainCamera();
-            cameraPlaceable = sceneManager.ecManager.getEntity("freelookcamera", true).placeable;
 
 
             // ** FPS Meter ***

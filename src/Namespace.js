@@ -13,7 +13,7 @@
 (function ( namespace, undefined ) {
 
     // Attributes
-    namespace.VERSION = '1.0 alpha';
+    namespace.VERSION = '1.0 beta';
     namespace.NAME = 'WebTundra';
     namespace.ENUMS = {};
     namespace.ECOMPONENTS = {};

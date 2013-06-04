@@ -1,5 +1,6 @@
 #Libs and utilities must be placed before other js files
 ../src/libs/three.js
+../src/libs/Stats.js
 ../src/libs/tween.min.js
 ../src/general/Util.js
 
@@ -15,16 +16,18 @@
 ../src/parsers/OgreXMLParser.js
 ../src/parsers/parseUri.js
 ../src/parsers/AssetParser.js
+../src/controls/InputManager.js
 ../src/controls/Controls.js
 ../src/controls/FreeLookControls.js
 ../src/controls/AvatarControls.js
+../src/networking/MsgSerializer.js
 ../src/networking/SyncManager.js
 ../src/networking/WSManager.js
 ../src/ecmodel/Entity.js
 ../src/ecmodel/Attribute.js
 ../src/ecmodel/Component.js
-../src/ecmodel/EC_Script.js
 ../src/ecmodel/EC_Avatar.js
+../src/ecmodel/EC_Script.js
 ../src/ecmodel/EC_Light.js
 ../src/ecmodel/EC_Sky.js
 ../src/ecmodel/EC_AnimationController.js

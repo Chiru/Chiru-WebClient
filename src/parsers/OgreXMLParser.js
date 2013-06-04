@@ -63,17 +63,23 @@
             }
 
             function parseMesh( element, xml, sharedVertexData, geomObject ) {
-                var elAttributes = element.attributes, faceData, vertexData, geometry;
+                var elAttributes = element.attributes, operationType, useSharedVertices, faceData, vertexData, geometry;
 
                 if ( elAttributes.length !== 4 ) {
                     throw new Error( ["OgreXMLParser: <submesh> had invalid amount of attributes."] );
                 }
-                if ( elAttributes[3].nodeValue !== "triangle_list" ) {
+
+                operationType = elAttributes.getNamedItem("operationtype");
+
+                if ( operationType && operationType.nodeValue !== "triangle_list" ) {
                     throw new Error( ["OgreXMLParser: Unsupported operation type wanted for submesh. Use 'triangle_list' for now."] );
                 }
 
+                useSharedVertices = elAttributes.getNamedItem("usesharedvertices");
+
                 faceData = parseFaces( element, xml );
-                if(element.getAttribute( "usesharedvertices" ) === "true" && sharedVertexData){
+
+                if(useSharedVertices && useSharedVertices.nodeValue === "true" && sharedVertexData){
                     vertexData = sharedVertexData;
                 }else{
                     geometry = element.getElementsByTagName( "geometry" )[0];
@@ -153,27 +159,35 @@
 
                 if ( buffer.hasAttribute( 'texture_coords' ) ) {
                     texChannels = parseInt( buffer.getAttribute( 'texture_coords' ), 10 );
-                    if ( buffer.hasAttribute( 'texture_coord_dimensions_0' ) ) {
-                        temp = parseInt( buffer.getAttribute( 'texture_coord_dimensions_0' ), 10 );
+                    if ( texChannels !== 0 ) {
+                        if ( buffer.hasAttribute( 'texture_coord_dimensions_0' ) ) {
+                            temp = parseInt( buffer.getAttribute( 'texture_coord_dimensions_0' ), 10 );
 
-                        //Checking if we have correct value for texture channel dimension
-                        if( !temp ){
-                            temp = buffer.getAttribute( 'texture_coord_dimensions_0' );
-                            texCoordDim = parseInt(temp.substr(-1), 10); // Getting the last character of e.g. "float2"
-                        }else{
-                            texCoordDim = temp;
+                            //Checking if we have correct value for texture channel dimension
+                            if ( !temp ) {
+                                temp = buffer.getAttribute( 'texture_coord_dimensions_0' );
+                                texCoordDim = parseInt( temp.substr( -1 ), 10 ); // Getting the last character of e.g. "float2"
+                            } else {
+                                texCoordDim = temp;
+                            }
+                            if ( texCoordDim !== 2 ) {
+                                throw new Error( ["OgreXMLParser: Only 2-dimensional uv-coordinates for texture channels are supported."] );
+                            }
+
+
+                        } else {
+                            console.warn( "OgreXMLParser: Texture coordinate dimensions not defined. Assuming 2-dimensioned coordinates." );
+                            texCoordDim = 2;
                         }
-                        if ( texCoordDim !== 2 ) {
-                            throw new Error( ["OgreXMLParser: Only 2-dimensional uv-coordinates for texture channels are supported."] );
+                        if ( texChannels > 1 ) {
+                            console.warn( "OgreXMLParser: One texture channel per vertexbuffer is supported. Using the first channel." );
                         }
 
                         hasUvs = true;
                     } else {
-                        throw new Error( ["OgreXMLParser: Texture coordinate dimensions are needed if texture channel is defined."] );
+                        hasUvs = false;
                     }
-                    if ( texChannels > 1 ) {
-                        console.warn("OgreXMLParser: One texture channel per vertexbuffer is supported. Using the first channel." );
-                    }
+
                 }
 
                 vertices = getElements( "vertex", xml, buffer );
@@ -197,10 +211,12 @@
                         normals[i] = new THREE.Vector3( parseFloat( normal[0].nodeValue ), parseFloat( normal[1].nodeValue ),
                             parseFloat( normal[2].nodeValue ) );
                     }
-                    if(texCoordDim === 2){
-                        uv = vertex.getElementsByTagName( "texcoord" )[0].attributes;
-                        uvs[i] = new THREE.Vector2( parseFloat( uv[0].nodeValue ),
-                            parseFloat( uv[1].nodeValue ) );
+                    if ( hasUvs ) {
+                        if ( texCoordDim === 2 ) {
+                            uv = vertex.getElementsByTagName( "texcoord" )[0].attributes;
+                            uvs[i] = new THREE.Vector2( parseFloat( uv[0].nodeValue ),
+                                parseFloat( uv[1].nodeValue ) );
+                        }
                     }
 
                 }
@@ -227,10 +243,10 @@
                 }
 
                 var  nVertices = vertexData.nVertices, positions = vertexData.positions, normals = vertexData.normals,
-                    hasNormals = normals.length === nVertices, uvs = vertexData.uvs, hasUVs = uvs.length === nVertices,
+                    hasNormals = normals && normals.length === nVertices, uvs = vertexData.uvs, hasUVs = uvs && uvs.length === nVertices,
                     faces = faceData.faces, nFaces, i;
 
-                if ( positions.length === nVertices ) {
+                if ( positions && positions.length === nVertices ) {
 
                     for ( i = nVertices; i--; ) {
                         geomObject.vertices[i] = positions[i];
@@ -333,7 +349,8 @@
                     diffuse: 1,
                     emissive: 2,
                     ambient: 3
-                };
+                },
+                defaultTexture = THREE.ImageUtils.generateDataTexture( 1, 1, new THREE.Color( 0xffffff ) );
 
             function parseMaterialScript( matString ) {
                 var lines, nLines, line, matContext,
@@ -616,7 +633,8 @@
                 if ( parameter === "texture" ) {
                     if ( line.length >= 2 ) {
                         data = line.slice(1, line.length ).join(" ");
-                        data = encodeURIComponent(data);
+                        //data = encodeURIComponent(data);
+                        //console.warn(data)
                         getTexture( data, matContext );
                     }
 
@@ -637,7 +655,7 @@
                     props = matContext.materialProps, map;
 
                 // Creating dummy texture that is used until the real texture is loaded
-                props.map = THREE.ImageUtils.generateDataTexture( 1, 1, new THREE.Color( Math.random() * 0xffffff ) );
+                props.map = defaultTexture; //THREE.ImageUtils.generateDataTexture( 1, 1, new THREE.Color( Math.random() * 0xffffff ) );
 
                 if(request){
                         request.add( function ( tex ) {

@@ -222,7 +222,7 @@
             type = type.toLowerCase();
 
             if ( type === 'mesh' ) {
-                assetName = cleanFileName( assetName, meshTypes[opts.meshType].meshFileExt );
+                assetName = cleanFileName( assetName, meshTypes[opts.meshType].meshFileExt, true );
 
                 if ( meshAssets.hasOwnProperty( assetName ) ) {
                     //console.log( "Mesh:", assetName, "already downloaded" );
@@ -237,7 +237,8 @@
                 requestType = requestTypes.xhr;
 
             } else if ( type === 'material' ) {
-                assetName = cleanFileName( assetName, meshTypes[opts.meshType].matFileExt, true );
+
+                assetName = cleanFileName( assetName, meshTypes[opts.meshType].matFileExt );
 
                 if ( materialAssets.hasOwnProperty( assetName ) ) {
                     //console.log( "Material:", assetName, "already downloaded" );
@@ -321,13 +322,14 @@
          * @param useBaseName
          * @returns {*}
          */
-        function cleanFileName( fileRef, forceType, useBaseName ) {
+        function cleanFileName( fileRef, fileType, forceType, useBaseName ) {
             var fileName, type;
 
             if ( !fileRef ) {
                 console.error( "AssetManager:", "Got empty Asset filename." );
                 return '';
             }
+            //console.warn( fileRef, fileType, forceType, useBaseName )
 
             fileName = fileRef.split( '//' ).pop();
 
@@ -335,18 +337,20 @@
                 fileName = getBaseFileName( fileName );
             }
 
-            if ( forceType ) {
+            if ( forceType && fileType ) {
                 fileName = fileName.split( '.' );
                 if ( fileName.length > 1 ) {
                     type = fileName.slice( -1 )[0];
 
-                    if ( type.toLowerCase() !== forceType ) {
-                        fileName[fileName.length - 1] = forceType;
+                    if ( type.toLowerCase() !== fileType ) {
+                        fileName[fileName.length - 1] = fileType;
                         fileRef = fileName.join( '.' );
                     }
                 } else {
-                    fileRef = fileName[0] + '.' + forceType;
+                    fileRef = fileName[0] + '.' + fileType;
                 }
+            } else if ( fileType ) {
+                fileRef = fileName + '.' + fileType;
             }
 
 
@@ -480,7 +484,7 @@
          */
         function getAsset( assetRef, type ) {
             if ( type === 'mesh' ) {
-                assetRef = cleanFileName( assetRef, meshTypes[opts.meshType].meshFileExt );
+                assetRef = cleanFileName( assetRef, meshTypes[opts.meshType].meshFileExt, true );
                 if ( meshAssets.hasOwnProperty( assetRef ) ) {
                     return meshAssets[assetRef];
                 }

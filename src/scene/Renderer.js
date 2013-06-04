@@ -18,21 +18,24 @@
                 container: document.body,
                 antialias: true,
                 shadows: true,
-                softShadows: true,
-                renderQuality: 'high'
+                softShadows: false,
+                resolution: 'high',
+                precision: 'highp'
             },
 
         // Setting options
             opts = extend( {}, defaults, options ),
-            delta, clock, scene, skyBoxScene, sceneManager, skyBoxCamera, renderer, self = this;
+            delta, clock, scene, skyBoxScene, sceneManager, skyBoxCamera, renderer, stats, self = this;
 
         THREE.Object3D.defaultEulerOrder = opts.eulerOrder;
 
         this.renderer = null;
+        this.resolution = 1;
         this.mainCamera = null;
         this.skyBoxCamera = null;
         this.container = opts.container;
         this.cameraManager = null;
+        this.stats = null;
 
         this.windowResizeListener = null;
 
@@ -55,21 +58,29 @@
             scene.add( new THREE.AmbientLight( null, 0 ) );
 
             renderer = this.renderer = new THREE.WebGLRenderer( {
-                antialias: true,
+                antialias: opts.antialias,
                 clearColor: 0x87CEEB,
                 clearAlpha: 1,
-                preserveDrawingBuffer: false
+                preserveDrawingBuffer: false,
+                precision: opts.precision
             } );
+
+            this.container.appendChild( renderer.domElement );
+
+            this.setResolution( opts.resolution );
 
             renderer.autoClear = false;
             //renderer.gammaInput = true;
             //renderer.gammaOutput = true;
-            renderer.shadowMapAutoUpdate = true;
-            renderer.shadowMapEnabled = true;
+            if ( opts.shadows ) {
+                renderer.shadowMapAutoUpdate = true;
+                renderer.shadowMapEnabled = true;
 
-            if ( opts.softShadows ) {
-                renderer.shadowMapSoft = true;
-                renderer.shadowMapType = THREE.PCFSoftShadowMap;
+
+                if ( opts.softShadows ) {
+                    renderer.shadowMapSoft = true;
+                    renderer.shadowMapType = THREE.PCFSoftShadowMap;
+                }
             }
 
             renderer.shadowMapCascade = false;
@@ -77,18 +88,27 @@
 
             renderer.physicallyBasedShading = true;
 
-            renderer.setSize( innerWidth( this.container ), innerHeight( this.container ) );
-
-            this.container.appendChild( renderer.domElement );
-
-            //this.setRenderQuality( opts.renderQuality );
-
             // *** CAMERAS ***
             skyBoxCamera = this.skyBoxCamera = new THREE.PerspectiveCamera( 35, (innerWidth( this.container ) /
-                innerHeight( this.container )), 1, 10000 );
+                innerHeight( this.container )), 1, 1000 );
             skyBoxCamera.lookAt( scene.position );
 
             this.setMainCamera();
+            cameraPlaceable = sceneManager.ecManager.getEntity("freelookcamera", true).placeable;
+
+
+            // ** FPS Meter ***
+
+           /* stats = this.stats = new Stats();
+            stats.setMode(0); // 0: fps, 1: ms
+            //stats.recordFPSValues(10, 1000);
+            stats.recordFPSValues(null, 500);
+            document.body.appendChild(stats.domElement);
+            stats.domElement.style.position = 'absolute';
+            stats.domElement.style.left = '2px';
+            stats.domElement.style.top = '2px';
+            */
+
 
             // *** Listeners ***
 
@@ -97,26 +117,29 @@
 
             // Starting the render loop when assets have been loaded
             framework.assetManager.assetsReady.add( this.renderLoop, this );
+           /* framework.assetManager.assetsReady.add( function() {
+                console.warn("Scene info: faces:", renderer.info.render.faces, "vertices:", renderer.info.render.vertices);
+            }, this );
+            */
 
         };
 
-
         this.renderLoop = function () {
+           // stats.begin();
             delta = clock.getDelta();
 
             framework.sceneManager.update( delta );
 
             skyBoxCamera.rotation.setEulerFromRotationMatrix(
                 self.mainCamera.parent.matrixWorld,
-                THREE.Object3D.defaultEulerOrder
-            );
+                THREE.Object3D.defaultEulerOrder);
 
-
-            //TWEEN.update();
             renderer.render( skyBoxScene, skyBoxCamera );
             renderer.render( scene, self.mainCamera );
 
             window.requestAnimationFrame( self.renderLoop );
+
+            //stats.end();
 
         };
 
@@ -230,26 +253,46 @@
         };
 
 
-        this.setRenderQuality = function ( quality ) {
-            if ( typeof(quality) === 'undefined' ){
-                quality = 'high';
+        this.setResolution = function ( resolution ) {
+            if ( typeof(resolution) === 'string' ) {
+                if ( resolution === 'high' ) {
+                    this.resolution = 1;
+                } else {
+                    this.resolution = 0.5;
+                }
+            } else if ( typeof(resolution) === 'number' ) {
+                this.resolution = resolution;
+
+            } else {
+                return;
             }
 
-            if ( quality === 'high' ) {
+
+            util.log( "Setting rendering resolution to: " + resolution );
+
+            if ( this.resolution < 1 ) {
+                this.renderer.setSize( innerWidth( this.container ) * this.resolution, innerHeight( this.container ) * this.resolution );
+                this.renderer.domElement.style.width = innerWidth( this.container ) + 'px';
+                this.renderer.domElement.style.height = innerHeight( this.container ) + 'px';
+            } else {
                 this.renderer.setSize( innerWidth( this.container ), innerHeight( this.container ) );
                 this.renderer.domElement.style.width = null;
                 this.renderer.domElement.style.height = null;
-            } else {
-                this.renderer.setSize( innerWidth( this.container ) / 2, innerHeight( this.container ) / 2 );
-                this.renderer.domElement.style.width = innerWidth( this.container ) + 'px';
-                this.renderer.domElement.style.height = innerHeight( this.container ) + 'px';
             }
+
         };
 
 
         this.listenWindowResize = function() {
             var callback = function () {
-                this.renderer.setSize( innerWidth( this.container ), innerHeight( this.container ) );
+                this.renderer.setSize( innerWidth( this.container ) * this.resolution , innerHeight( this.container ) * this.resolution );
+                if(this.resolution < 1 ){
+                    this.renderer.domElement.style.width = innerWidth( this.container ) + 'px';
+                    this.renderer.domElement.style.height = innerHeight( this.container ) + 'px';
+                } else {
+                    this.renderer.domElement.style.width = null;
+                    this.renderer.domElement.style.height = null;
+                }
 
                 this.mainCamera.aspect = innerWidth( this.container ) / innerHeight( this.container );
                 this.mainCamera.updateProjectionMatrix();

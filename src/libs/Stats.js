@@ -7,7 +7,7 @@ var Stats = function () {
 	var startTime = Date.now(), prevTime = 0;
 	var ms = 0, msMin = Infinity, msMax = 0;
 	var fps = 0, fpsMin = Infinity, fpsMax = 0, fpsAccumulator = 0, recordFPSValues = false, measurements = 0, averageFPS = 0,
-        totalSamples = 0, samplingDelay = 1000;
+        totalSamples = 0, samplingDelay = 1000, waitForStop = false;
 	var frames = 0, mode = 0;
     var average = 0;
 
@@ -130,10 +130,10 @@ var Stats = function () {
                         //console.warn( fps )
                         fpsAccumulator += fps;
                         measurements++;
-                        if ( measurements === totalSamples ) {
+
+                        if ( !waitForStop && measurements === totalSamples ) {
                             //console.warn( fpsAccumulator )
-                            this.getAverageFPS();
-                            recordFPSValues = false;
+                            this.stopRecording();
                         }
                     }
                 }
@@ -157,28 +157,39 @@ var Stats = function () {
         recordFPSValues: function( nSamples, delay ){
             samplingDelay = parseInt(delay, 10) ? delay : 1000;
             recordFPSValues = true;
+            waitForStop = false;
             fpsAccumulator = 0;
             totalSamples = parseInt(nSamples, 10) ? nSamples : 10;
             measurements = 0;
             fpsMin = 0;
             fpsMax = 0;
 
-            console.warn("Stats: Recording FPS values for", totalSamples*samplingDelay, "milliseconds. " +
-                "Taking", totalSamples, "samples.");
+            if(!nSamples){
+                waitForStop = true;
+                console.warn("Stats: Recording FPS values until stopped.");
+            } else{
+                console.warn("Stats: Recording FPS values for", totalSamples*samplingDelay, "milliseconds. " +
+                    "Taking", totalSamples, "samples.");
+            }
+
             return true;
+        },
+
+        stopRecording: function() {
+            recordFPSValues = false;
+            waitForStop = false;
+            return this.getAverageFPS();
         },
 
         getAverageFPS: function(){
             if(fpsAccumulator > 0 && measurements > 0){
                 averageFPS = fpsAccumulator / measurements;
-                console.warn(measurements)
-                console.warn("Stats: Average fps over", measurements*samplingDelay, "milliseconds:",
-                    averageFPS, "(Sampling delay:", samplingDelay, "milliseconds)");
+                webtundra.util.log(measurements+'');
+
                 fpsAccumulator = 0;
                 measurements = 0;
-                averageFPS = 0;
 
-                return true;
+                return averageFPS;
             }
             return false;
 

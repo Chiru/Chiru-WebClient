@@ -50,7 +50,8 @@
         {
             container: namespace.container,
             shadows: false,
-            renderQuality: 'high'
+            resolution: 'high',
+            precision: 'highp'
         } );
 
     webtundra.setupAssetManager(

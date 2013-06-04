@@ -35,7 +35,7 @@
                 /*namespace.util.log( "Got new Entity " + "( id: " + data['entityID'] + ", name: " + data['name'] +
                     ", components: " + data['numReplComps'] + " )" );*/
                 self.parseEntity( data );
-                console.log(data)
+                //console.log(data)
 
             } );
             connection.bindEvent( "EntityRemoved", function ( data ) {

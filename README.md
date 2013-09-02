@@ -30,3 +30,4 @@ You should also change the default "excludepattern" in JSDoc3 conf.json to ".+\\
 [2]: https://github.com/jsdoc3/jsdoc
 
 
+Author: Toni Dahl
